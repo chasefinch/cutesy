@@ -11,7 +11,7 @@ setuptools.setup(
     version="1.0a1",
     author="Chase Finch",
     author_email="chase@finch.email",
-    description="A linter & autoformatter for cute HTML code, or else.",
+    description="A linter & autoformatter for clean HTML code, or else.",
     keywords=[
         "Cutesy",
         "HTML",
