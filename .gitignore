@@ -1,0 +1,12 @@
+
+*.pyc
+.coverage
+build/
+prof/
+dist/
+bin/
+lib/
+pyvenv.cfg
+cutesy.egg-info/
+test_file.html
+test_file2.html
