@@ -8,6 +8,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴ ̶̰̈́m̴͔̊͒̅a̷�
 
 Cutesy checks HTML documents for consistency and best practices. It includes a set of rules, most of which can be fixed automatically.
 
+---
 
 ### Testing, etc.
 
