@@ -1,6 +1,6 @@
 ### Cutesy 🥰
 
-<p style="font-size: 1.3em;">A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴ ̶̰̈́m̴͔̊͒̅a̷͖̠͊̈́̕d̶͇̠͕͙͌.̸</p>
+#### A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴ ̶̰̈́m̴͔̊͒̅a̷͖̠͊̈́̕d̶͇̠͕͙͌.̸
 
 ---
 
