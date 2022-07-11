@@ -4,11 +4,11 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ ̶̰̈́a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈.̸
 
-Cutesy checks HTML documents for consistency and best practices. It's opinionated. It includes a set of rules, most of which can be fixed automatically.
+Cutesy checks HTML documents for consistency and best practices. It’s opinionated. It includes a set of rules, most of which can be fixed automatically.
 
 Cutesy expects (and enforces) HTML5 files, with UTF-8 encoding.
 
-Cutesy works with templating languages by using "preprocessors". These take template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
+Cutesy works with templating languages by using a “preprocessor”. These take dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
 Preprocessing is (or will be) supported for these templating languages:
 
@@ -41,23 +41,30 @@ Minimal usage:
 
     cutesy "some_file.html"
 
+
 Lint multiple files using a glob pattern:
 
     cutesy "*.html"
 
     cutesy "path/to/templates/**/*.html"
 
+
 Fix files automatically (recommended):
 
     cutesy "*.html" --fix
 
-Cutesy can check HTML fragments, or whole HTML documents. By default, files specifying a non-HTML5 doctype (anything other than `<!doctype html>`) are ignored. To assume (and enforce) that all matching files are HTML5, use the `--check-doctype` flag:
+
+Cutesy can check HTML fragments, or whole HTML documents. By default, files specifying a non-HTML5 doctype (anything other than `<!doctype html>`) are ignored.
+
+To assume (and enforce) that all matching files are HTML5, use the `--check-doctype` flag:
 
     cutesy "*.html" --fix --check-doctype
+
 
 To lint files written in a template language, such as the Django Template Language:
 
     cutesy "*.html" --fix --preprocessor="django"
+
 
 Other options:
 
