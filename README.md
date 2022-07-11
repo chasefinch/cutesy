@@ -2,7 +2,7 @@
 
 ![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue) [![Build Status](https://travis-ci.com/chasefinch/cutesy.svg?branch=main)](https://travis-ci.com/chasefinch/cutesy)
 
-A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ ̶̰̈́a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
+A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
 Cutesy checks HTML documents for consistency and best practices. It’s opinionated. It includes a set of rules, most of which can be fixed automatically.
 
