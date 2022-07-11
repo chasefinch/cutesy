@@ -8,11 +8,11 @@ Cutesy checks HTML documents for consistency and best practices. It’s opiniona
 
 Cutesy expects (and enforces) HTML5 files, with UTF-8 encoding.
 
-Cutesy works with templating languages by using a “preprocessor”. These take dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
+Cutesy works with templating languages, such as Django Template Language or Ruby's ERB. These are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
 Preprocessing is (or will be) supported for these templating languages:
 
-- [x] Django Template Language
+- [x] Django
 - [ ] Jinja
 - [ ] ERB
 - [ ] Handlebars
