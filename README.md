@@ -45,8 +45,8 @@ Minimal usage:
 Lint multiple files using a glob pattern:
 
     cutesy "*.html"
-
     cutesy "path/to/templates/**/*.html"
+    # etc…
 
 
 Fix files automatically (recommended):
