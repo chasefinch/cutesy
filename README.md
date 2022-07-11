@@ -33,7 +33,7 @@ Preprocessing is (or will be) supported for these templating languages:
 
 Cutesy is written in Python. Install via PyPI:
 
-  pip install cutesy
+    pip install cutesy
 
 ## Usage
 
