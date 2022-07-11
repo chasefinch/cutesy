@@ -1,6 +1,6 @@
 ### Cutesy 🥰
 
-A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴ ̶̰̈́m̴͔̊͒̅a̷͖̠͊̈́̕d̶͇̠͕͙͌.̸
+A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ ̶̰̈́a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈.̸
 
 ---
 

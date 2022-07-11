@@ -74,8 +74,6 @@ Rule("E1", "Doctype not “html”")
 Rule("E2", "Ampersand not represented as “&amp;”")
 Rule("E3", "Left angle bracket not represented as “&lt;”")
 Rule("E4", "Right angle bracket not represented as “&gt;”")
-Rule("E5", "Quotation mark not represented as “&quot;”")
-Rule("E6", "Apostrophe not represented as “&apos;”")
 
 
 class Mode(DataEnum):
@@ -714,19 +712,6 @@ class HTMLLinter(HTMLParser):
                 cursor = self.updatepos(cursor, cursor + 1)
                 continue
 
-            if startswith("'", cursor) or startswith('"', cursor):
-                char = rawdata[cursor : cursor + 1]
-                if self.cdata_elem is not None:
-                    self.handle_data(char)
-                elif self.fix:
-                    self.handle_data({"'": "&apos;", '"': "&quot;"}[char])
-                else:
-                    self.handle_data(char)
-                    self._log_error({"'": "E6", '"': "E5"})
-
-                cursor = self.updatepos(cursor, cursor + 1)
-                continue
-
             if startswith("<", cursor):
                 if starttagopen.match(rawdata, cursor):  # < + letter
                     cursor2 = self.parse_starttag(cursor)
@@ -844,9 +829,6 @@ class HTMLLinter(HTMLParser):
             elif not self.fix:
                 self._log_error("F9", attr=attrname)
 
-            if attrvalue:
-                attrvalue = unescape(attrvalue)
-
             attrs.append((attrname, attrvalue))
             cursor2 = match.end()
 
@@ -944,19 +926,6 @@ class HTMLLinter(HTMLParser):
             name, value = attr
             name = name.lower()
 
-            if value:
-                if '"' in value:
-                    if self.fix:
-                        value = value.replace('"', "&quot;")
-                    else:
-                        self._log_error("E5", attr=name)
-
-                if "'" in value:
-                    if self.fix:
-                        value = value.replace("'", "&apos;")
-                    else:
-                        self._log_error("E6", attr=name)
-
             if self.preprocessor:
                 wraps = self.preprocessor.delimiters
                 while wraps[0] in name:
@@ -964,11 +933,18 @@ class HTMLLinter(HTMLParser):
                     end_index = name.index(wraps[1]) + 1
 
                     if start_index > 0:
-                        all_attrs.append((name[:start_index], value))
-                    all_attrs.append((name[start_index:end_index], None))
+                        split_name = name[:start_index]
+                        quote_char = "'" if '"' in split_name else '"'
+                        all_attrs.append((split_name, value, quote_char))
+
+                    split_name = name[start_index:end_index]
+                    quote_char = "'" if '"' in split_name else '"'
+                    all_attrs.append((split_name, None, quote_char))
+
                     name = name[end_index:]
             if name:
-                all_attrs.append((name, value))
+                quote_char = "'" if '"' in (value or "") else '"'
+                all_attrs.append((name, value, quote_char))
 
         attr_groups_by_key = []
 
@@ -977,8 +953,8 @@ class HTMLLinter(HTMLParser):
 
         group = []
         while index < len(all_attrs):
-            attr = all_attrs[index]
-            name, value = attr
+            name, value, quote_char = all_attrs[index]
+            attr = name, value
 
             instruction_type = None
             if self.preprocessor and name.startswith(self.preprocessor.delimiters[0]):
@@ -1016,7 +992,7 @@ class HTMLLinter(HTMLParser):
             else:
                 attr_string = name
                 if value is not None:
-                    attr_string = f'{attr_string}="{value}"'
+                    attr_string = f"{attr_string}={quote_char}{value}{quote_char}"
                 attr_groups_by_key.append((name, [attr_string]))
 
             index += 1
