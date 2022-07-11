@@ -4,7 +4,6 @@ import re
 import string
 from dataclasses import dataclass
 from enum import Enum, unique
-from html import unescape
 from html.parser import HTMLParser
 
 # Third Party
@@ -824,8 +823,9 @@ class HTMLLinter(HTMLParser):
             elif attrvalue[:1] == '"' == attrvalue[-1:]:
                 attrvalue = attrvalue[1:-1]
             elif attrvalue[:1] == "'" == attrvalue[-1:]:
-                self._log_error("F10", attr=attrname)
                 attrvalue = attrvalue[1:-1]
+                if '"' not in attrvalue:
+                    self._log_error("F10", attr=attrname)
             elif not self.fix:
                 self._log_error("F9", attr=attrname)
 

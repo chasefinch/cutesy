@@ -45,7 +45,7 @@ lint:
 test:
 	find . -name "*.pyc" -delete
 	coverage erase
-	coverage run --source=lint_html -m pytest --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build
+	coverage run --source=cutesy -m pytest --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build
 	coverage report -m --fail-under 0
 
 install:
