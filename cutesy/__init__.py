@@ -396,11 +396,6 @@ class HTMLLinter(HTMLParser):
 
         tag = tag.lower()
 
-        if not self.fix:
-            for attr in attrs:
-                if attr[0] != attr[0].lower():
-                    self._log_error("F8", attr=attr[0])
-
         num_long_attrs = 0
         num_xlong_attrs = 0
         num_xxlong_attrs = 0
@@ -804,24 +799,24 @@ class HTMLLinter(HTMLParser):
         rawdata = self.rawdata
 
         self.__starttag_text = None  # noqa: WPS112 (copied)
+        if self.preprocessor:
+            wraps = self.preprocessor.delimiters
+            wrap_regex = re.escape(wraps[0])
+            overlap = re.compile(
+                rf"<([a-zA-Z][-.a-zA-Z0-9:_]*){wrap_regex}",
+            )
+            match = overlap.match(rawdata, cursor)
+            if match:
+                line, column = self.getpos()
+                raise self.preprocessor.make_error(
+                    "P1",
+                    line=line,
+                    column=column,
+                    tag="Instruction",
+                )
+
         end_cursor = self.check_for_whole_start_tag(cursor)
         if end_cursor < 0:
-            if self.preprocessor:
-                wraps = self.preprocessor.delimiters
-                wrap_regex = re.escape(wraps[0])
-                overlap = re.compile(
-                    rf"<([a-zA-Z][-.a-zA-Z0-9:_]*){wrap_regex}",
-                )
-                match = overlap.match(rawdata, cursor)
-                if match:
-                    line, column = self.getpos()
-                    raise self.preprocessor.make_error(
-                        "P1",
-                        line=line,
-                        column=column,
-                        tag="Instruction",
-                    )
-
             self._log_error("D7")
             return end_cursor
 
@@ -964,7 +959,6 @@ class HTMLLinter(HTMLParser):
         all_attrs = []
         for attr in attrs:
             name, value = attr
-            name = name.lower()
 
             if self.preprocessor:
                 wraps = self.preprocessor.delimiters
@@ -974,17 +968,26 @@ class HTMLLinter(HTMLParser):
 
                     if start_index > 0:
                         split_name = name[:start_index]
-                        quote_char = "'" if '"' in split_name else '"'
-                        all_attrs.append((split_name, value, quote_char))
+                        split_name_lower = split_name.lower()
+                        if not self.fix and split_name != split_name_lower:
+                            self._log_error("F8", attr=split_name_lower)
+
+                        quote_char = "'" if '"' in split_name_lower else '"'
+                        all_attrs.append((split_name_lower, value, quote_char))
 
                     split_name = name[start_index:end_index]
+
                     quote_char = "'" if '"' in split_name else '"'
                     all_attrs.append((split_name, None, quote_char))
 
                     name = name[end_index:]
             if name:
+                name_lower = name.lower()
+                if not self.fix and name != name_lower:
+                    self._log_error("F8", attr=name_lower)
+
                 quote_char = "'" if '"' in (value or "") else '"'
-                all_attrs.append((name, value, quote_char))
+                all_attrs.append((name_lower, value, quote_char))
 
         attr_groups_by_key = []
 
