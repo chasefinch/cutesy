@@ -3,7 +3,7 @@
 import re
 import string
 from dataclasses import dataclass
-from enum import Enum, unique, auto
+from enum import Enum, auto, unique
 from html.parser import HTMLParser
 
 # Third Party

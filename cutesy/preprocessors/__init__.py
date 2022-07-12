@@ -62,8 +62,8 @@ class SetupError(Exception):
 class BasePreprocessor(ABC):
     """A base class for preprocessors.
 
-    A preprocessor will replace dynamic instructions that it recognizes
-    with placeholder stubs that can later be understood correctly by the HTML
+    A preprocessor will replace dynamic instructions that it recognizes with
+    placeholder stubs that can later be understood correctly by the HTML
     parser.
     """
 
@@ -107,6 +107,7 @@ class BasePreprocessor(ABC):
 
         # Dynamic instructions which have been replaced
         self._instructions = []
+        self.errors = []
 
         # Modified HTML parts, including placeholders for instructions
         self._modified_html_parts = []
@@ -152,7 +153,7 @@ class BasePreprocessor(ABC):
 
         # end while
         if self._cursor < size:
-            self._modified_html_parts.append(html[self._cursor:size])
+            self._modified_html_parts.append(html[self._cursor : size])
 
         if self._block_instruction_stack:
             # Handle dangling open instructions
@@ -449,7 +450,7 @@ class BasePreprocessor(ABC):
 
         return end_cursor
 
-    def log_error(self, rule_code, **kwargs):
+    def _log_error(self, rule_code, **kwargs):
         replacements = {}
         for keyword, value in kwargs.items():
             replacements[keyword] = value
