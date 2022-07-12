@@ -121,7 +121,6 @@ class BasePreprocessor(ABC):
         html = self._dynamic_html
         size = self._size
 
-        self._current_freeform_level = 0
         self._block_instruction_stack = []
 
         self._cursor = 0
@@ -317,12 +316,6 @@ class BasePreprocessor(ABC):
             should_collapse = False
 
         part = html[cursor:end_cursor]
-
-        # Handle freeform instructions
-        if instruction_type == InstructionType.FREEFORM:
-            self._current_freeform_level += 1
-        elif instruction_type == InstructionType.END_FREEFORM:
-            self._current_freeform_level -= 1
 
         # Keep the length of the replacement the same for
         # line/column counting, but don't include any spaces so
