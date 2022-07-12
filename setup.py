@@ -8,7 +8,7 @@ with open("README.md", "r") as readme_file:
 
 setuptools.setup(
     name="cutesy",
-    version="1.0a1",
+    version="1.0a2",
     author="Chase Finch",
     author_email="chase@finch.email",
     description="A linter & autoformatter for consistent HTML code, or else.",
