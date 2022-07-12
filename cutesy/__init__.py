@@ -666,12 +666,11 @@ class HTMLLinter(HTMLParser):
     def goahead(self, end):
         """Handle data as far as reasonably possible.
 
-        Copied from:
+        Adapted from:
         https://github.com/python/cpython/blob/3.10/Lib/html/parser.py
 
-        Modified to exclude charrefs which don't end in a semicolon, and to
-        handle dynamic placeholders. This modified version also does not
-        support multiple calls to "feed" or convert_charrefs mode.
+        This modified version doesn't support multiple calls to "feed" or
+        convert_charrefs mode.
         """
         interesting_regex = r"&|<"
         if self.preprocessor:
@@ -793,10 +792,8 @@ class HTMLLinter(HTMLParser):
     def parse_starttag(self, cursor):
         """Parse a start tag.
 
-        Copied from:
+        Adapted from:
         https://github.com/python/cpython/blob/3.10/Lib/html/parser.py
-
-        Modified to preserve casing in tag names.
         """
         attrfind_tolerant = re.compile(
             r'((?<=[\'"\s/])[^\s/>][^\s/=>]*)(\s*=+\s*'
@@ -882,11 +879,8 @@ class HTMLLinter(HTMLParser):
     def parse_endtag(self, cursor):
         """Parse an end tag.
 
-        Copied from:
+        Adapted from:
         https://github.com/python/cpython/blob/3.10/Lib/html/parser.py
-
-        Modified to preserve casing in tag names, and to punt on whitespace
-        between </ and the tag name.
         """
         rawdata = self.rawdata
 
