@@ -53,6 +53,8 @@ Rule("D3", "Expected {tag}")  # Expected closing tag
 Rule("D4", "{tag} doesn’t have a matching opening tag")
 Rule("D5", "Unnecessary self-closing of {tag}")
 Rule("D6", "Self-closing of non-void element {tag}")
+Rule("D7", "Malformed tag")
+Rule("D8", "Malformed closing tag")
 
 # Formatting rules
 Rule("F1", "Doctype not lowercase")
@@ -218,9 +220,6 @@ class InstructionType(Enum):
         }
 
 
-TAGFIND_TOLERANT = re.compile(r"([a-zA-Z][^\t\n\r\f />\x00]*)(?:\s|/(?!>))*")
-
-
 class HTMLLinter(HTMLParser):
     """A parser to ingest HTML and lint it."""
 
@@ -326,7 +325,13 @@ class HTMLLinter(HTMLParser):
             self.preprocessor.reset(html_data, self.fix)
             html_data = self.preprocessor.process()
 
-        self.feed(html_data)
+        try:
+            self.feed(html_data)
+        except PreprocessingError as preprocessing_error:
+            # Update the line & column numbers for the errors.
+            self.preprocessor.restore(html_data, preprocessing_error.errors)
+            raise preprocessing_error
+
         self.close()
 
         result = "".join(self._result) if self.fix else html_data
@@ -668,13 +673,13 @@ class HTMLLinter(HTMLParser):
         handle dynamic placeholders. This modified version also does not
         support multiple calls to "feed" or convert_charrefs mode.
         """
-        interesting_regex_string = "".join(('"|', r"'|&|<"))
+        interesting_regex = r"&|<"
         if self.preprocessor:
             wraps = self.preprocessor.delimiters
             opening_regex_part = re.escape(wraps[0])
-            interesting_regex_string = f"{interesting_regex_string}|(?:{opening_regex_part})"
+            interesting_regex = f"{interesting_regex}|(?:{opening_regex_part})"
 
-        interesting = re.compile(interesting_regex_string)
+        interesting = re.compile(interesting_regex)
         entityref = re.compile("&([a-zA-Z][-.a-zA-Z0-9]*);")
         charref = re.compile("&#(?:[0-9]+|[xX][0-9a-fA-F]+);")
         starttagopen = re.compile("<[a-zA-Z]")
@@ -798,16 +803,35 @@ class HTMLLinter(HTMLParser):
             + r'(\'[^\']*\'|"[^"]*"|(?![\'"])[^>\s]*))?(?:\s|/(?!>))*',
         )
 
+        tagfind_tolerant = re.compile(r"([a-zA-Z][^\t\n\r\f />\x00]*)(?:\s|/(?!>))*")
+        rawdata = self.rawdata
+
         self.__starttag_text = None  # noqa: WPS112 (copied)
         end_cursor = self.check_for_whole_start_tag(cursor)
         if end_cursor < 0:
+            if self.preprocessor:
+                wraps = self.preprocessor.delimiters
+                wrap_regex = re.escape(wraps[0])
+                overlap = re.compile(
+                    rf"<([a-zA-Z][-.a-zA-Z0-9:_]*){wrap_regex}",
+                )
+                match = overlap.match(rawdata, cursor)
+                if match:
+                    line, column = self.getpos()
+                    raise self.preprocessor.make_error(
+                        "P1",
+                        line=line,
+                        column=column,
+                        tag="Instruction",
+                    )
+
+            self._log_error("D7")
             return end_cursor
 
-        rawdata = self.rawdata
         self.__starttag_text = rawdata[cursor:end_cursor]  # noqa: WPS112 (copied)
 
         attrs = []
-        match = TAGFIND_TOLERANT.match(rawdata, cursor + 1)
+        match = tagfind_tolerant.match(rawdata, cursor + 1)
         cursor2 = match.end()
 
         tag = match.group(1)
@@ -869,16 +893,38 @@ class HTMLLinter(HTMLParser):
         endtagfind = re.compile(r"</([a-zA-Z][-.a-zA-Z0-9:_]*)\s*>")
         match = endtagfind.match(rawdata, cursor)  # </ + tag + >
         if not match:
+            if self.preprocessor:
+                wraps = self.preprocessor.delimiters
+                wrap_regex = re.escape(wraps[0])
+                overlap = re.compile(
+                    rf"</[a-zA-Z][-.a-zA-Z0-9:_]*\s*{wrap_regex}",
+                )
+                match = overlap.match(rawdata, cursor)
+                if match:
+                    line, column = self.getpos()
+                    raise self.preprocessor.make_error(
+                        "P1",
+                        line=line,
+                        column=column,
+                        tag="Instruction",
+                    )
+
+            self._log_error("D8")
             return -1
 
         end_cursor = match.end()
         tag = match.group(1)
+
+        parsed_data = rawdata[cursor:end_cursor]
         if any((char in string.whitespace for char in rawdata[cursor:end_cursor])):
-            self._log_error("F11", tag=f"</{tag}>")
+            if self.fix:
+                parsed_data = re.sub(r"\s", "", parsed_data)
+            else:
+                self._log_error("F11", tag=f"</{tag}>")
 
         if self.cdata_elem is not None and tag.lower() != self.cdata_elem:
             # script or style
-            self.handle_data(rawdata[cursor:end_cursor])
+            self.handle_data(parsed_data)
             return end_cursor
 
         self.handle_endtag(tag)

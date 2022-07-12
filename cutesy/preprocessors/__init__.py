@@ -114,7 +114,6 @@ class BasePreprocessor(ABC):
 
         opening_braces = (re.escape(braces[0]) for braces in self.braces)
         pattern = "|".join((f"(?:{brace})" for brace in opening_braces))
-        pattern = "|".join((pattern, "'", '"', r"<!\-\-", r"\-\->"))
         interesting = re.compile(pattern)
 
         self._placeholder_id_num = 0
@@ -122,10 +121,8 @@ class BasePreprocessor(ABC):
         html = self._dynamic_html
         size = self._size
 
-        self._current_string_char = None
         self._current_freeform_level = 0
         self._block_instruction_stack = []
-        is_in_html_comment = False
 
         self._cursor = 0
         while self._cursor < size:
@@ -145,42 +142,9 @@ class BasePreprocessor(ABC):
             cursor = self._cursor
 
             startswith = html.startswith
-            if startswith("<!--", cursor):
-                if not self._current_string_char:
-                    is_in_html_comment = True
 
-                cursor2 = cursor + 4
-                self._modified_html_parts.append(html[cursor:cursor2])
-                self._cursor = self._update_position(cursor, cursor2)
-                continue
-
-            if is_in_html_comment and startswith("-->", cursor):
-                if not self._current_string_char:
-                    is_in_html_comment = False
-                cursor2 = cursor + 3
-                self._modified_html_parts.append(html[cursor:cursor2])
-                self._cursor = self._update_position(cursor, cursor2)
-                continue
-
-            is_handled = False
             for braces in self.braces:
                 if startswith(braces[0], cursor) and self._handle_match(braces):
-                    is_handled = True
-                    break
-
-            if is_handled:
-                continue
-
-            for string_char in ('"', "'"):
-                if startswith(string_char, cursor):
-                    if not is_in_html_comment:
-                        if not self._current_string_char:
-                            self._current_string_char = string_char
-                        elif self._current_string_char == string_char:
-                            self._current_string_char = None
-
-                    self._modified_html_parts.append(string_char)
-                    self._cursor = self._update_position(cursor, cursor + 1)
                     break
 
         # end while
@@ -202,7 +166,7 @@ class BasePreprocessor(ABC):
                 "spaceless_json": "endspaceless_json",
             }[last_instruction]
             tag_string = f"{braces[0]} {expected_instruction} {braces[1]}"
-            raise self._make_error("P2", tag=tag_string)
+            raise self.make_error("P2", tag=tag_string)
 
         return "".join(self._modified_html_parts)
 
@@ -241,6 +205,26 @@ class BasePreprocessor(ABC):
 
         return modified_html
 
+    def make_error(self, rule_code, line=None, column=None, **kwargs):
+        """Create a PreprocessingError based on the given details."""
+        if line is None:
+            line = self.line
+        if column is None:
+            column = self.offset
+
+        replacements = {}
+        for keyword, value in kwargs.items():
+            replacements[keyword] = value
+
+        error = Error(
+            line=line,
+            column=column,
+            rule=Rule.get(rule_code),
+            replacements=replacements,
+        )
+
+        return PreprocessingError(errors=[error])
+
     def _handle_match(self, braces):
         """Replace a matched instruction with a placeholder."""
         should_collapse = True
@@ -255,7 +239,7 @@ class BasePreprocessor(ABC):
 
         cursor2 = html.find(braces[1], cursor + len_start)
         if cursor2 < 0:
-            raise self._make_error("P4")
+            raise self.make_error("P4")
 
         instruction_string, instruction_type = self.parse_instruction_tag(
             braces,
@@ -268,7 +252,7 @@ class BasePreprocessor(ABC):
 
         # Ensure balanced tags
         tag_string = f"{braces[0]} {instruction_string} {braces[1]}"
-        hanging_closing_tag_error = self._make_error("P3", tag=tag_string)
+        hanging_closing_tag_error = self.make_error("P3", tag=tag_string)
 
         # Handle comment instructions
         if instruction_type == InstructionType.END_COMMENT:
@@ -290,7 +274,7 @@ class BasePreprocessor(ABC):
 
             match = search_regex.search(dynamic_html_lower, end_cursor)
             if not match:
-                raise self._make_error("P2", tag=search_string)
+                raise self.make_error("P2", tag=search_string)
 
             end_cursor = match.end()
 
@@ -334,74 +318,11 @@ class BasePreprocessor(ABC):
 
         part = html[cursor:end_cursor]
 
-        fishy_position_error = self._make_error("P1", tag=tag_string)
-
-        # Ensure this instruction is in a valid position
-        opening_instructions = {
-            InstructionType.PARTIAL,
-            InstructionType.CONDITIONAL,
-            InstructionType.REPEATABLE,
-            InstructionType.FREEFORM,
-            InstructionType.COMMENT,
-            InstructionType.VALUE,
-            InstructionType.IGNORED,
-        }
-        is_fishy_opening_position = all(
-            (
-                instruction_type in opening_instructions,
-                not self._current_string_char,
-                not self._current_freeform_level,
-                cursor > 0,
-                html[cursor - 1] not in CLEAN_CHARS_BEFORE_OPENING,
-            ),
-        )
-
-        if is_fishy_opening_position:
-            is_after_instruction = False
-            closing_braces = (test_braces[1] for test_braces in self.braces)
-            for closing_brace in closing_braces:
-                offset = cursor - len(closing_brace)
-                if offset >= 0 and html[offset:cursor] == closing_brace:
-                    is_after_instruction = True
-                    break
-
-            if not is_after_instruction:
-                raise fishy_position_error
-
         # Handle freeform instructions
         if instruction_type == InstructionType.FREEFORM:
             self._current_freeform_level += 1
         elif instruction_type == InstructionType.END_FREEFORM:
             self._current_freeform_level -= 1
-
-        # Ensure this instruction is in a valid position
-        closing_instructions = {
-            InstructionType.END_PARTIAL,
-            InstructionType.END_CONDITIONAL,
-            InstructionType.END_REPEATABLE,
-            InstructionType.END_FREEFORM,
-            InstructionType.END_COMMENT,
-        }
-        is_fishy_closing_position = all(
-            (
-                instruction_type in closing_instructions,
-                not self._current_string_char,
-                not self._current_freeform_level,
-                end_cursor < self._size,
-                html[end_cursor : end_cursor + 1] not in CLEAN_CHARS_AFTER_CLOSING,
-            ),
-        )
-
-        if is_fishy_closing_position:
-            is_before_instruction = False
-            opening_braces = (test_braces[0] for test_braces in self.braces)
-            for opening_brace in opening_braces:
-                if html[end_cursor : cursor + 2] == opening_brace:
-                    is_before_instruction = True
-                    break
-
-            if not is_before_instruction:
-                raise fishy_position_error
 
         # Keep the length of the replacement the same for
         # line/column counting, but don't include any spaces so
@@ -465,12 +386,12 @@ class BasePreprocessor(ABC):
 
         formatted_instruction = " ".join(formatted_instruction_parts)
         if not self._fix and raw_instruction != formatted_instruction:
-            raise self._make_error("P5", tag=tag_string)
+            raise self.make_error("P5", tag=tag_string)
         raw_instruction = formatted_instruction
 
         padding_length = len(raw_instruction) - necessary_length - len(id_value)
         if padding_length < 0:
-            raise self._make_error("T1")
+            raise self.make_error("T1")
 
         padding = "-" * padding_length
         replacement = f"{wraps[0]}{type_id_char}{id_value}{padding}{wraps[1]}"
@@ -495,17 +416,3 @@ class BasePreprocessor(ABC):
         else:
             self.offset += len_chunk
         return end_cursor
-
-    def _make_error(self, rule_code, **kwargs):
-        replacements = {}
-        for keyword, value in kwargs.items():
-            replacements[keyword] = value
-
-        error = Error(
-            line=self.line,
-            column=self.offset,
-            rule=Rule.get(rule_code),
-            replacements=replacements,
-        )
-
-        return PreprocessingError(errors=[error])

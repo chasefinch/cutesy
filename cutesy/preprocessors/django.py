@@ -25,7 +25,7 @@ class Preprocessor(BasePreprocessor):
         except IndexError:
             if braces[0] == "{#":
                 return "…", InstructionType.IGNORED
-            raise self._make_error("P4")
+            raise self.make_error("P4")
 
         if braces[0] == "{#":
             special_comment_instructions = {
