@@ -3,7 +3,7 @@
 import re
 import string
 from dataclasses import dataclass
-from enum import Enum, unique
+from enum import Enum, unique, auto
 from html.parser import HTMLParser
 
 # Third Party
@@ -85,6 +85,13 @@ Mode.DOCUMENT = Mode()
 Mode.UNSTRUCTURED = Mode()
 
 
+class IndentationType(Enum):
+    """An indentation scheme."""
+
+    TAB = auto()  # noqa: WPS115 (Caps preferred for Enums)
+    SPACES = auto()  # noqa: WPS115 (Caps preferred for Enums)
+
+
 @dataclass
 class Error:
     """An issue to be reported by the linter."""
@@ -95,6 +102,7 @@ class Error:
     replacements: dict
 
 
+# https://www.w3.org/TR/2011/WD-html-markup-20110113/syntax.html#void-elements
 VOID_ELEMENTS = frozenset(
     (
         "area",
@@ -227,17 +235,28 @@ class HTMLLinter(HTMLParser):
         """Initialize HTMLLinter."""
         super().__init__(*args, **kwargs)
 
-        self.fix = fix
+        self.fix = fix  # Whether we're fixing the files
+
+        # If true, assume all files are HTML5 files, and complain when they
+        # aren't. Otherwise, skip any files without an HTML5 doctype.
         self.check_doctype = check_doctype
+
+        # A preprocessor for handling dynamic templating languages
         self.preprocessor = preprocessor
 
         self.convert_charrefs = False
-        self.indentation = "\t"
+        self.indentation_type = IndentationType.TAB
+
+        # This applies even if indentation == TABS, to best infer what spaces
+        # mean in the incoming HTML document
         self.tab_width = 4
+
+        # Tuners for attribute wrapping logic
         self.long_attr_value_length = 10
         self.xlong_attr_value_length = 28
         self.xxlong_attr_value_length = 60
 
+        # A function to sort attributes by priority
         self.attr_sort = lambda attr: (
             attr[0] is None,
             attr[0] != "⚡",
@@ -300,10 +319,12 @@ class HTMLLinter(HTMLParser):
         """Reset the state of the linter so that it can be run again."""
         super().reset()
 
-        self._mode = None
+        self._mode = None  # Full document or arbitrary HTML
+
         self._errors = []
         self._result = []
 
+        # Parsing state
         self._did_report_expected_doctype = False
         self._freeform_level = 0
         self._indentation_level = 0
@@ -312,6 +333,7 @@ class HTMLLinter(HTMLParser):
         # Possible values: {None, True} if self.fix else {None, str}
         self._expected_indentation = None
 
+        # Line & column numbers in the modified HTML
         self._line = 0
         self._column = 0
 
@@ -322,6 +344,8 @@ class HTMLLinter(HTMLParser):
         html_data = html
 
         if self.preprocessor:
+            # Replace the dynamic template language instructions with
+            # placeholders that our parser can handle
             self.preprocessor.reset(html_data, self.fix)
             html_data = self.preprocessor.process()
 
@@ -339,8 +363,21 @@ class HTMLLinter(HTMLParser):
 
         if self.preprocessor:
             result = self.preprocessor.restore(result, errors)  # modifies "errors"
+            errors.extend(self.preprocessor.errors)
+            errors.sort(key=lambda error: (error.line, error.column))
 
         return result, errors
+
+    @property
+    def indentation(self):
+        """Return a string to indent a line one level."""
+        if self.indentation_type == IndentationType.TAB:
+            return "\t"
+
+        if self.indentation_type == IndentationType.SPACES:
+            return " " * self.tab_width
+
+        return "\t"
 
     def handle_decl(self, decl):
         """Process a declaration string."""
@@ -808,7 +845,7 @@ class HTMLLinter(HTMLParser):
             match = overlap.match(rawdata, cursor)
             if match:
                 line, column = self.getpos()
-                raise self.preprocessor.make_error(
+                raise self.preprocessor.make_fatal_error(
                     "P1",
                     line=line,
                     column=column,
@@ -891,7 +928,7 @@ class HTMLLinter(HTMLParser):
                 match = overlap.match(rawdata, cursor)
                 if match:
                     line, column = self.getpos()
-                    raise self.preprocessor.make_error(
+                    raise self.preprocessor.make_fatal_error(
                         "P1",
                         line=line,
                         column=column,

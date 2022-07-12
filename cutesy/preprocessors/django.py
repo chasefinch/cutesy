@@ -7,6 +7,12 @@ from . import BasePreprocessor
 class Preprocessor(BasePreprocessor):
     """A preprocessor for Django templates."""
 
+    braces = {
+        ("{%", "%}"),
+        ("{{", "}}"),
+        ("{#", "#}"),
+    }
+
     closing_tag_string_map = {
         "freeform": "endfreeform",
         "comment": "endcomment",
@@ -15,8 +21,9 @@ class Preprocessor(BasePreprocessor):
     }
 
     def parse_instruction_tag(self, braces, html, cursor, cursor2):
-        """Return the appropriate InstructionType."""
+        """Return the appropriate instruction text and InstructionType."""
         if braces[0] == "{{":
+            # Easy
             return "…", InstructionType.VALUE
 
         parts = html[cursor + len(braces[0]) : cursor2].split()
@@ -24,10 +31,14 @@ class Preprocessor(BasePreprocessor):
             instruction = parts[0]
         except IndexError:
             if braces[0] == "{#":
+                # Just an empty comment
                 return "…", InstructionType.IGNORED
-            raise self.make_error("P4")
+
+            # Can't parse any instruction
+            raise self.make_fatal_error("P4")
 
         if braces[0] == "{#":
+            # Special directive comments allowed specifically for Cutesy
             special_comment_instructions = {
                 "freeform": InstructionType.FREEFORM,
                 "endfreeform": InstructionType.END_FREEFORM,
@@ -66,4 +77,5 @@ class Preprocessor(BasePreprocessor):
                 }[instruction],
             )
         except KeyError:
+            # Unrecognized but valid tags behave like values.
             return instruction, InstructionType.VALUE

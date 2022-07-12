@@ -30,8 +30,10 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
     num_files_modified = 0
     num_files_failed = 0
 
+    is_in_modification_block = False  # For printing extra newlines
+
     for path in Path(".").glob(pattern):
-        is_preprocessing_error = False
+        is_preprocessing_error = False  # These are "fatal"
 
         with open(path, mode="r") as html_file:
             html = html_file.read()
@@ -39,6 +41,8 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
         try:
             result, errors = linter.lint(html)
         except DoctypeError:
+            # Ignore this file due to non-HTML5 doctype, when this feature has
+            # been enabled
             continue
         except PreprocessingError as preprocessing_error:
             is_preprocessing_error = True
@@ -48,12 +52,20 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
             if fix and html != result:
                 with open(path, mode="w") as html_file:
                     html_file.write(result)
+                    is_in_modification_block = True
                     print(f"Fixed {path}")  # noqa: T201 (CLI output)
                 num_files_modified += 1
+
+        # Print closing remarks
 
         if errors:
             errors_by_file[str(path)] = errors
             num_errors += len(errors)
+
+            if is_in_modification_block:
+                # Extra newline for spacing
+                print()  # noqa: T201 (CLI output)
+                is_in_modification_block = False
 
             print(f"\033[1m\033[4m{path}\033[0m")  # noqa: T201 (CLI output)
 
@@ -84,6 +96,10 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
 
         if fix:
             if num_files_modified:
+                if is_in_modification_block:
+                    # Extra newline for spacing
+                    print()  # noqa: T201 (CLI output)
+
                 maybe_s_3 = "" if num_files_modified == 1 else "s"
                 print(  # noqa: T201 (CLI output)
                     f"\033[1mFixed {num_files_modified} file{maybe_s_3}, "
@@ -108,6 +124,9 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
 
     if fix:
         if num_files_modified:
+            if is_in_modification_block:
+                print()  # noqa: T201 (CLI output)
+
             maybe_s = "" if num_files_modified == 1 else "s"
             print(  # noqa: T201 (CLI output)
                 f"\033[1mFixed {num_files_modified} file{maybe_s}, no problems left\033[0m 🥰",
