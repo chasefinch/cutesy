@@ -44,7 +44,8 @@ Rule("P1", "{tag} overlaps HTML elements or attributes")
 Rule("P2", "Expected {tag}")  # Expected closing instruction
 Rule("P3", "{tag} doesn’t have a matching opening instruction")
 Rule("P4", "Malformed processing instruction")
-Rule("P5", "Nonstandard whitespace in {tag}")
+Rule("P5", "Extra whitespace in {tag}")
+Rule("P6", "Expected padding in {tag}")
 
 # Document structure rules
 Rule("D1", "Expected doctype before other HTML elements")
@@ -68,7 +69,10 @@ Rule("F8", "Attribute “{attr}” not lowercase")
 Rule("F9", "Attribute “{attr}” missing quotes")
 Rule("F10", "Attribute “{attr}” using wrong quotes")
 Rule("F11", "{tag} contains whitespace")
-Rule("F12", "Nonstandard whitespace in {tag}")
+Rule("F12", "Long tag {tag} should be on a new line")
+Rule("F13", "Nonstandard whitespace in {tag}")
+Rule("F14", "Expected {tag} attributes on new lines")
+Rule("F15", "Expected {tag} attributes on a single line")
 
 # Encoding & language rules
 Rule("E1", "Doctype not “html”")
@@ -367,7 +371,8 @@ class HTMLLinter(HTMLParser):
 
             # Add in any errors from the preprocessor which weren't fatal
             errors.extend(self.preprocessor.errors)
-            errors.sort(key=lambda error: (error.line, error.column))
+
+        errors.sort(key=lambda error: (error.line, error.column))
 
         return result, errors
 
@@ -433,6 +438,8 @@ class HTMLLinter(HTMLParser):
     def handle_starttag(self, tag, attrs):
         """Process a start tag."""
         self._did_encounter_data()
+
+        is_new_line = self._expected_indentation is not None
         self._reconcile_indentation()
 
         if not self.fix and tag != tag.lower():
@@ -468,6 +475,12 @@ class HTMLLinter(HTMLParser):
                 num_breaking_attrs > 0,
             ),
         )
+
+        if should_wrap and not is_new_line:
+            self._log_error("F12", tag=f"<{tag}>")
+
+        should_wrap = should_wrap and is_new_line
+
         if should_wrap:
             # Wrap the attribute strings. Each attribute will get a new line,
             # and attributes with multi-line values will be indented to the
@@ -527,8 +540,23 @@ class HTMLLinter(HTMLParser):
             attrs_string = f"\n{indentation}".join(adjusted_attr_strings)
             attrs_string = f"\n{indentation}{attrs_string}\n{end_char}"
         elif attr_strings:
+            adjusted_attr_strings = []
+
+            for attr_string in attr_strings:
+                # Remove formatting-specific newlines & indentations
+                preserve_spaces = attr_string.startswith(" "), attr_string.endswith(" ")
+
+                adjusted_attr_string = re.sub(r"\s*\n\s*", " ", attr_string)
+
+                if not preserve_spaces[0]:
+                    adjusted_attr_string = adjusted_attr_string.lstrip()
+                if not preserve_spaces[1]:
+                    adjusted_attr_string = adjusted_attr_string.rstrip()
+
+                adjusted_attr_strings.append(adjusted_attr_string)
+
             # Don't wrap; Just separate all by a space
-            attrs_string = " ".join(attr_strings)
+            attrs_string = " ".join(adjusted_attr_strings)
             attrs_string = f" {attrs_string}"
         else:
             # No attributes
@@ -539,7 +567,14 @@ class HTMLLinter(HTMLParser):
             old_whitespace = list(filter(is_whitespace, list(self.__starttag_text)))
 
             if new_whitespace != old_whitespace:
-                self._log_error("P5", tag=f"<{tag}>")
+                if "\n" in new_whitespace and "\n" not in old_whitespace and should_wrap:
+                    error_code = "F14"
+                elif "\n" not in new_whitespace and "\n" in old_whitespace and not should_wrap:
+                    error_code = "F15"
+                else:
+                    error_code = "F13"
+
+                self._log_error(error_code, tag=f"<{tag}>")
 
         if tag not in VOID_ELEMENTS:
             # Tag should be closed, add it to the stack.
@@ -611,11 +646,12 @@ class HTMLLinter(HTMLParser):
             while blank_line in new_html_data:
                 new_html_data = new_html_data.replace(blank_line, "\n\n")
 
-            if new_html_data.endswith(f"\n{indentation}"):
+        if new_html_data.endswith(f"\n{indentation}"):
+            if indentation:
                 new_html_data = new_html_data[: -1 * len(indentation)]
 
-                # We should add indentation once we know how deep to indent.
-                self._expected_indentation = True
+            # We should add indentation once we know how deep to indent.
+            self._expected_indentation = True
 
         if self.fix:
             html_data = new_html_data

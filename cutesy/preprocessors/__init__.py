@@ -348,6 +348,16 @@ class BasePreprocessor(ABC):
         id_value = base36_encode(self._placeholder_id_num)
 
         raw_instruction = part
+        if not self._fix:
+            has_valid_padding = all(
+                (
+                    raw_instruction[len_start:].startswith(" "),
+                    raw_instruction[: -1 * len_end].endswith(" "),
+                ),
+            )
+
+            if not has_valid_padding:
+                self._log_error("P6", tag=tag_string)
 
         # Start with the opening brace
         formatted_instruction_parts = [part[:len_start]]
@@ -406,9 +416,23 @@ class BasePreprocessor(ABC):
 
         # Collapse
         formatted_instruction = " ".join(formatted_instruction_parts)
-        if not self._fix and raw_instruction != formatted_instruction:
-            # This wasn't collapsed before OR it didn't have enough space
-            self._log_error("P5", tag=tag_string)
+        if not self._fix:
+            # Check if collapsing changed anything
+            stripped_raw_instruction = raw_instruction[len_start : -1 * len_end]
+            stripped_formatted_instruction = formatted_instruction[len_start : -1 * len_end]
+
+            # Remove the case we checked for already
+            if stripped_raw_instruction.startswith(" "):
+                stripped_raw_instruction = stripped_raw_instruction[1:]
+            if stripped_raw_instruction.endswith(" "):
+                stripped_raw_instruction = stripped_raw_instruction[:-1]
+
+            stripped_formatted_instruction = stripped_formatted_instruction[1:-1]
+
+            if stripped_raw_instruction != stripped_formatted_instruction:
+                # This wasn't collapsed before
+                self._log_error("P5", tag=tag_string)
+
         raw_instruction = formatted_instruction
 
         padding_length = len(raw_instruction) - necessary_length - len(id_value)

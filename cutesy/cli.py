@@ -85,7 +85,7 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
                 if error.replacements:
                     message = message.format(**error.replacements)
                 print(  # noqa: T201 (CLI output)
-                    f"  {warning_part}{location_display} {error.rule.code.ljust(3)} {message}",
+                    f"  {warning_part}{location_display} {error.rule.code.ljust(4)} {message}",
                 )
 
             print("")  # noqa: T201 (CLI output)
