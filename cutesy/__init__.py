@@ -362,7 +362,10 @@ class HTMLLinter(HTMLParser):
         errors = self._errors
 
         if self.preprocessor:
+            # Restore the instructions into the placeholder slots
             result = self.preprocessor.restore(result, errors)  # modifies "errors"
+
+            # Add in any errors from the preprocessor which weren't fatal
             errors.extend(self.preprocessor.errors)
             errors.sort(key=lambda error: (error.line, error.column))
 
@@ -383,6 +386,9 @@ class HTMLLinter(HTMLParser):
         """Process a declaration string."""
         self._reconcile_indentation()
 
+        # We only want "doctype" declarations, and only at the beginning. The
+        # presence of a doctype declaration determines whether this is an HTML
+        # document, or just loose HTML.
         if self._mode:
             self._log_error(
                 {
@@ -397,6 +403,7 @@ class HTMLLinter(HTMLParser):
         decl_lower = decl.lower()
         if decl_lower != "doctype html":
             if not self.check_doctype:
+                # Punt; This is not an HTML5 document.
                 raise DoctypeError
 
             self._log_error("E1")
@@ -429,10 +436,12 @@ class HTMLLinter(HTMLParser):
         self._reconcile_indentation()
 
         if not self.fix and tag != tag.lower():
+            # Tag isn't lowercase
             self._log_error("F7", tag=f"<{tag}>")
 
         tag = tag.lower()
 
+        # Decide whether this should be kept on one line or should wrap
         num_long_attrs = 0
         num_xlong_attrs = 0
         num_xxlong_attrs = 0
@@ -460,6 +469,9 @@ class HTMLLinter(HTMLParser):
             ),
         )
         if should_wrap:
+            # Wrap the attribute strings. Each attribute will get a new line,
+            # and attributes with multi-line values will be indented to the
+            # standard level based on the presence of newlines in their value.
             indentation = self.indentation * (self._indentation_level + 1)
             value_indentation = f"{indentation}{self.indentation}"
             end_char = self.indentation * self._indentation_level
@@ -469,6 +481,9 @@ class HTMLLinter(HTMLParser):
             for attr_string in attr_strings:
                 adjusted_attr_string = attr_string
                 if "\n" in adjusted_attr_string:
+                    # Format the attribute value with appropriate indentation
+                    # since it contains newlines. If it doesn't, we'd just keep
+                    # it all on one line.
                     name_etc, value = adjusted_attr_string.split('"', 1)
                     value = value[:-1]  # Strip trailing quote
                     lines = value.rstrip().split("\n")
@@ -512,9 +527,11 @@ class HTMLLinter(HTMLParser):
             attrs_string = f"\n{indentation}".join(adjusted_attr_strings)
             attrs_string = f"\n{indentation}{attrs_string}\n{end_char}"
         elif attr_strings:
+            # Don't wrap; Just separate all by a space
             attrs_string = " ".join(attr_strings)
             attrs_string = f" {attrs_string}"
         else:
+            # No attributes
             attrs_string = ""
 
         if not self.fix:
@@ -525,9 +542,12 @@ class HTMLLinter(HTMLParser):
                 self._log_error("P5", tag=f"<{tag}>")
 
         if tag not in VOID_ELEMENTS:
+            # Tag should be closed, add it to the stack.
             self._tag_stack.append((tag, self._indentation_level))
 
             if tag != "html":
+                # All non-void elements increase the expected indentation level
+                # except <html>
                 self._indentation_level += 1
 
         if self.fix:
@@ -541,6 +561,7 @@ class HTMLLinter(HTMLParser):
         tag = tag.lower()
 
         if tag in {tag_info[0] for tag_info in self._tag_stack}:
+            # Pop self._tag_stack until we find the matching opening tag
             while self._tag_stack:
                 expected_tag = self._tag_stack.pop()
                 if expected_tag[0] == tag:
@@ -568,6 +589,7 @@ class HTMLLinter(HTMLParser):
 
         indentation = self.indentation * self._indentation_level
 
+        # Check for & fix trailing whitespace
         trailing_whitespace = r"[ \t]+\n"
         if self.fix:
             html_data = re.sub(trailing_whitespace, "\n", html_data)
@@ -579,6 +601,7 @@ class HTMLLinter(HTMLParser):
                 column = html_data.rfind("\n", 0, start) - 1
                 self._log_error("F2", line_offset=line_offset, column=column)
 
+        # Check for & fix inappropriate indentation
         some_indentation = r"\n[ \t]*"
         new_html_data = re.sub(some_indentation, f"\n{indentation}", html_data)
 
@@ -590,6 +613,8 @@ class HTMLLinter(HTMLParser):
 
             if new_html_data.endswith(f"\n{indentation}"):
                 new_html_data = new_html_data[: -1 * len(indentation)]
+
+                # We should add indentation once we know how deep to indent.
                 self._expected_indentation = True
 
         if self.fix:
@@ -599,14 +624,18 @@ class HTMLLinter(HTMLParser):
             new_html_lines = new_html_data.split("\n")
             for index, line in enumerate(new_html_lines):
                 if index == len(new_html_lines) - 1 and not line:
+                    # This is the last line; We don't know what's coming next
                     if not self.fix:
+                        # We should confirm the indentation once we know it.
                         self._expected_indentation = html_lines[index]
                     break
 
+                # This isn't the last line
                 original_line = html_lines[index]
                 if line != original_line:
                     self._log_error("F3", line_offset=index, column=0)
 
+        # Check for & fix too many consecutive empty lines
         extra_vertical_lines = r"\n{3,}"
         if self.fix:
             html_data = re.sub(extra_vertical_lines, "\n\n", html_data)
@@ -619,6 +648,9 @@ class HTMLLinter(HTMLParser):
         for index, line in enumerate(html_data.split("\n")):
             line_contents = line
             line_start = ""
+
+            # We don't assume that the lines have been indented, or have had
+            # trailing whitespace removed, since we might not be in "fix" mode
             if index > 0:
                 line_contents = line_contents.lstrip()
                 line_start = line[: len(line) - len(line_contents)]
@@ -663,7 +695,7 @@ class HTMLLinter(HTMLParser):
         if instruction_type.should_decrease_indentation:
             self._indentation_level -= 1
 
-        self._reconcile_indentation()
+        self._reconcile_indentation()  # Between the indentation change
 
         if instruction_type.should_increase_indentation:
             self._indentation_level += 1
@@ -734,6 +766,7 @@ class HTMLLinter(HTMLParser):
             startswith = rawdata.startswith
 
             if self.preprocessor:
+                # Check for the opening of a dynamic tag
                 prefix, postfix = self.preprocessor.delimiters
                 if startswith(prefix, cursor):
                     cursor2 = rawdata.find(postfix, cursor + 1)  # Should always be >= 0
@@ -743,6 +776,8 @@ class HTMLLinter(HTMLParser):
                     continue
 
             if self._freeform_level:
+                # We're in a freeform tag; Everything other than the dynamic
+                # tags should just be reproduced as-is
                 self.handle_data(rawdata[cursor : cursor + 1])
                 cursor = self.updatepos(cursor, cursor + 1)
                 continue
