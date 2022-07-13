@@ -406,7 +406,16 @@ class HTMLLinter(HTMLParser):
             return
 
         decl_lower = decl.lower()
-        if decl_lower != "doctype html":
+        if decl_lower != decl and not self.fix:
+            self._log_error("F1")
+
+        decl_lower_joined = " ".join(decl_lower.split())
+        if self.fix:
+            decl_lower = decl_lower_joined
+        elif decl_lower != decl_lower_joined:
+            self._log_error("F13", tag=f"<!{decl_lower_joined}>")
+
+        if decl_lower_joined != "doctype html":
             if not self.check_doctype:
                 # Punt; This is not an HTML5 document.
                 raise DoctypeError
@@ -417,8 +426,6 @@ class HTMLLinter(HTMLParser):
 
         if self.fix:
             self._process(f"<!{decl_lower}>")
-        elif decl != decl_lower:
-            self._log_error("F1")
 
     def handle_startendtag(self, tag, attrs):
         """Process a self-closing tag."""
@@ -701,15 +708,16 @@ class HTMLLinter(HTMLParser):
             new_line_contents = f"{leading_space}{new_line_contents}{trailing_space}"
             if self.fix:
                 line = f"{line_start}{new_line_contents}"
-            elif line_contents != new_line_contents:
+            elif line_contents.rstrip() != new_line_contents.rstrip():
                 # Find first character where the differ
+                len_line = min(len(line_contents.rstrip()), len(new_line_contents.rstrip()))
                 column = next(
                     (
                         column
-                        for column in range(min(len(line_contents), len(new_line_contents)))
+                        for column in range(len_line)
                         if line_contents[column] != new_line_contents[column]
                     ),
-                    None,
+                    len_line,
                 )
 
                 self._log_error("F5", line_offset=index, column=len(line_start) + column)

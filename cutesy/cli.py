@@ -12,13 +12,39 @@ from .preprocessors import django
 
 
 @click.command()
-@click.option("--fix", is_flag=True)
-@click.option("--return-zero", is_flag=True)
-@click.option("--check-doctype", is_flag=True)
-@click.option("--preprocessor")
+@click.option(
+    "--code",
+    is_flag=True,
+    help="Process the code passed in as a string, instead of searching PATTERN.",
+)
+@click.option("--fix", is_flag=True, help="Automatically fix problems when possible.")
+@click.option(
+    "--return-zero",
+    is_flag=True,
+    help="Always exit with 0, even if unfixed problems remain.",
+)
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Don't print individual problems.",
+)
+@click.option(
+    "--check-doctype",
+    is_flag=True,
+    help="Process files with non-HTML5 doctypes. Without this flag, non-HTML5 files are skipped.",
+)
+@click.option(
+    "--preprocessor",
+    metavar="<str>",
+    help="Use a preprocessor for dynamic HTML files. Try 'django'.",
+)
+@click.version_option()
 @click.argument("pattern")
-def main(fix, return_zero, check_doctype, preprocessor, pattern):
-    """Lint the specified files."""
+def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
+    """Cutesy 🥰
+
+    Lint (and optionally, fix & format) all files matching PATTERN.
+    """  # noqa: D209, D400
     preprocessor = {
         None: None,
         "django": django.Preprocessor(),
@@ -32,11 +58,18 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
 
     is_in_modification_block = False  # For printing extra newlines
 
-    for path in Path(".").glob(pattern):
-        is_preprocessing_error = False  # These are "fatal"
+    html_paths_and_strings = []
+    if code:
+        html_paths_and_strings = [(None, pattern)]
+    else:
+        for path in Path(".").glob(pattern):
+            with open(path, mode="r") as html_file:
+                html = html_file.read()
+                html_paths_and_strings.append((path, html))
 
-        with open(path, mode="r") as html_file:
-            html = html_file.read()
+    result = None  # For passed-in-code mode
+    for path, html in html_paths_and_strings:
+        is_preprocessing_error = False  # These are "fatal"
 
         try:
             result, errors = linter.lint(html)
@@ -49,14 +82,13 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
             num_files_failed += 1
             errors = preprocessing_error.errors
         else:
-            if fix and html != result:
+            if fix and html != result and path is not None:
                 with open(path, mode="w") as html_file:
                     html_file.write(result)
                     is_in_modification_block = True
-                    print(f"Fixed {path}")  # noqa: T201 (CLI output)
+                    if not quiet:
+                        click.echo(f"Fixed {path}")
                 num_files_modified += 1
-
-        # Print closing remarks
 
         if errors:
             errors_by_file[str(path)] = errors
@@ -64,31 +96,65 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
 
             if is_in_modification_block:
                 # Extra newline for spacing
-                print()  # noqa: T201 (CLI output)
+                if not quiet:
+                    click.echo()
                 is_in_modification_block = False
 
-            print(f"\033[1m\033[4m{path}\033[0m")  # noqa: T201 (CLI output)
+            if not quiet:
+                indentation = ""
+                if path is not None:
+                    indentation = "  "
+                    click.echo(f"\033[1m\033[4m{click.format_filename(path)}\033[0m")
 
-            if is_preprocessing_error:
-                warning_part = "\033[91m\033[1mFATAL\033[0m  "
+                if is_preprocessing_error:
+                    warning_part = "\033[91m\033[1mFATAL\033[0m  "
+                else:
+                    warning_part = ""
+
+                for error in errors:
+                    rule = error.rule
+
+                    len_error_line = len(str(error.line))
+                    location_width = 4 + max((len_error_line, 3))
+                    location_display = f"{error.line}:{error.column}".ljust(location_width)
+
+                    message = rule.message
+                    if error.replacements:
+                        message = message.format(**error.replacements)
+                    click.echo(
+                        f"{indentation}{warning_part}{location_display} "
+                        + f"{error.rule.code.ljust(4)} {message}",
+                    )
+
+                click.echo("")
+
+    # Print closing remarks
+
+    if code:
+        if num_errors:
+            maybe_s = "" if num_errors == 1 else "s"
+            if fix:
+                click.echo(f"🔪 \033[91m\033[1m{num_errors} pro̵ble̴m{maybe_s} lef̴̥͆t\033[0m")
             else:
-                warning_part = ""
+                click.echo(f"🔪 \033[91m\033[1m{num_errors} proble̴m{maybe_s} fo̵͖̔u̷nd\033[0m")
 
-            for error in errors:
-                rule = error.rule
+            if return_zero:
+                exit(0)
+            exit(1)
 
-                len_error_line = len(str(error.line))
-                location_width = 4 + max((len_error_line, 3))
-                location_display = f"{error.line}:{error.column}".ljust(location_width)
+        if fix:
+            if result is not None:
+                click.echo(result)
+                click.echo()
 
-                message = rule.message
-                if error.replacements:
-                    message = message.format(**error.replacements)
-                print(  # noqa: T201 (CLI output)
-                    f"  {warning_part}{location_display} {error.rule.code.ljust(4)} {message}",
-                )
+            if result == pattern:
+                click.echo("\033[1mNothing to fix\033[0m 🥰")
+            else:
+                click.echo("\033[1mAll done\033[0m 🥰")
+        else:
+            click.echo("\033[1mNo problems found\033[0m 🥰")
 
-            print("")  # noqa: T201 (CLI output)
+        exit(0)
 
     if errors_by_file:
         maybe_s_1 = "" if num_errors == 1 else "s"
@@ -98,22 +164,22 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
             if num_files_modified:
                 if is_in_modification_block:
                     # Extra newline for spacing
-                    print()  # noqa: T201 (CLI output)
+                    click.echo()
 
                 maybe_s_3 = "" if num_files_modified == 1 else "s"
-                print(  # noqa: T201 (CLI output)
+                click.echo(
                     f"\033[1mFixed {num_files_modified} file{maybe_s_3}, "
                     + f"\033[91m\033[1m{num_errors} problḙ̴͈͝m{maybe_s_1} le̴ft\033[0m in "
                     + f"{len(errors_by_file)} file{maybe_s_2}",
                 )
             else:
-                print(  # noqa: T201 (CLI output)
+                click.echo(
                     f"🔪 \033[91m\033[1m{num_errors} pro̵ble̴m{maybe_s_1} lef̴̥͆t\033[0m in "
                     + f"{len(errors_by_file)} file{maybe_s_2}",
                 )
 
         else:
-            print(  # noqa: T201 (CLI output)
+            click.echo(
                 f"🔪 \033[91m\033[1m{num_errors} proble̴m{maybe_s_1}\033[0m fo̵͖̔u̷nd in "
                 + f"{len(errors_by_file)} file{maybe_s_2}",
             )
@@ -125,16 +191,16 @@ def main(fix, return_zero, check_doctype, preprocessor, pattern):
     if fix:
         if num_files_modified:
             if is_in_modification_block:
-                print()  # noqa: T201 (CLI output)
+                click.echo()
 
             maybe_s = "" if num_files_modified == 1 else "s"
-            print(  # noqa: T201 (CLI output)
+            click.echo(
                 f"\033[1mFixed {num_files_modified} file{maybe_s}, no problems left\033[0m 🥰",
             )
         else:
-            print("\033[1mNothing to fix\033[0m 🥰")  # noqa: T201 (CLI output)
+            click.echo("\033[1mNothing to fix\033[0m 🥰")
 
     else:
-        print("\033[1mNo problems found\033[0m 🥰")  # noqa: T201 (CLI output)
+        click.echo("\033[1mNo problems found\033[0m 🥰")
 
     exit(0)

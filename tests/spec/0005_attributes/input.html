@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test Page</title>
+</head>
+<body>
+	<h1 class="heading heading--large heading--primary heading--dark heading--otherModifier" id="intro">
+		Hello world!
+	</h1>
+	<p
+	    class="hero"
+	>Showtime.</p>
+
+	<img
+	    src="https://example.com/test.jpg"
+	    [src]="
+	    testFlag ?
+	        https://example.com/test.jpg
+	        :
+	        https://example.com/test2.jpg
+	    "
+	>
+</body>
+</html>

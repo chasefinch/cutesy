@@ -29,6 +29,43 @@ Preprocessing is (or will be) supported for these templating languages:
 - Maximum readability, due to consistent style.
 - Faster code review, due to the smallest possible diffs.
 
+## Examples
+
+Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In "fix" mode, cutesy turns this:
+
+        <!doctype html>
+    <html>
+                        <head>
+        <title>Test Page</title>
+       </head>
+    <body>
+                <h1>Hello     world!</h1>
+                {% if condition1 %}
+                                <p>I love cookies.</p>
+                              {% endif %}
+                    <div     class='someDiv'
+                           id="theDiv"   ></div    >
+                        </body>
+    </html>
+
+Into this:
+
+    <!doctype html>
+    <html>
+    <head>
+        <title>Test Page</title>
+    </head>
+    <body>
+        <h1>Hello world!</h1>
+        {% if condition1 %}
+            <p>I love cookies.</p>
+        {% endif %}
+        <div id="theDiv" class="someDiv"></div>
+    </body>
+    </html>
+
+See the [full list of rules](docs/rules.md) for more information.
+
 ## Installation
 
 Cutesy is written in Python. Install via PyPI:
@@ -68,7 +105,12 @@ To lint files written in a template language, such as the Django Template Langua
 
 Other options:
 
-- `--return-zero`: Exit with code 0 even when problems are found
+- `--code`: Process the code passed in as a string.
+- `--quiet`: Don't print individual problems.
+- `--return-zero`: Always exit with 0, even if unfixed problems remain.
+- `--version`: Show the version and exit.
+- `--help`: Show the CLI help and exit.
+
 
 ## Testing, etc.
 

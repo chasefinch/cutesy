@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test Page</title>
+</head>
+<body {% block body_class %}{% endblock %}>
+	Hello world!
+
+	{% if test %}
+		Hello!
+	{% endif %}
+
+	<div>
+		<div>
+
+	{% if test %}
+			Welcome.
+	{% elif test2 %}
+			<div>
+			<span>Welcome.</span>
+		</div>
+	{% endif %}
+		</div>
+	</div>
+
+	<div id="main" class="mainClass class1 class2 class3 class4 class5 {% if test2 %}class6{% endif %}">
+	<span style="font-size: 1.1em;">My name is {{ name }}. Nice to meet you.</span>
+</div>
+</body>
+</html>
