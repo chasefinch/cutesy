@@ -31,7 +31,7 @@ Preprocessing is (or will be) supported for these templating languages:
 
 ## Examples
 
-Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In "fix" mode, cutesy turns this:
+Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In `fix` mode, Cutesy turns this:
 
         <!doctype html>
     <html>
