@@ -108,7 +108,7 @@ To assume (and enforce) that all matching files are HTML5, use the `--check-doct
 
 To lint files written in a template language, such as the Django Template Language:
 
-    cutesy "*.html" --fix --preprocessor="django"
+    cutesy "*.html" --fix --preprocessor django
 
 
 Other options:
