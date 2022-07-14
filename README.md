@@ -40,7 +40,7 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
         <title>Test Page</title>
        </head>
     <body>
-                <h1>Hello     world!</h1>
+                <h1>Hello     world! </h1>
 
 
                 {% if condition1 %}
@@ -62,7 +62,7 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
         <title>Test Page</title>
     </head>
     <body>
-        <h1>Hello world!</h1>
+        <h1>Hello world! </h1>
 
         {% if condition1 %}
             <p>I love cookies.</p>
