@@ -6,7 +6,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 Cutesy checks HTML documents for consistency and best practices. It’s opinionated. It includes a set of rules, most of which can be fixed automatically.
 
-Cutesy expects (and enforces) HTML5 files, with UTF-8 encoding.
+Cutesy expects HTML5 files, with UTF-8 encoding.
 
 Cutesy works with templating languages, such as Django Template Language or Ruby's ERB. These are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
@@ -24,14 +24,15 @@ Preprocessing is (or will be) supported for these templating languages:
 
 ## Benefits
 
-- Better web experiences & metrics, due to enforced best practices.
-- Quicker development; Write without worrying about formatting, and let Cutesy apply the formatting automatically.
-- Maximum readability, due to consistent style.
-- Faster code review, due to the smallest possible diffs.
+- Catch accidental errors.
+- Enforce best practices.
+- Code without worrying about formatting. Cutesy formats automatically.
+- Improve code readability.
+- Small diffs for easier code review.
 
 ## Examples
 
-Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In `fix` mode, Cutesy turns this:
+Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In `--fix` mode, Cutesy turns this:
 
         <!doctype html>
     <html>
@@ -40,15 +41,20 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
        </head>
     <body>
                 <h1>Hello     world!</h1>
+
+
                 {% if condition1 %}
-                                <p>I love cookies.</p>
+                                <p>I love           cookies.</p>
                               {% endif %}
+
+
+
                     <div     class='someDiv'
                            id="theDiv"   ></div    >
                         </body>
     </html>
 
-Into this:
+…into this:
 
     <!doctype html>
     <html>
@@ -57,9 +63,11 @@ Into this:
     </head>
     <body>
         <h1>Hello world!</h1>
+
         {% if condition1 %}
             <p>I love cookies.</p>
         {% endif %}
+
         <div id="theDiv" class="someDiv"></div>
     </body>
     </html>
@@ -76,7 +84,7 @@ Cutesy is written in Python. Install via PyPI:
 
 Minimal usage:
 
-    cutesy "some_file.html"
+    cutesy some_file.html
 
 
 Lint multiple files using a glob pattern:
@@ -91,7 +99,7 @@ Fix files automatically (recommended):
     cutesy "*.html" --fix
 
 
-Cutesy can check HTML fragments, or whole HTML documents. By default, files specifying a non-HTML5 doctype (anything other than `<!doctype html>`) are ignored.
+Cutesy can check HTML fragments, or whole HTML documents. By default, Cutesy ignores files specifying a non-HTML5 doctype (anything other than `<!doctype html>`).
 
 To assume (and enforce) that all matching files are HTML5, use the `--check-doctype` flag:
 
