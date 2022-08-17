@@ -49,7 +49,7 @@ test:
 	coverage report -m --fail-under 0
 
 install:
-	${CURDIR}/bin/pip install -U pip wheel
-	${CURDIR}/bin/pip install -r requirements/develop.txt --use-deprecated=legacy-resolver
+	pip install -U pip wheel
+	pip install -r requirements/develop.txt --use-deprecated=legacy-resolver
 
 .PHONY: default format lint test install
