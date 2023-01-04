@@ -210,7 +210,7 @@ class InstructionType(Enum):
         }
 
     @property
-    def should_increase_indentation(self):
+    def increase_indentation(self):
         """Whether this instruction type causes an increase in indentation."""
         return self in {
             InstructionType.PARTIAL,
@@ -221,7 +221,7 @@ class InstructionType(Enum):
         }
 
     @property
-    def should_decrease_indentation(self):
+    def decrease_indentation(self):
         """Whether this instruction type causes a decrease in indentation."""
         return self in {
             InstructionType.END_PARTIAL,
@@ -473,7 +473,7 @@ class HTMLLinter(HTMLParser):
 
         _, attr_strings = self._make_attr_strings(attrs)
 
-        should_wrap = any(
+        wrap = any(
             (
                 len(attr_strings) > 5,
                 num_long_attrs > 2,
@@ -483,12 +483,12 @@ class HTMLLinter(HTMLParser):
             ),
         )
 
-        if should_wrap and not is_new_line:
+        if wrap and not is_new_line:
             self._log_error("F12", tag=f"<{tag}>")
 
-        should_wrap = should_wrap and is_new_line
+        wrap = wrap and is_new_line
 
-        if should_wrap:
+        if wrap:
             # Wrap the attribute strings. Each attribute will get a new line,
             # and attributes with multi-line values will be indented to the
             # standard level based on the presence of newlines in their value.
@@ -574,9 +574,9 @@ class HTMLLinter(HTMLParser):
             old_whitespace = list(filter(is_whitespace, list(self.__starttag_text)))
 
             if new_whitespace != old_whitespace:
-                if "\n" in new_whitespace and "\n" not in old_whitespace and should_wrap:
+                if "\n" in new_whitespace and "\n" not in old_whitespace and wrap:
                     error_code = "F14"
-                elif "\n" not in new_whitespace and "\n" in old_whitespace and not should_wrap:
+                elif "\n" not in new_whitespace and "\n" in old_whitespace and not wrap:
                     error_code = "F15"
                 else:
                     error_code = "F13"
@@ -736,12 +736,12 @@ class HTMLLinter(HTMLParser):
         elif instruction_type == InstructionType.END_FREEFORM:
             self._freeform_level -= 1
 
-        if instruction_type.should_decrease_indentation:
+        if instruction_type.decrease_indentation:
             self._indentation_level -= 1
 
         self._reconcile_indentation()  # Between the indentation change
 
-        if instruction_type.should_increase_indentation:
+        if instruction_type.increase_indentation:
             self._indentation_level += 1
 
         if self.fix:

@@ -244,7 +244,7 @@ class BasePreprocessor(ABC):
     def _handle_match(self, braces):
         """Replace a matched instruction with a placeholder."""
         # The instruction can be collapsed to contain only single spaces
-        should_collapse = True
+        collapse = True
 
         wraps = self.delimiters
         cursor = self._cursor
@@ -279,7 +279,7 @@ class BasePreprocessor(ABC):
             raise hanging_closing_tag_error
 
         if instruction_type == InstructionType.COMMENT:
-            should_collapse = False
+            collapse = False
 
             closing_tag_string = self.closing_tag_string_map[instruction_string]
             search_string = f"{braces[0]} {closing_tag_string} {braces[1]}"
@@ -336,7 +336,7 @@ class BasePreprocessor(ABC):
 
         # Handle ignored instructions
         if instruction_type == InstructionType.IGNORED:
-            should_collapse = False
+            collapse = False
 
         part = html[cursor:end_cursor]
 
@@ -364,7 +364,7 @@ class BasePreprocessor(ABC):
 
         middle_part = part[len_start : -1 * len_end]
 
-        if should_collapse:
+        if collapse:
             # Collapse the instruction, except the part inside of strings.
             current_string_char = None
             part_cursor = 0
