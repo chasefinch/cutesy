@@ -1,46 +1,37 @@
 default: format lint test
 
 format:
-	@echo "Converting imports to relative imports where possible..."
-	@find . \( -path ./lib -o -path ./bin -o -path ./dist -o -path ./prof -o -path ./build -o -path ./git \) -prune -o -name '*.py' -exec absolufy-imports --never {} \;
+	@echo "Formatting Python docstrings..."
+	@docformatter . -r --in-place --exclude bin lib node_modules .git || true
 	@echo "...done."
-
-	@echo
-	@echo "Removing unnecessary imports..."
-	@autoflake . -r --in-place --remove-all-unused-imports --exclude="./bin/*,./lib/*,./dist/*,./prof/*,./build/*,.git/*"
-	@echo "...done."
-
-	@echo
-	@echo "Sorting imports..."
-	@isort .
-	@echo "...done."
-
-	@echo
-	@echo "Formatting docstrings..."
-	@# --wrap-descriptions is 72 by default; Doesn't seem necessary to shorten it that far
-	@docformatter . -r --in-place --wrap-descriptions=79 --exclude bin lib dist prof build .git
-	@echo "...done."
-
-	@echo
 	@echo "Formatting Python files..."
-	@black . --line-length 99 --target-version py38 --quiet
+	@echo "  1. Ruff Format"
+	@ruff format . > /dev/null
+	@echo "  2. Ruff Check (fix only)"
+	@ruff check --fix-only . --quiet
+	@echo "  3. Add trailing commas"
 	@# Add trailing commas to dangling lines and function calls
-	@find . \( -path ./lib -o -path ./bin -o -path ./dist -o -path ./prof -o -path ./build -o -path ./git \) -prune -o -name '*.py' -exec add-trailing-comma --py36-plus {} \;
+	@find . \( -path ./lib -o -path ./bin -o -path ./node_modules -o -path ./bringfido/public -o -path ./bringfido/static -o -path ./bringfido/src -o -path ./git \) -prune -o -name '*.py' -print0 | xargs -P 16 -0 -I{} sh -c 'add-trailing-comma "{}" || true'
+	@echo "  4. Ruff Format (again)"
 	@# Format again after adding trailing commas
-	@black . --line-length 99 --target-version py38 --quiet
+	@ruff format . --quiet
+	@echo "  5. Ruff Check (fix only, again)"
+	@ruff check --fix-only . --quiet
 	@echo "...done."
-	@echo
 
-lint:
+lint-py:
 	@echo "Checking for Python formatting issues which can be fixed automatically..."
-	@black . --preview --line-length 99 --target-version py38 --check --quiet || (printf 'Found files which need to be auto-formatted. Run \e[1mmake format\e[0m and re-lint.\n'; exit 1)
-	@isort . --check --quiet || (printf 'Found files which need to be auto-formatted. Run \e[1mmake format\e[0m and re-lint.\n'; exit 1)
+	@echo "  1. Ruff Format"
+	@ruff format . --diff > /dev/null 2>&1 || (printf 'Found files which need to be auto-formatted. Make sure your dependencies are up to date and then run \e[1mmake format-py\e[0m and re-lint.\n'; exit 1)
+	@echo "  2. Ruff Check (fix only)"
+	@ruff check . --diff --silent || (printf 'Found files which need to be auto-formatted. Make sure your dependencies are up to date and then run \e[1mmake format-py\e[0m and re-lint.\n'; exit 1)
 	@echo "...done. No issues found."
-
-	@echo
 	@echo "Running Python linter..."
-	@flake8 . && echo "...done. No issues found."
-	@echo
+	@echo "  1. Ruff Check"
+	@ruff check . --quiet
+	@echo "  2. Flake8"
+	@flake8 .
+	@echo "...done. No issues found."
 
 test:
 	find . -name "*.pyc" -delete
@@ -48,8 +39,14 @@ test:
 	coverage run --source=cutesy -m pytest --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
 	coverage report -m --fail-under 0
 
-install:
-	pip install -U pip wheel
-	pip install -r requirements/develop.txt --use-deprecated=legacy-resolver
+setup:
+	python3 -m venv .
+	chmod +x ./bin/activate
+	uv pip install -r requirements/develop.txt
 
-.PHONY: default format lint test install
+teardown:
+	-rm -r lib/*
+	-rm -r bin/*
+	-rm pyvenv.cfg
+
+.PHONY: default format lint test setup

@@ -13,7 +13,7 @@ Cutesy works with templating languages, such as Django Template Language or Ruby
 Preprocessing is (or will be) supported for these templating languages:
 
 - [x] Django
-- [ ] Jinja
+- [ ] Jinja2
 - [ ] ERB
 - [ ] Handlebars
 - [ ] EJS
@@ -78,7 +78,7 @@ See the [full list of rules](docs/rules.md) for more information.
 
 Cutesy is written in Python. Install via PyPI:
 
-    pip install cutesy
+    uv pip install cutesy
 
 ## Usage
 
@@ -124,7 +124,9 @@ Other options:
 
 Install development requirements (Requires Python >= 3.8):
 
-    make install
+    cd /path/to/cutesy/
+    make setup
+    source bin/activate
 
 Sort imports:
 
