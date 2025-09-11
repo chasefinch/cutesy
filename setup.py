@@ -1,9 +1,12 @@
 """Define metadata for Cutesy 🥰."""
 
 # Third Party
+from pathlib import Path
+
 import setuptools
 
-with open("README.md") as readme_file:
+readme_path = Path("README.md")
+with readme_path.open() as readme_file:
     long_description = readme_file.read()
 
 setuptools.setup(

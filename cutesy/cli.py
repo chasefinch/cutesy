@@ -41,11 +41,19 @@ from .preprocessors import django
 )
 @click.version_option()
 @click.argument("pattern")
-def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
+def main(
+    code: bool,  # noqa: FBT001 (argument pattern)
+    fix: bool,  # noqa: FBT001 (argument pattern)
+    return_zero: bool,  # noqa: FBT001 (argument pattern)
+    quiet: bool,  # noqa: FBT001 (argument pattern)
+    check_doctype: bool,  # noqa: FBT001 (argument pattern)
+    preprocessor: str,
+    pattern: str,
+) -> None:
     """Cutesy 🥰
 
     Lint (and optionally, fix & format) all files matching PATTERN.
-    """  # noqa: D209, D400
+    """  # noqa: D209, D400, D415
     preprocessor = {
         None: None,
         "django": django.Preprocessor(),
@@ -64,7 +72,7 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
         html_paths_and_strings = [(None, pattern)]
     else:
         for path in Path().glob(pattern):
-            with open(path) as html_file:
+            with path.open("r") as html_file:
                 html = html_file.read()
                 html_paths_and_strings.append((path, html))
 
@@ -84,7 +92,7 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
             errors = preprocessing_error.errors
         else:
             if fix and html != result and path is not None:
-                with open(path, mode="w") as html_file:
+                with path.open("w") as html_file:
                     html_file.write(result)
                     is_in_modification_block = True
                     if not quiet:
@@ -107,10 +115,7 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
                     indentation = "  "
                     click.echo(f"\033[1m\033[4m{click.format_filename(path)}\033[0m")
 
-                if is_preprocessing_error:
-                    warning_part = "\033[91m\033[1mFATAL\033[0m  "
-                else:
-                    warning_part = ""
+                warning_part = "\x1b[91m\x1b[1mFATAL\x1b[0m  " if is_preprocessing_error else ""
 
                 for error in errors:
                     rule = error.rule

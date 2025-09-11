@@ -4,5 +4,5 @@
 class TestOptions:
     """Test that each option works correctly."""
 
-    def test_fix(self):
+    def test_fix(self) -> None:
         """Test rule F1."""

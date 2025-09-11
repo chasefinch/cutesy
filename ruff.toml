@@ -21,7 +21,10 @@ ignore = [
 	"E731", "B023",  # Lambda & unbound lambda is OK
 	"B024",  # Allow ABCs without abstract methods
 	"BLE001",  # Allow catching bare exception explicitly
-	"FIX002", "TD003"  # Allow fully-formed TODOs
+	"FIX002", "TD003",  # Allow fully-formed TODOs
+
+	# Specific opt-outs
+	"C", "PLR09"  # Complexity rules
 ]
 
 [lint.isort]

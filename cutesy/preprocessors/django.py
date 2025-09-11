@@ -1,27 +1,35 @@
 """Prerendering to accommodate the Django template language."""
 
 # Current App
-from .. import InstructionType
+from typing import ClassVar
+
+from ..types import InstructionType
 from . import BasePreprocessor
 
 
 class Preprocessor(BasePreprocessor):
     """A preprocessor for Django templates."""
 
-    braces = {
+    braces: ClassVar[set[tuple[str, str]]] = {
         ("{%", "%}"),
         ("{{", "}}"),
         ("{#", "#}"),
     }
 
-    closing_tag_string_map = {
+    closing_tag_string_map: ClassVar[dict[str, str]] = {
         "freeform": "endfreeform",
         "comment": "endcomment",
         "spaceless": "endspaceless",
         "spaceless_json": "endspaceless_json",
     }
 
-    def parse_instruction_tag(self, braces, html, cursor, cursor2):
+    def parse_instruction_tag(
+        self,
+        braces: tuple[str, str],
+        html: str,
+        cursor: int,
+        cursor2: int,
+    ) -> tuple[str, InstructionType]:
         """Return the appropriate instruction text and InstructionType."""
         if braces[0] == "{{":
             # Easy
@@ -30,13 +38,14 @@ class Preprocessor(BasePreprocessor):
         parts = html[cursor + len(braces[0]) : cursor2].split()
         try:
             instruction = parts[0]
-        except IndexError:
+        except IndexError as error:
             if braces[0] == "{#":
                 # Just an empty comment
                 return "…", InstructionType.IGNORED
 
             # Can't parse any instruction
-            raise self.make_fatal_error("P4")
+            error_code = "P4"
+            raise self.make_fatal_error(error_code) from error
 
         if braces[0] == "{#":
             # Special directive comments allowed specifically for Cutesy

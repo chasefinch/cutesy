@@ -4,7 +4,7 @@ BASE_36_BASE = 36
 BASE_36_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 
-def base36_encode(positive_integer):
+def base36_encode(positive_integer: int) -> str:
     """Convert from Base10 to Base36."""
     encoded_integer = ""
     while positive_integer > 0:
@@ -14,6 +14,6 @@ def base36_encode(positive_integer):
     return encoded_integer
 
 
-def base36_decode(string):
+def base36_decode(string: str) -> int:
     """Convert from Base36 to Base10."""
     return int(string, BASE_36_BASE)
