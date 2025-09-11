@@ -4,13 +4,24 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-Cutesy checks HTML documents for consistency and best practices. It’s opinionated. It includes a set of rules, most of which can be fixed automatically.
+Cutesy reformats & lints HTML documents, including HTML templates. It includes a set of rules, most of which can be fixed automatically.
 
 Cutesy expects HTML5 files, with UTF-8 encoding.
 
+## Benefits
+
+- Catch accidental errors.
+- Enforce best practices.
+- Code without worrying about formatting. Cutesy formats automatically.
+- Improve code readability.
+- Small diffs for easier code review.
+- Supports template languages
+
+## Templating languages
+
 Cutesy works with templating languages, such as Django Template Language or Ruby's ERB. These are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
-Preprocessing is (or will be) supported for these templating languages:
+Preprocessing is supported for these templating languages:
 
 - [x] Django
 - [ ] Jinja2
@@ -22,13 +33,17 @@ Preprocessing is (or will be) supported for these templating languages:
 - [ ] Smarty
 - [ ] Liquid
 
-## Benefits
+## Attribute-based CSS & JavaScript frameworks
 
-- Catch accidental errors.
-- Enforce best practices.
-- Code without worrying about formatting. Cutesy formats automatically.
-- Improve code readability.
-- Small diffs for easier code review.
+Cutesy works with CSS and JavaScript frameworks that rely heavily on HTML attributes, such as TailwindCSS and AlpineJS. It provides hooks for inspecting and rewriting HTML attributes, style blocks, and script blocks, making it possible to enforce consistent formatting directly within your HTML.
+
+### CSS
+
+Cutesy can apply formatters and linters (like Prettier and Stylelint) to inline CSS. It’s also able to sort Tailwind classes into a consistent order, ensuring a clean and predictable style across your markup.
+
+### JavaScript
+
+For in-attribute JavaScript, Cutesy can apply formatters and linters (such as Prettier and ESLint). It can also extract inline scripts, type check them, and run tests, bringing modern development safeguards to code that normally lives inside your HTML.
 
 ## Examples
 

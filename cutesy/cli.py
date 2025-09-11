@@ -9,6 +9,7 @@ import click
 
 # Current App
 from . import HTMLLinter
+from .attribute_processors import tailwind
 from .preprocessors import django
 from .types import DoctypeError, PreprocessingError
 
@@ -40,6 +41,12 @@ from .types import DoctypeError, PreprocessingError
     metavar="<str>",
     help="Use a preprocessor for dynamic HTML files. Try 'django'.",
 )
+@click.option(
+    "--attribute-processor",
+    metavar="<str>",
+    multiple=True,
+    help="Use an attribute processor for dynamic HTML files. Try 'tailwind'.",
+)
 @click.version_option()
 @click.argument("pattern")
 def main(
@@ -49,6 +56,7 @@ def main(
     quiet: bool,  # noqa: FBT001 (argument pattern)
     check_doctype: bool,  # noqa: FBT001 (argument pattern)
     preprocessor: str,
+    attribute_processor: list[str],
     pattern: str,
 ) -> None:
     """Cutesy 🥰
@@ -60,7 +68,19 @@ def main(
         "django": django.Preprocessor(),
     }[preprocessor]
 
-    linter = HTMLLinter(fix=fix, check_doctype=check_doctype, preprocessor=preprocessor_instance)
+    attribute_processor_instances = []
+    for attr_processor in attribute_processor:
+        attribute_processor_instance = {
+            "tailwind": tailwind.AttributeProcessor(),
+        }[attr_processor]
+        attribute_processor_instances.append(attribute_processor_instance)
+
+    linter = HTMLLinter(
+        fix=fix,
+        check_doctype=check_doctype,
+        preprocessor=preprocessor_instance,
+        attribute_processors=attribute_processor_instances,
+    )
     errors_by_file = {}
     num_errors = 0
     num_files_modified = 0

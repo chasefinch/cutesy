@@ -348,7 +348,7 @@
 
 	{# The currently selected location, which works alongside `search` as the backbone of the dynamic search system. #}
 	<amp-state id="location">
-		{# Precalculate urlPartPostfixed and queryItemArray b/c of AMP's operand limit on calculating URLs            #}
+		{# Precalculate urlPartPostfixed and queryItemArray b/c of AMP's operand limit on calculating URLs #}
 		<script type="application/json">{% spaceless_json %}
 			{% if location %}
 				{
@@ -437,7 +437,7 @@
 
 	{# This is a temporary location that powers the main menu links. #}
 	<amp-state id="mainMenuLocation">
-		{# Precalculate urlPartPostfixed and queryItemArray b/c of AMP's operand limit on calculating URLs            #}
+		{# Precalculate urlPartPostfixed and queryItemArray b/c of AMP's operand limit on calculating URLs #}
 		<script type="application/json">{% spaceless_json %}
 			{% if location %}
 				{
@@ -1130,7 +1130,7 @@
 							{% block sidebar_middle %}
 							{% endblock %}
 
-							{%  comment %}
+							{% comment %}
 							<div class="block block--sidebarAd">
 								<div class="block__row block--sidebarAd__row">
 									<amp-ad
@@ -1141,7 +1141,7 @@
 									</amp-ad>
 								</div>
 							</div>
-							{% endcomment  %}
+							{% endcomment %}
 						</div>
 					</div>
 
@@ -3851,7 +3851,7 @@
 										</a>
 
 										{% if not is_wrapped %}
-											{# if in wrapped mode, we aren't promoting another app            #}
+											{# if in wrapped mode, we aren't promoting another app #}
 											<a
 												rel="noopener"
 												href="https://itunes.apple.com/us/app/bringfido-pet-friendly-hotels/id682820712"
@@ -4174,12 +4174,12 @@
 		<amp-analytics
 			type="gtag"
 			{% if request.locale.requires_cookie_consent %}
-				{%  comment %}
+				{% comment %}
 					If the current locale requires cookie consent, Google Analytics is blocked unless the user consents to Analytics cookies. This consent can be given by clicking "OK" without clicking "Manage Preferences", or by clicking "Manage Preferences" and explicitly allowing Analytics cookies.
-				{% endcomment  %}
+				{% endcomment %}
 				data-block-on-consent-purposes="analyticsCookies"
 			{% else %}
-				{%  comment %}
+				{% comment %}
 					This deserves a bit of an explanation.
 
 					There are two reasons why cookie consent might be required:
@@ -4187,7 +4187,7 @@
 						(2) The user is determined, using the amp-geo component, to be in a country that requires a cookie notice.
 
 					As of July 2021, "consentRequired" can be conditional on amp-geo, and the "data-block-on-consent" flag will honor that. However, "data-block-on-consent-purposes" does not honor that; It will block the component unless given explicit consent. So, when the privacy notice is conditional on amp-geo, rather than by the user being on a domain that requires it explicitly, we remove the granular controls and reduce the consent management options to an "OK" button. That way, we can allow analytics for domains which have no cookie notice requirement.
-				{% endcomment  %}
+				{% endcomment %}
 				data-block-on-consent
 			{% endif %}
 			data-credentials="include"

@@ -7,6 +7,8 @@ from collections.abc import Sequence
 from html.parser import HTMLParser
 from typing import Any, Never, TypeGuard
 
+from .attribute_processors import BaseAttributeProcessor
+
 # Third Party
 from .preprocessors import BasePreprocessor
 from .types import (
@@ -120,6 +122,7 @@ class HTMLLinter(HTMLParser):
         fix: bool = False,
         check_doctype: bool = False,
         preprocessor: BasePreprocessor | None = None,
+        attribute_processors: Sequence[BaseAttributeProcessor] | None = None,
         convert_charrefs: bool = True,
     ) -> None:
         """Initialize HTMLLinter."""
@@ -130,6 +133,7 @@ class HTMLLinter(HTMLParser):
         self.check_doctype = check_doctype
         # A preprocessor for handling dynamic templating languages
         self.preprocessor = preprocessor
+        self.attribute_processors = attribute_processors or []
         self.convert_charrefs = False
         self.indentation_type = IndentationType.TAB
         # This applies even if indentation == TABS, to best infer what spaces
@@ -997,7 +1001,15 @@ class HTMLLinter(HTMLParser):
             else:
                 attr_string = name
                 if value is not None:
-                    attr_string = f"{attr_string}={quote_char}{value}{quote_char}"
+                    processed_value = value
+                    for processor in self.attribute_processors:
+                        processed_value = processor.process(
+                            attr_name=name,
+                            indentation=self.indentation,
+                            bounding_character=quote_char,
+                            attr_body=processed_value,
+                        )
+                    attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 
         if self.fix:
