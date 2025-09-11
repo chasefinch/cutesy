@@ -8,8 +8,9 @@ from pathlib import Path
 import click
 
 # Current App
-from . import DoctypeError, HTMLLinter, PreprocessingError
+from . import HTMLLinter
 from .preprocessors import django
+from .types import DoctypeError, PreprocessingError
 
 
 @click.command()
@@ -54,12 +55,12 @@ def main(
 
     Lint (and optionally, fix & format) all files matching PATTERN.
     """  # noqa: D209, D400, D415
-    preprocessor = {
+    preprocessor_instance = {
         None: None,
         "django": django.Preprocessor(),
     }[preprocessor]
 
-    linter = HTMLLinter(fix=fix, check_doctype=check_doctype, preprocessor=preprocessor)
+    linter = HTMLLinter(fix=fix, check_doctype=check_doctype, preprocessor=preprocessor_instance)
     errors_by_file = {}
     num_errors = 0
     num_files_modified = 0
@@ -67,14 +68,14 @@ def main(
 
     is_in_modification_block = False  # For printing extra newlines
 
-    html_paths_and_strings = []
+    html_paths_and_strings: list[tuple[Path | None, str]] = []
     if code:
         html_paths_and_strings = [(None, pattern)]
     else:
-        for path in Path().glob(pattern):
-            with path.open("r") as html_file:
+        for glob_path in Path().glob(pattern):
+            with glob_path.open("r") as html_file:
                 html = html_file.read()
-                html_paths_and_strings.append((path, html))
+                html_paths_and_strings.append((glob_path, html))
 
     result = None  # For passed-in-code mode
     for path, html in html_paths_and_strings:

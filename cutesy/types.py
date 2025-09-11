@@ -1,7 +1,7 @@
 """Types to support Cutesy."""
 
 # Standard Library
-from collections.abc import Iterable
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto, unique
 
@@ -93,7 +93,7 @@ class DoctypeError(Exception):
 class PreprocessingError(Exception):
     """An exception that can be thrown when preprocessing fails."""
 
-    def __init__(self, *args: object, errors: Iterable[Error]) -> None:
+    def __init__(self, *args: object, errors: Sequence[Error]) -> None:
         """Initialize the error with attached errors."""
         super().__init__(*args)
 

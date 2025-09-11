@@ -122,7 +122,7 @@ Other options:
 
 ## Testing, etc.
 
-Install development requirements (Requires Python >= 3.8):
+Install development requirements (Requires Python >= 3.13):
 
     cd /path/to/cutesy/
     make setup

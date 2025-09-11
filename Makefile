@@ -1,4 +1,4 @@
-default: configure format lint test
+default: configure format lint check test
 
 configure:
 	@echo "Checking configuration against global spec..."
@@ -36,6 +36,11 @@ lint:
 	@ruff check . --quiet
 	@echo "  2. Flake8"
 	@flake8 .
+	@echo "...done. No issues found."
+
+check:
+	@echo "Running Python type checks..."
+	@mypy .
 	@echo "...done. No issues found."
 
 test:

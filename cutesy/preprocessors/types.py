@@ -102,7 +102,7 @@ class BasePreprocessor(ABC):
 
         self.delimiters = chr(unused_char_num), chr(unused_char_2_num)
 
-    def process(self) -> None:
+    def process(self) -> str:
         """Replace the dynamic parts of some dynamic HTML with placeholders."""
         self.line = 1
         self.offset = 0
@@ -177,7 +177,7 @@ class BasePreprocessor(ABC):
 
         return "".join(self._modified_html_parts)
 
-    def restore(self, modified_html: str, errors: Iterable[Error]) -> None:
+    def restore(self, modified_html: str, errors: Iterable[Error]) -> str:
         """Restore the original dynamic parts to the modified HTML."""
         if not hasattr(self, "_instructions"):
             error_message = "Error: Attempting to restore before initial processing."
@@ -468,7 +468,7 @@ class BasePreprocessor(ABC):
         self._cursor = self._update_position(cursor, end_cursor)
         self._placeholder_id_num += 1
 
-    def _update_position(self, cursor: int, end_cursor: int) -> None:
+    def _update_position(self, cursor: int, end_cursor: int) -> int:
         """Update line & column number, and return the new cursor value."""
         len_chunk = end_cursor - cursor
         if len_chunk <= 0:

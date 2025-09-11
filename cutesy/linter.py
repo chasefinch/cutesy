@@ -3,9 +3,9 @@
 # Standard Library
 import re
 import string
-from collections.abc import Iterable
+from collections.abc import Sequence
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, Never, TypeGuard
 
 # Third Party
 from .preprocessors import BasePreprocessor
@@ -20,13 +20,13 @@ from .types import (
 )
 
 
-def is_whitespace(char: str) -> bool:
+def is_whitespace(char: str) -> TypeGuard[Never]:
     """Return whether char is a whitespace character."""
     return char in string.whitespace
 
 
-def attr_sort(attr: tuple[str | None, Any]) -> tuple[str | None, Any]:
-    """Sort attributes by priority."""
+def attr_sort(attr: tuple[str | None, Any]) -> tuple[Any, ...]:
+    """Return a sort tuple for attributes by priority."""
     return (
         attr[0] is None,
         attr[0] != "⚡",
@@ -112,6 +112,8 @@ VOID_ELEMENTS = frozenset(
 class HTMLLinter(HTMLParser):
     """A parser to ingest HTML and lint it."""
 
+    _expected_indentation: Any = None
+
     def __init__(
         self,
         *,
@@ -155,23 +157,25 @@ class HTMLLinter(HTMLParser):
         self._line = 0
         self._column = 0
 
-    def lint(self, html: str) -> (str, Iterable[Error]):
+    def lint(self, html: str) -> tuple[str, Sequence[Error]]:
         """Run the server-side-rendering routine."""
         self.reset()
 
         html_data = html
 
-        if self.preprocessor:
+        preprocessor = self.preprocessor
+        if preprocessor:
             # Replace the dynamic template language instructions with
             # placeholders that our parser can handle
-            self.preprocessor.reset(html_data, fix=self.fix)
-            html_data = self.preprocessor.process()
+            preprocessor.reset(html_data, fix=self.fix)
+            html_data = preprocessor.process()
 
         try:
             self.feed(html_data)
         except PreprocessingError as preprocessing_error:
             # Update the line & column numbers for the errors.
-            self.preprocessor.restore(html_data, preprocessing_error.errors)
+            if preprocessor:
+                preprocessor.restore(html_data, preprocessing_error.errors)
             raise
 
         self.close()
@@ -179,12 +183,12 @@ class HTMLLinter(HTMLParser):
         result = "".join(self._result) if self.fix else html_data
         errors = self._errors
 
-        if self.preprocessor:
+        if preprocessor:
             # Restore the instructions into the placeholder slots
-            result = self.preprocessor.restore(result, errors)  # modifies "errors"
+            result = preprocessor.restore(result, errors)  # modifies "errors"
 
             # Add in any errors from the preprocessor which weren't fatal
-            errors.extend(self.preprocessor.errors)
+            errors.extend(preprocessor.errors)
 
         errors.sort(key=lambda error: (error.line, error.column))
 
@@ -240,7 +244,7 @@ class HTMLLinter(HTMLParser):
         if self.fix:
             self._process(f"<!{decl_lower}>")
 
-    def handle_startendtag(self, tag: str, attrs: Iterable[tuple[str, str]]) -> None:
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Process a self-closing tag."""
         self.handle_starttag(tag, attrs)
 
@@ -255,9 +259,9 @@ class HTMLLinter(HTMLParser):
 
             self.handle_endtag(tag)
 
-    def handle_starttag(self, tag: str, attrs: Iterable[tuple[str, str]]) -> None:
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Process a start tag."""
-        self._did_encounter_data()
+        self._handle_encountered_data()
 
         is_new_line = self._expected_indentation is not None
         self._reconcile_indentation()
@@ -397,7 +401,7 @@ class HTMLLinter(HTMLParser):
 
         if not self.fix:
             new_whitespace = list(filter(is_whitespace, list(attrs_string)))
-            old_whitespace = list(filter(is_whitespace, list(self.__starttag_text)))
+            old_whitespace = list(filter(is_whitespace, list(self.__starttag_text or "")))
 
             if new_whitespace != old_whitespace:
                 if "\n" in new_whitespace and "\n" not in old_whitespace and wrap:
@@ -447,7 +451,7 @@ class HTMLLinter(HTMLParser):
 
     def handle_data(self, html_data: str) -> None:
         """Process HTML data."""
-        self._did_encounter_data()
+        self._handle_encountered_data()
         self._reconcile_indentation()
 
         if self.cdata_elem or self._freeform_level:
@@ -572,12 +576,15 @@ class HTMLLinter(HTMLParser):
             self._indentation_level += 1
 
         if self.fix:
-            wraps = self.preprocessor.delimiters
-            self._process(f"{wraps[0]}{instruction_text}{wraps[1]}")
+            processing_text = instruction_text
+            if self.preprocessor:
+                wraps = self.preprocessor.delimiters
+                processing_text = f"{wraps[0]}{instruction_text}{wraps[1]}"
+            self._process(processing_text)
 
     def handle_entityref(self, name: str) -> None:
         """Process an HTML entity."""
-        self._did_encounter_data()
+        self._handle_encountered_data()
         self._reconcile_indentation()
 
         if self.fix:
@@ -585,7 +592,7 @@ class HTMLLinter(HTMLParser):
 
     def handle_charref(self, name: str) -> None:
         """Process a numbered HTML entity."""
-        self._did_encounter_data()
+        self._handle_encountered_data()
         self._reconcile_indentation()
 
         if self.fix:
@@ -724,7 +731,7 @@ class HTMLLinter(HTMLParser):
             cursor = self.updatepos(cursor, size)
         self.rawdata = rawdata[cursor:]
 
-    def parse_starttag(self, cursor: int) -> None:
+    def parse_starttag(self, cursor: int) -> int:
         """Parse a start tag.
 
         Adapted from:
@@ -765,6 +772,9 @@ class HTMLLinter(HTMLParser):
 
         attrs = []
         match = tagfind_tolerant.match(rawdata, cursor + 1)
+        if not match:
+            raise NotImplementedError
+
         cursor2 = match.end()
 
         tag = match.group(1)
@@ -775,7 +785,7 @@ class HTMLLinter(HTMLParser):
                 break
 
             attrname, rest, attrvalue = match.group(1, 2, 3)
-            if not rest:
+            if not rest or attrvalue is None:
                 attrvalue = None
             elif attrvalue[:1] == '"' == attrvalue[-1:]:
                 attrvalue = attrvalue[1:-1]
@@ -812,7 +822,7 @@ class HTMLLinter(HTMLParser):
 
         return end_cursor
 
-    def parse_endtag(self, cursor: int) -> None:
+    def parse_endtag(self, cursor: int) -> int:
         """Parse an end tag.
 
         Adapted from:
@@ -875,7 +885,7 @@ class HTMLLinter(HTMLParser):
         else:
             self._column += len_chunk
 
-    def _did_encounter_data(self) -> bool:
+    def _handle_encountered_data(self) -> None:
         """Handle encountered data."""
         self._mode = self._mode or Mode.UNSTRUCTURED
 
@@ -894,8 +904,8 @@ class HTMLLinter(HTMLParser):
 
     def _make_attr_strings(
         self,
-        attrs: Iterable[tuple[str, Any]],
-    ) -> tuple[str | None, Iterable[str]]:
+        attrs: Sequence[tuple[str, Any]],
+    ) -> tuple[str | None, Sequence[str]]:
         """Return the prepared attribute strings.
 
         Recursively handles dynamic attributes, prepending them with the
@@ -960,7 +970,10 @@ class HTMLLinter(HTMLParser):
             elif instruction_type and instruction_type.is_group_middle:
                 if group_level == 1:
                     subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
-                    group_key = min((group_key, subgroup_key)) if group_key else subgroup_key
+                    if group_key and subgroup_key:
+                        group_key = min(group_key, subgroup_key)
+                    else:
+                        group_key = group_key or subgroup_key
                     group += [f"{self.indentation}{attr_string}" for attr_string in subgroup]
                     group.append(name)
                     subgroup_attrs = []
@@ -969,7 +982,10 @@ class HTMLLinter(HTMLParser):
             elif instruction_type and instruction_type.is_group_end:
                 if group_level == 1:
                     subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
-                    group_key = min((group_key, subgroup_key)) if group_key else subgroup_key
+                    if group_key and subgroup_key:
+                        group_key = min(group_key, subgroup_key)
+                    else:
+                        group_key = group_key or subgroup_key
                     group += [f"{self.indentation}{attr_string}" for attr_string in subgroup]
                     group.append(name)
                     attr_keys_and_groups.append((group_key, group))
