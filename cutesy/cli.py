@@ -1,6 +1,7 @@
 """Expose Cutesy via CLI."""
 
 # Standard Library
+import sys
 from pathlib import Path
 
 # Third Party
@@ -62,8 +63,8 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
     if code:
         html_paths_and_strings = [(None, pattern)]
     else:
-        for path in Path(".").glob(pattern):
-            with open(path, mode="r") as html_file:
+        for path in Path().glob(pattern):
+            with open(path) as html_file:
                 html = html_file.read()
                 html_paths_and_strings.append((path, html))
 
@@ -123,7 +124,7 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
                         message = message.format(**error.replacements)
                     click.echo(
                         f"{indentation}{warning_part}{location_display} "
-                        + f"{error.rule.code.ljust(4)} {message}",
+                        f"{error.rule.code.ljust(4)} {message}",
                     )
 
                 click.echo("")
@@ -139,8 +140,8 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
                 click.echo(f"🔪 \033[91m\033[1m{num_errors} proble̴m{maybe_s} fo̵͖̔u̷nd\033[0m")
 
             if return_zero:
-                exit(0)
-            exit(1)
+                sys.exit(0)
+            sys.exit(1)
 
         if fix:
             if result is not None:
@@ -154,7 +155,7 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
         else:
             click.echo("\033[1mNo problems found\033[0m 🥰")
 
-        exit(0)
+        sys.exit(0)
 
     if errors_by_file:
         maybe_s_1 = "" if num_errors == 1 else "s"
@@ -169,24 +170,24 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
                 maybe_s_3 = "" if num_files_modified == 1 else "s"
                 click.echo(
                     f"\033[1mFixed {num_files_modified} file{maybe_s_3}, "
-                    + f"\033[91m\033[1m{num_errors} problḙ̴͈͝m{maybe_s_1} le̴ft\033[0m in "
-                    + f"{len(errors_by_file)} file{maybe_s_2}",
+                    f"\033[91m\033[1m{num_errors} problḙ̴͈͝m{maybe_s_1} le̴ft\033[0m in "
+                    f"{len(errors_by_file)} file{maybe_s_2}",
                 )
             else:
                 click.echo(
                     f"🔪 \033[91m\033[1m{num_errors} pro̵ble̴m{maybe_s_1} lef̴̥͆t\033[0m in "
-                    + f"{len(errors_by_file)} file{maybe_s_2}",
+                    f"{len(errors_by_file)} file{maybe_s_2}",
                 )
 
         else:
             click.echo(
                 f"🔪 \033[91m\033[1m{num_errors} proble̴m{maybe_s_1}\033[0m fo̵͖̔u̷nd in "
-                + f"{len(errors_by_file)} file{maybe_s_2}",
+                f"{len(errors_by_file)} file{maybe_s_2}",
             )
 
         if return_zero:
-            exit(0)
-        exit(1)
+            sys.exit(0)
+        sys.exit(1)
 
     if fix:
         if num_files_modified:
@@ -203,4 +204,4 @@ def main(code, fix, return_zero, quiet, check_doctype, preprocessor, pattern):
     else:
         click.echo("\033[1mNo problems found\033[0m 🥰")
 
-    exit(0)
+    sys.exit(0)

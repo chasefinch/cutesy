@@ -30,13 +30,13 @@ class TestSpec:
 
     def _run_test(self, spec):
         local_path = os.path.dirname(__file__)
-        input_path = "{}/spec/{}/input.html".format(local_path, spec)
-        output_path = "{}/spec/{}/expected_output.html".format(local_path, spec)
+        input_path = f"{local_path}/spec/{spec}/input.html"
+        output_path = f"{local_path}/spec/{spec}/expected_output.html"
 
-        with open(input_path, mode="r") as html_file:
+        with open(input_path) as html_file:
             html = html_file.read()
 
-        with open(output_path, mode="r") as html_file:
+        with open(output_path) as html_file:
             expected = html_file.read()
 
         preprocessor = django.Preprocessor()

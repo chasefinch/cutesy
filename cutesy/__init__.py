@@ -1,16 +1,19 @@
 """Lint & autoformat an HTML document in Python."""
+
 # Standard Library
 import re
 import string
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, auto, unique
 from html.parser import HTMLParser
+from typing import Any
 
 # Third Party
 from data_enum import DataEnum
 
 
-def is_whitespace(char):
+def is_whitespace(char) -> bool:
     """Return whether char is a whitespace character."""
     return char in string.whitespace
 
@@ -22,7 +25,7 @@ class DoctypeError(Exception):
 class PreprocessingError(Exception):
     """An exception that can be thrown when preprocessing fails."""
 
-    def __init__(self, *args, errors, **kwargs):
+    def __init__(self, *args, errors, **kwargs) -> None:
         """Initialize the error with attached errors."""
         super().__init__(*args, **kwargs)
 
@@ -87,6 +90,67 @@ class Mode(DataEnum):
 
 Mode.DOCUMENT = Mode()
 Mode.UNSTRUCTURED = Mode()
+
+
+def attr_sort(attr: tuple[str | None, Any]) -> tuple[str | None, Any]:
+    """Sort attributes by priority."""
+    return (
+        attr[0] is None,
+        attr[0] != "⚡",
+        attr[0] != "amp",
+        attr[0] != "lang",
+        attr[0] != "rel",
+        attr[0] != "as",
+        attr[0] != "for",
+        attr[0] != "type",
+        attr[0] != "id",
+        attr[0] != "class",
+        "class" not in (attr[0] or ""),
+        attr[0] != "name",
+        "href" not in (attr[0] or ""),
+        attr[0] != "itemid",
+        attr[0] != "itemscope",
+        attr[0] != "itemtype",
+        attr[0] != "itemprop",
+        attr[0] != "property",
+        attr[0] != "content",
+        attr[0] != "value",
+        "value" not in (attr[0] or ""),
+        attr[0] != "placeholder",
+        attr[0] != "checked",
+        "checked" not in (attr[0] or ""),
+        attr[0] != "href",
+        attr[0] != "src",
+        "src" not in (attr[0] or ""),
+        attr[0] != "multiple",
+        attr[0] != "size",
+        attr[0] != "step",
+        attr[0] != "sizes",
+        attr[0] != "width",
+        attr[0] != "height",
+        attr[0] != "alt",
+        attr[0] != "title",
+        attr[0] != "pattern",
+        attr[0] != "maxlength",
+        attr[0] != "disabled",
+        attr[0] != "hidden",
+        "hidden" not in (attr[0] or ""),
+        attr[0] != "readonly",
+        attr[0] != "required",
+        attr[0] != "autocomplete",
+        attr[0] != "autofocus",
+        attr[0] != "tabindex",
+        not (attr[0] or "").startswith("form"),
+        attr[0] != "itemid",
+        attr[0] != "itemscope",
+        attr[0] != "itemtype",
+        attr[0] != "itemprop",
+        attr[0] != "style",
+        # Push these keys to the end
+        (attr[0] or "").startswith("on"),
+        (attr[0] or "").startswith("data-"),
+        attr[0],
+    )
 
 
 class IndentationType(Enum):
@@ -238,105 +302,35 @@ class HTMLLinter(HTMLParser):
     def __init__(self, fix=False, check_doctype=False, preprocessor=None, *args, **kwargs):
         """Initialize HTMLLinter."""
         super().__init__(*args, **kwargs)
-
         self.fix = fix  # Whether we're fixing the files
-
         # If true, assume all files are HTML5 files, and complain when they
         # aren't. Otherwise, skip any files without an HTML5 doctype.
         self.check_doctype = check_doctype
-
         # A preprocessor for handling dynamic templating languages
         self.preprocessor = preprocessor
-
         self.convert_charrefs = False
         self.indentation_type = IndentationType.TAB
-
         # This applies even if indentation == TABS, to best infer what spaces
         # mean in the incoming HTML document
         self.tab_width = 4
-
         # Tuners for attribute wrapping logic
         self.long_attr_value_length = 10
         self.xlong_attr_value_length = 28
         self.xxlong_attr_value_length = 60
 
-        # A function to sort attributes by priority
-        self.attr_sort = lambda attr: (
-            attr[0] is None,
-            attr[0] != "⚡",
-            attr[0] != "amp",
-            attr[0] != "lang",
-            attr[0] != "rel",
-            attr[0] != "as",
-            attr[0] != "for",
-            attr[0] != "type",
-            attr[0] != "id",
-            attr[0] != "class",
-            "class" not in (attr[0] or ""),
-            attr[0] != "name",
-            "href" not in (attr[0] or ""),
-            attr[0] != "itemid",
-            attr[0] != "itemscope",
-            attr[0] != "itemtype",
-            attr[0] != "itemprop",
-            attr[0] != "property",
-            attr[0] != "content",
-            attr[0] != "value",
-            "value" not in (attr[0] or ""),
-            attr[0] != "placeholder",
-            attr[0] != "checked",
-            "checked" not in (attr[0] or ""),
-            attr[0] != "href",
-            attr[0] != "src",
-            "src" not in (attr[0] or ""),
-            attr[0] != "multiple",
-            attr[0] != "size",
-            attr[0] != "step",
-            attr[0] != "sizes",
-            attr[0] != "width",
-            attr[0] != "height",
-            attr[0] != "alt",
-            attr[0] != "title",
-            attr[0] != "pattern",
-            attr[0] != "maxlength",
-            attr[0] != "disabled",
-            attr[0] != "hidden",
-            "hidden" not in (attr[0] or ""),
-            attr[0] != "readonly",
-            attr[0] != "required",
-            attr[0] != "autocomplete",
-            attr[0] != "autofocus",
-            attr[0] != "tabindex",
-            not (attr[0] or "").startswith("form"),
-            attr[0] != "itemid",
-            attr[0] != "itemscope",
-            attr[0] != "itemtype",
-            attr[0] != "itemprop",
-            attr[0] != "style",
-            # Push these keys to the end
-            (attr[0] or "").startswith("on"),
-            (attr[0] or "").startswith("data-"),
-            attr[0],
-        )
-
     def reset(self):
         """Reset the state of the linter so that it can be run again."""
         super().reset()
-
         self._mode = None  # Full document or arbitrary HTML
-
         self._errors = []
         self._result = []
-
         # Parsing state
         self._did_report_expected_doctype = False
         self._freeform_level = 0
         self._indentation_level = 0
         self._tag_stack = []
-
         # Possible values: {None, True} if self.fix else {None, str}
         self._expected_indentation = None
-
         # Line & column numbers in the modified HTML
         self._line = 0
         self._column = 0
@@ -387,7 +381,7 @@ class HTMLLinter(HTMLParser):
 
         return "\t"
 
-    def handle_decl(self, decl):
+    def handle_decl(self, decl: str) -> None:
         """Process a declaration string."""
         self._reconcile_indentation()
 
@@ -395,12 +389,11 @@ class HTMLLinter(HTMLParser):
         # presence of a doctype declaration determines whether this is an HTML
         # document, or just loose HTML.
         if self._mode:
-            self._log_error(
-                {
-                    Mode.DOCUMENT: "D2",
-                    Mode.UNSTRUCTURED: "D1",
-                }[self._mode],
-            )
+            mode_code = {
+                Mode.DOCUMENT: "D2",
+                Mode.UNSTRUCTURED: "D1",
+            }[self._mode]
+            self._log_error(mode_code)
             if self.fix:
                 self._process(f"<!{decl}>")
             return
@@ -427,7 +420,7 @@ class HTMLLinter(HTMLParser):
         if self.fix:
             self._process(f"<!{decl_lower}>")
 
-    def handle_startendtag(self, tag, attrs):
+    def handle_startendtag(self, tag: str, attrs: Iterable[tuple[str, str]]) -> None:
         """Process a self-closing tag."""
         self.handle_starttag(tag, attrs)
 
@@ -442,7 +435,7 @@ class HTMLLinter(HTMLParser):
 
             self.handle_endtag(tag)
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs: Iterable[tuple[str, str]]) -> None:
         """Process a start tag."""
         self._did_encounter_data()
 
@@ -468,7 +461,7 @@ class HTMLLinter(HTMLParser):
                 num_xlong_attrs += 1
             if value_length >= self.xxlong_attr_value_length:
                 num_xxlong_attrs += 1
-            if attr[1] and any((char in attr[1] for char in ("\n", "\t"))):
+            if attr[1] and any(char in attr[1] for char in ("\n", "\t")):
                 num_breaking_attrs += 1
 
         _, attr_strings = self._make_attr_strings(attrs)
@@ -520,7 +513,7 @@ class HTMLLinter(HTMLParser):
                         for line in lines:
                             num_indents = 0
                             index = 0
-                            while any((line[index:].startswith(char) for char in indentations)):
+                            while any(line[index:].startswith(char) for char in indentations):
                                 num_indents += 1
                                 if line[index:].startswith(" "):
                                     index += self.tab_width
@@ -908,7 +901,7 @@ class HTMLLinter(HTMLParser):
         """
         attrfind_tolerant = re.compile(
             r'((?<=[\'"\s/])[^\s/>][^\s/=>]*)(\s*=+\s*'
-            + r'(\'[^\']*\'|"[^"]*"|(?![\'"])[^>\s]*))?(?:\s|/(?!>))*',
+            r'(\'[^\']*\'|"[^"]*"|(?![\'"])[^>\s]*))?(?:\s|/(?!>))*',
         )
 
         tagfind_tolerant = re.compile(r"([a-zA-Z][^\t\n\r\f />\x00]*)(?:\s|/(?!>))*")
@@ -1021,7 +1014,7 @@ class HTMLLinter(HTMLParser):
         tag = match.group(1)
 
         parsed_data = rawdata[cursor:end_cursor]
-        if any((char in string.whitespace for char in rawdata[cursor:end_cursor])):
+        if any(char in string.whitespace for char in rawdata[cursor:end_cursor]):
             if self.fix:
                 parsed_data = re.sub(r"\s", "", parsed_data)
             else:
@@ -1073,8 +1066,8 @@ class HTMLLinter(HTMLParser):
         level set. The second is a list of attribute strings.
         """
         all_attrs = []
-        for attr in attrs:
-            name, value = attr
+        for incoming_attr in attrs:
+            name, value = incoming_attr
 
             if self.preprocessor:
                 wraps = self.preprocessor.delimiters
@@ -1157,9 +1150,9 @@ class HTMLLinter(HTMLParser):
             index += 1
 
         if self.fix:
-            attr_groups_by_key.sort(key=self.attr_sort)
+            attr_groups_by_key.sort(key=attr_sort)
         else:
-            sorted_groups = sorted(attr_groups_by_key, key=self.attr_sort)
+            sorted_groups = sorted(attr_groups_by_key, key=attr_sort)
             if attr_groups_by_key != sorted_groups:
                 self._log_error("F6")
 

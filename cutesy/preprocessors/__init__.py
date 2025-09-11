@@ -28,7 +28,7 @@ SPECIAL_CHARS = frozenset(
         " ",
         " ",  # Non-breaking space
         "­",  # Soft hyphen
-        "​",  # Zero-width space
+        "\u200b",  # Zero-width space
     ),
 )
 
@@ -112,8 +112,8 @@ class BasePreprocessor(ABC):
         # Modified HTML parts, including placeholders for instructions
         self._modified_html_parts = []
 
-        opening_braces = (re.escape(braces[0]) for braces in self.braces)
-        pattern = "|".join((f"(?:{brace})" for brace in opening_braces))
+        opening_braces = (re.escape(possible_opening[0]) for possible_opening in self.braces)
+        pattern = "|".join(f"(?:{brace})" for brace in opening_braces)
         interesting = re.compile(pattern)
 
         # Each placeholder includes an ID
@@ -145,10 +145,10 @@ class BasePreprocessor(ABC):
             cursor = self._cursor
 
             startswith = html.startswith
-            for braces in self.braces:
-                if startswith(braces[0], cursor):
+            for possible_matching_braces in self.braces:
+                if startswith(possible_matching_braces[0], cursor):
                     # Process & consume the match
-                    self._handle_match(braces)
+                    self._handle_match(possible_matching_braces)
                     break
 
         # end while
@@ -287,8 +287,8 @@ class BasePreprocessor(ABC):
 
             search_regex = re.compile(
                 rf"{re.escape(braces[0])}[ \t]*"
-                + rf"{re.escape(closing_tag_string)}[ \t]*"
-                + f"{re.escape(braces[1])}",
+                rf"{re.escape(closing_tag_string)}[ \t]*"
+                f"{re.escape(braces[1])}",
             )
 
             match = search_regex.search(dynamic_html_lower, end_cursor)
@@ -405,9 +405,9 @@ class BasePreprocessor(ABC):
                 part_cursor += 1
 
             middle_parts.append(current_part)
-            for middle_part in middle_parts:
-                if middle_part:  # Skip blank strings, we allowed those
-                    formatted_instruction_parts.append(middle_part)
+            for possible_middle_part in middle_parts:
+                if possible_middle_part:  # Skip blank strings, we allowed those
+                    formatted_instruction_parts.append(possible_middle_part)
         else:
             formatted_instruction_parts.append(middle_part.strip())
 
@@ -422,10 +422,8 @@ class BasePreprocessor(ABC):
             stripped_formatted_instruction = formatted_instruction[len_start : -1 * len_end]
 
             # Remove the case we checked for already
-            if stripped_raw_instruction.startswith(" "):
-                stripped_raw_instruction = stripped_raw_instruction[1:]
-            if stripped_raw_instruction.endswith(" "):
-                stripped_raw_instruction = stripped_raw_instruction[:-1]
+            stripped_raw_instruction = stripped_raw_instruction.removeprefix(" ")
+            stripped_raw_instruction = stripped_raw_instruction.removesuffix(" ")
 
             stripped_formatted_instruction = stripped_formatted_instruction[1:-1]
 

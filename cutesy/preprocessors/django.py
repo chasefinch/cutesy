@@ -1,4 +1,5 @@
 """Prerendering to accommodate the Django template language."""
+
 # Current App
 from .. import InstructionType
 from . import BasePreprocessor

@@ -1,8 +1,13 @@
-default: format lint test
+default: configure format lint test
+
+configure:
+	@echo "Checking configuration against global spec..."
+	@nitpick check
+	@printf "\e[1mConfiguration is in sync!\e[0m\n\n"
 
 format:
 	@echo "Formatting Python docstrings..."
-	@docformatter . -r --in-place --exclude bin lib node_modules .git || true
+	@docformatter . -r --in-place --exclude bin lib .git || true
 	@echo "...done."
 	@echo "Formatting Python files..."
 	@echo "  1. Ruff Format"
@@ -11,7 +16,7 @@ format:
 	@ruff check --fix-only . --quiet
 	@echo "  3. Add trailing commas"
 	@# Add trailing commas to dangling lines and function calls
-	@find . \( -path ./lib -o -path ./bin -o -path ./node_modules -o -path ./bringfido/public -o -path ./bringfido/static -o -path ./bringfido/src -o -path ./git \) -prune -o -name '*.py' -print0 | xargs -P 16 -0 -I{} sh -c 'add-trailing-comma "{}" || true'
+	@find . \( -path ./lib -o -path ./bin \) -prune -o -name '*.py' -print0 | xargs -P 16 -0 -I{} sh -c 'add-trailing-comma "{}" || true'
 	@echo "  4. Ruff Format (again)"
 	@# Format again after adding trailing commas
 	@ruff format . --quiet
@@ -19,7 +24,7 @@ format:
 	@ruff check --fix-only . --quiet
 	@echo "...done."
 
-lint-py:
+lint:
 	@echo "Checking for Python formatting issues which can be fixed automatically..."
 	@echo "  1. Ruff Format"
 	@ruff format . --diff > /dev/null 2>&1 || (printf 'Found files which need to be auto-formatted. Make sure your dependencies are up to date and then run \e[1mmake format-py\e[0m and re-lint.\n'; exit 1)
@@ -49,4 +54,4 @@ teardown:
 	-rm -r bin/*
 	-rm pyvenv.cfg
 
-.PHONY: default format lint test setup
+.PHONY: default configure format lint test setup

@@ -134,6 +134,7 @@ Sort imports:
 
 Lint:
 
+    make configure
     make lint
 
 Test:

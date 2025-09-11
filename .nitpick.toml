@@ -1,0 +1,3 @@
+[tool.nitpick]
+style = 'https://www.chasefinch.com/nitpick-style.toml'
+cache = 'never'
