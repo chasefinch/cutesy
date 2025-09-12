@@ -312,90 +312,15 @@ class HTMLLinter(HTMLParser):
         wrap = wrap and is_new_line
 
         if wrap:
-            # Wrap the attribute strings. Each attribute will get a new line,
-            # and attributes with multi-line values will be indented to the
-            # standard level based on the presence of newlines in their value.
             indentation = self.indentation * (self._indentation_level + 1)
-            value_indentation = f"{indentation}{self.indentation}"
+            attrs_string = f"\n{indentation}".join(attr_strings)
+
             end_char = self.indentation * self._indentation_level
-
-            adjusted_attr_strings = []
-            indentations = (" " * self.tab_width, "\t")
-            for attr_string in attr_strings:
-                adjusted_attr_string = attr_string
-                if "\n" in adjusted_attr_string:
-                    # Format the attribute value with appropriate indentation
-                    # since it contains newlines. If it doesn't, we'd just keep
-                    # it all on one line.
-                    name_etc, value = adjusted_attr_string.split('"', 1)
-                    value = value[:-1]  # Strip trailing quote
-                    lines = value.rstrip().split("\n")
-
-                    if len(lines) == 1:
-                        adjusted_attr_string = lines[0].strip()
-                    else:
-                        special_first_line = None
-                        indentation_and_lines = []
-
-                        if not lines[0].startswith("\n"):
-                            special_first_line = lines.pop(0).strip()
-
-                        for line in lines:
-                            num_indents = 0
-                            index = 0
-                            while any(line[index:].startswith(char) for char in indentations):
-                                num_indents += 1
-                                if line[index:].startswith(" "):
-                                    index += self.tab_width
-                                else:
-                                    index += 1
-
-                            indentation_and_lines.append((num_indents, line.strip()))
-
-                        lines_with_content = [
-                            indentation_and_line
-                            for indentation_and_line in indentation_and_lines
-                            if indentation_and_line[1]
-                        ]
-                        min_indents = min(line_info[0] for line_info in lines_with_content)
-                        if special_first_line:
-                            indentation_and_lines.insert(0, (min_indents, special_first_line))
-
-                        indented_lines = []
-                        for line_info in indentation_and_lines:
-                            line_content = line_info[1]
-                            if line_content:
-                                line_indentation = self.indentation * (line_info[0] - min_indents)
-                                indented_lines.append(f"{line_indentation}{line_info[1]}")
-                            else:
-                                indented_lines.append("")
-
-                        value = f"\n{value_indentation}".join(indented_lines)
-                        adjusted_attr_string = (
-                            f'{name_etc}"\n{value_indentation}{value}\n{indentation}"'
-                        )
-                adjusted_attr_strings.append(adjusted_attr_string)
-
-            attrs_string = f"\n{indentation}".join(adjusted_attr_strings)
             attrs_string = f"\n{indentation}{attrs_string}\n{end_char}"
+
         elif attr_strings:
-            adjusted_attr_strings = []
-
-            for attr_string in attr_strings:
-                # Remove formatting-specific newlines & indentations
-                preserve_spaces = attr_string.startswith(" "), attr_string.endswith(" ")
-
-                adjusted_attr_string = re.sub(r"\s*\n\s*", " ", attr_string)
-
-                if not preserve_spaces[0]:
-                    adjusted_attr_string = adjusted_attr_string.lstrip()
-                if not preserve_spaces[1]:
-                    adjusted_attr_string = adjusted_attr_string.rstrip()
-
-                adjusted_attr_strings.append(adjusted_attr_string)
-
             # Don't wrap; Just separate all by a space
-            attrs_string = " ".join(adjusted_attr_strings)
+            attrs_string = " ".join(attr_strings)
             attrs_string = f" {attrs_string}"
         else:
             # No attributes
@@ -1006,6 +931,8 @@ class HTMLLinter(HTMLParser):
                         processed_value = processor.process(
                             attr_name=name,
                             indentation=self.indentation,
+                            current_indentation_level=self._indentation_level + 1,
+                            tab_width=self.tab_width,
                             bounding_character=quote_char,
                             attr_body=processed_value,
                         )

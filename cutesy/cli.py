@@ -9,7 +9,7 @@ import click
 
 # Current App
 from . import HTMLLinter
-from .attribute_processors import tailwind
+from .attribute_processors import reindent, tailwind, whitespace
 from .preprocessors import django
 from .types import DoctypeError, PreprocessingError
 
@@ -72,6 +72,8 @@ def main(
     for attr_processor in attribute_processor:
         attribute_processor_instance = {
             "tailwind": tailwind.AttributeProcessor(),
+            "reindent": reindent.AttributeProcessor(),
+            "whitespace": whitespace.AttributeProcessor(),
         }[attr_processor]
         attribute_processor_instances.append(attribute_processor_instance)
 

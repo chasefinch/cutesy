@@ -2,6 +2,7 @@
 
 # Cutesy
 from cutesy import HTMLLinter
+from cutesy.attribute_processors import reindent, tailwind, whitespace
 from cutesy.preprocessors import django
 from cutesy.types import IndentationType
 
@@ -79,24 +80,27 @@ asdf
         """
         expected_result = """
 <div
-    x-data="
-        () => {
-            state1: true,
+    x-data="() => {
+        state1: true,
 
-            state2: true,
+        state2: true,
 
-            init() {
-                state1 = false;
-                state2 = false;
-            }
+        init() {
+            state1 = false;
+            state2 = false;
         }
-    "
+    }"
 >
     asdf
 </div>
 """
 
-        linter = HTMLLinter(fix=True)
+        attribute_processors = [
+            whitespace.AttributeProcessor(),
+            reindent.AttributeProcessor(),
+            tailwind.AttributeProcessor(),
+        ]
+        linter = HTMLLinter(fix=True, attribute_processors=attribute_processors)
         linter.indentation_type = IndentationType.SPACES
         result, errors = linter.lint(basic_html)
 

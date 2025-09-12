@@ -2,6 +2,7 @@
 
 # Cutesy
 from cutesy import HTMLLinter
+from cutesy.attribute_processors import reindent, tailwind, whitespace
 from cutesy.preprocessors import django
 from cutesy.types import Rule
 
@@ -12,11 +13,22 @@ class TestRules:
     def setup_method(self, test_method: str) -> None:
         """Set up the systems under test."""
         self.preprocessor = django.Preprocessor()
-        self.checking_linter = HTMLLinter(check_doctype=True, preprocessor=self.preprocessor)
+        attribute_processors = [
+            whitespace.AttributeProcessor(),
+            reindent.AttributeProcessor(),
+            tailwind.AttributeProcessor(),
+        ]
+
+        self.checking_linter = HTMLLinter(
+            check_doctype=True,
+            preprocessor=self.preprocessor,
+            attribute_processors=attribute_processors,
+        )
         self.fixing_linter = HTMLLinter(
             check_doctype=True,
             fix=True,
             preprocessor=self.preprocessor,
+            attribute_processors=attribute_processors,
         )
 
     def run_test(self, html: str, rule_code: str, *, is_fixable: bool = True) -> None:

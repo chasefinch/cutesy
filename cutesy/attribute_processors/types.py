@@ -2,7 +2,6 @@
 
 # Standard Library
 from abc import ABC, abstractmethod
-from typing import Literal
 
 
 class BaseAttributeProcessor(ABC):
@@ -13,7 +12,9 @@ class BaseAttributeProcessor(ABC):
         self,
         attr_name: str,
         indentation: str,
-        bounding_character: Literal["'", '"'],
+        current_indentation_level: int,
+        tab_width: int,
+        bounding_character: str,
         attr_body: str,
     ) -> str:
         """Replace the dynamic parts of some dynamic HTML with placeholders."""

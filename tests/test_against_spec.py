@@ -10,6 +10,7 @@ import pytest
 
 # Cutesy
 from cutesy import HTMLLinter
+from cutesy.attribute_processors import reindent, tailwind, whitespace
 from cutesy.preprocessors import django
 
 
@@ -47,14 +48,28 @@ class TestSpec:
             expected = html_file.read()
 
         preprocessor = django.Preprocessor()
+        attribute_processors = [
+            whitespace.AttributeProcessor(),
+            reindent.AttributeProcessor(),
+            tailwind.AttributeProcessor(),
+        ]
 
-        checking_linter = HTMLLinter(check_doctype=True, preprocessor=preprocessor)
+        checking_linter = HTMLLinter(
+            check_doctype=True,
+            preprocessor=preprocessor,
+            attribute_processors=attribute_processors,
+        )
         result, errors = checking_linter.lint(html)
 
         assert result == html
         assert self.tests[spec][0] == [error.rule.code for error in errors]
 
-        fixing_linter = HTMLLinter(check_doctype=True, fix=True, preprocessor=preprocessor)
+        fixing_linter = HTMLLinter(
+            check_doctype=True,
+            fix=True,
+            preprocessor=preprocessor,
+            attribute_processors=attribute_processors,
+        )
         result, errors = fixing_linter.lint(html)
 
         assert result == expected

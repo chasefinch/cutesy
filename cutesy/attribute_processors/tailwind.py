@@ -1,7 +1,5 @@
 """Class sorting to accommodate the Tailwind CSS framework."""
 
-from typing import Literal
-
 from . import BaseAttributeProcessor
 
 
@@ -12,9 +10,10 @@ class AttributeProcessor(BaseAttributeProcessor):
         self,
         attr_name: str,
         indentation: str,
-        bounding_character: Literal["'", '"'],
+        current_indentation_level: int,
+        tab_width: int,
+        bounding_character: str,
         attr_body: str,
     ) -> str:
         """Update the class attribute body with sorted classes."""
-        print(attr_body)
         return attr_body
