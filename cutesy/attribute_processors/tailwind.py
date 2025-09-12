@@ -128,7 +128,16 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         sorted_classes = group_and_sort_tailwind(classes)
         if single_line_mode:
-            all_class_names = [tailwind_class.full_string for class_list in sorted_classes for tailwind_class in class_list]
+            all_class_names = []
+            for class_list in sorted_classes:
+                for tailwind_class in class_list:
+                    line = tailwind_class.full_string
+                    if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
+                        index = int(line.split('_')[-1])
+                        all_class_names.extend(stashed_class_names.pop(index))
+                    else:
+                        all_class_names.append(line)
+
             return ' '.join(all_class_names)
 
         attribute_lines = [""]
