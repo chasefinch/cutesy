@@ -46,9 +46,9 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         adjusted_attr_body = attr_body.strip()
         class_names = adjusted_attr_body.split()
-        stashed_class_names: list[list[str]] = []
-        preprocessed_index_ranges: list[tuple(int, int)] = []
-        current_preprocessed_index_range: tuple(int, int) = None
+        stashed_class_names: list = []
+        preprocessed_index_ranges: list[list[int] | int] = []
+
         if preprocessor:
             left, right = preprocessor.delimiters
             line, column = position
@@ -75,29 +75,32 @@ class AttributeProcessor(BaseAttributeProcessor):
             )
 
             class_names = expand_class_names(class_names, left, right, keep_empty=False)
-            start_block_count = 0
+            stack: list[list[int] | int] = []
+
             for index, class_name in enumerate(class_names):
+                starts = ends = False
                 if class_name.startswith(left):
                     min_instruction_string_length = 4
-                    assert(len(class_name) >= min_instruction_string_length)
+                    assert len(class_name) >= min_instruction_string_length
                     instruction_type = InstructionType(class_name[1])
-                    if instruction_type.starts_block:
-                        start_block_count += 1
-                    elif instruction_type.ends_block:
-                        start_block_count -= 1
+                    starts = getattr(instruction_type, "starts_block", False)
+                    ends = getattr(instruction_type, "ends_block", False)
 
-                if start_block_count < 0:
-                    raise_tw1 - True
+                if starts:
+                    node: list = [index] # start index
+                    if stack:
+                        stack[-1].append(node) # nest under current open node
+                    else:
+                        preprocessed_index_ranges.append(node) # top-level
+                    stack.append(node)
 
-                if current_preprocessed_index_range:
-                    current_preprocessed_index_range = (current_preprocessed_index_range[0], index + 1)
-                    if not start_block_count:
-                        preprocessed_index_ranges.append(current_preprocessed_index_range)
-                        current_preprocessed_index_range = None
-                elif start_block_count:
-                    current_preprocessed_index_range = (index, index + 1)
+                if ends:
+                    if not stack:
+                        raise ValueError(f"Unbalanced block ending at index {index}")
+                    stack[-1].append(index + 1) # end index (exclusive)
+                    stack.pop()
 
-            if current_preprocessed_index_range:
+            if stack:
                 raise_tw1 = True
 
             if raise_tw1:
@@ -110,12 +113,9 @@ class AttributeProcessor(BaseAttributeProcessor):
                 )
 
             for index, index_range in enumerate(reversed(preprocessed_index_ranges)):
-                # Do this after & in reverse order, b/c editing class_names
-                stashed_class_names.append(class_names[index_range[0]:index_range[1]])
-                class_names[index_range[0]:index_range[1]] = [f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"]
-
-            if preprocessed_index_ranges:
-                print(class_names)
+                sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"
+                class_names, stash = extract_with_sentinel(class_names, index_range, sentinel)
+                stashed_class_names.append(stash)
 
         max_single_line_classes = 5
         max_single_line_characters = 40
@@ -126,6 +126,7 @@ class AttributeProcessor(BaseAttributeProcessor):
             tailwind_class = parse_tailwind_class(class_name)
             classes.append(tailwind_class)
 
+        full_instruction_size = 3
         sorted_classes = group_and_sort_tailwind(classes)
         if single_line_mode:
             all_class_names = []
@@ -134,7 +135,14 @@ class AttributeProcessor(BaseAttributeProcessor):
                     line = tailwind_class.full_string
                     if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
                         index = int(line.split('_')[-1])
-                        all_class_names.extend(stashed_class_names.pop(index))
+                        stash = stashed_class_names.pop(index)
+                        if len(stash) >= full_instruction_size:
+                            # Remove the first & last space in this conditional
+                            last_item = stash.pop(-1)
+                            stash[-1] = ''.join((stash[-1], last_item))
+                            second_item = stash.pop(1)
+                            stash[0] = ''.join((stash[0], second_item))
+                        all_class_names.extend(stash)
                     else:
                         all_class_names.append(line)
 
@@ -149,8 +157,12 @@ class AttributeProcessor(BaseAttributeProcessor):
                 if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
                     index = int(line.split('_')[-1])
                     original_class_names = stashed_class_names.pop(index)
-                    for class_name in original_class_names:
-                        attribute_lines.append(f'{line_indentation}{class_name}')
+                    for index, class_name in enumerate(original_class_names):
+                        line_string = f'{line_indentation}{class_name}'
+                        if len(original_class_names) >= full_instruction_size and 0 < index < len(original_class_names) - 1:
+                            # Add an extra indentation for blocks.
+                            line_string = f'{indentation}{line_string}'
+                        attribute_lines.append(line_string)
                 else:
                     attribute_lines.append(f'{line_indentation}{line}')
         else:
@@ -195,10 +207,9 @@ def expand_class_names(
       - Unmatched delimiters leave the string as-is (no split).
       - Set keep_empty=True to retain empty outside pieces (default drops them).
       - Does not attempt to handle nested delimiters (e.g., “{ a { b } }”).
-
     """
     pattern = re.compile(f"({re.escape(left)}.*?{re.escape(right)})")
-    out: List[str] = []
+    out: list[str] = []
 
     for s in class_names:
         # If there are no delimited chunks, keep the string as-is.
@@ -213,6 +224,40 @@ def expand_class_names(
         out.extend(parts)
 
     return out
+
+
+def _build_stash(class_names: list[str], tree: list) -> list:
+    start = tree[0]
+    end = tree[-1]
+    children = tree[1:-1]
+
+    stash: list = []
+    cursor = start
+
+    for child in children:
+        first, last = child[0], child[-1]
+        stash.extend(class_names[cursor:first])  # plain items before child
+        stash.append(_build_stash(class_names, child))  # nested child
+        cursor = last
+
+    stash.extend(class_names[cursor:end])  # tail after last child
+    return stash
+
+
+def extract_with_sentinel(class_names: list[str], index_tree: list, sentinel: str):
+    """Extract and replace from a class list.
+
+    Replace class_names[start:end] with a sentinel., and return
+    (new_class_names, stash) where stash is the nested list of the removed
+    items per the index tree.
+    """
+    start = index_tree[0]
+    end = index_tree[-1]
+
+    stash = _build_stash(class_names, index_tree)
+    new_class_names = class_names[:start] + [sentinel] + class_names[end:]
+    return new_class_names, stash
+
 
 def parse_tailwind_class(full: str) -> TailwindClass:
     """Parse a Tailwind class string into a TailwindClass object."""
@@ -436,8 +481,7 @@ def _family_key(group_name: str, class_name: str) -> tuple:
 
 def _intragroup_sort_key(group_name: str, item, original_index: int) -> tuple:
     """Unmodified first, then modifiers in consistent order, then name, then
-    stable index.
-    """
+    stable index."""
     base = item.class_name
     has_mods = 1 if item.modifiers else 0
     return (
@@ -456,8 +500,8 @@ def _find_group(class_name: str) -> str | None:
     for group_name, compiled_list in _COMPILED:
         if any(pat.match(class_name) for pat in compiled_list):
             return group_name
-    # “Looks Tailwind-y”? (dash or one of the core bare words)
-    if "-" in class_name or class_name in {"container", "flex", "grid", "contents", "hidden"}:
+    # “Looks Tailwind-y”? (one of the core bare words)
+    if class_name in {"container", "flex", "grid", "contents", "hidden"}:
         return "other (tailwind)"
     return None  # None means: user-defined
 
