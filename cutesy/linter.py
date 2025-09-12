@@ -140,9 +140,9 @@ class HTMLLinter(HTMLParser):
         # mean in the incoming HTML document
         self.tab_width = 4
         # Tuners for attribute wrapping logic
-        self.long_attr_value_length = 10
-        self.xlong_attr_value_length = 28
-        self.xxlong_attr_value_length = 60
+        self.long_attr_length = 20
+        self.xlong_attr_length = 38
+        self.xxlong_attr_length = 70
 
     def reset(self) -> None:
         """Reset the state of the linter so that it can be run again."""
@@ -276,23 +276,23 @@ class HTMLLinter(HTMLParser):
 
         tag = tag.lower()
 
+        _, attr_strings = self._make_attr_strings(attrs)
+
         # Decide whether this should be kept on one line or should wrap
         num_long_attrs = 0
         num_xlong_attrs = 0
         num_xxlong_attrs = 0
         num_breaking_attrs = 0
-        for attr in attrs:
-            value_length = max(len(attr[0]), len(attr[1] or ""))
-            if value_length >= self.long_attr_value_length:
+        for attr_string in attr_strings:
+            value_length = len(attr_string)
+            if value_length >= self.long_attr_length:
                 num_long_attrs += 1
-            if value_length >= self.xlong_attr_value_length:
+            if value_length >= self.xlong_attr_length:
                 num_xlong_attrs += 1
-            if value_length >= self.xxlong_attr_value_length:
+            if value_length >= self.xxlong_attr_length:
                 num_xxlong_attrs += 1
-            if attr[1] and any(char in attr[1] for char in ("\n", "\t")):
+            if any(char in attr_string for char in ("\n", "\t")):
                 num_breaking_attrs += 1
-
-        _, attr_strings = self._make_attr_strings(attrs)
 
         max_attrs = 5
         max_long_attrs = 2
@@ -958,7 +958,7 @@ class HTMLLinter(HTMLParser):
             if (  # noqa: WPS337 (Dynamic loop condition)
                 len(group) == num_dynamic_tag_parts
                 and "\n" not in group[1]
-                and len(group[1][len(self.indentation)]) <= self.long_attr_value_length
+                and len(group[1][len(self.indentation)]) <= self.long_attr_length
             ):
                 group[1] = group[1][len(self.indentation) :]  # Strip leading indentation
                 attr_strings.append("".join(group))
