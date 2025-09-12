@@ -9,7 +9,7 @@
 	{% if not is_invalid_amp %}⚡{% endif %}
 	lang="{{ request.locale.language }}"
 	id="html"
-	class="html{% if is_map %} fixedLock{% endif %}"
+	class="html {% if is_map %}fixedLock{% endif %}"
 	[class]="'html' + (isFixedFixMode ? ' fixedFix' : '') + (isMapMode ? ' fixedLock' : '')"
 	{# fixedLock prevents overscrolling when a fixed div takes over the screen #}
 >
@@ -218,7 +218,7 @@
 </head>
 <body
 	id="body"
-	class="{% block body_class %}body{% if is_map %} fixedLock{% endif %}{% endblock %}"
+	class="{% block body_class %}body {% if is_map %} fixedLock{% endif %}{% endblock %}"
 	[class]="{% block body_class_expr %}'body' + (isMapMode ? ' fixedLock': '') + (isFixedFixMode ? ' fixedFix' : ''){% endblock %}"
 	{# fixedLock prevents overscrolling when a fixed div takes over the screen #}
 >
@@ -504,7 +504,7 @@
 
 	{# Fixed header which is translucent in map mode #}
 	<header
-		class="hdr{% if is_map %} hdr--seeThru{% endif %}"
+		class="hdr {% if is_map %} hdr--seeThru{% endif %}"
 		[class]="'hdr' + (isMapMode ? ' hdr--seeThru': '') + (searchFormIsModified ? ' hdr--active' : '')"
 	>
 		{% block header %}
@@ -3424,7 +3424,7 @@
 
 	<footer
 		id="ftr"
-		class="ftr{% block footer_extra_classes %}{% endblock %}"
+		class="ftr {% block footer_extra_classes %}{% endblock %}"
 		{% if is_map %}hidden{% endif %}
 		[hidden]="isMapMode"
 	>
@@ -3893,7 +3893,7 @@
 					</div>
 				</div>
 			{% endblock %}
-			<div class="ftr__subftr{% block footer_subfooter_extra_classes %}{% endblock %}">
+			<div class="ftr__subftr {% block footer_subfooter_extra_classes %}{% endblock %}">
 				<div class="ctr">
 					<div class="ftr__subftrAside dropdownWrapper">
 						<button
@@ -3928,7 +3928,7 @@
 								{% for currency in currencies_in_order %}
 									<li class="dropdown__li">
 										<a
-											class="ftr__dropdownItem dropdown__item dropdown__item--decorated dropdown__item--grayOnly{% if currency == request.currency %} dropdown__item--decorated--selected{% endif %}"
+											class="ftr__dropdownItem dropdown__item dropdown__item--decorated dropdown__item--grayOnly {% if currency == request.currency %} dropdown__item--decorated--selected{% endif %}"
 											href="{% make_currency_href request currency %}"
 										>
 											<span>{{ currency.symbol }} {{ currency.code }} — {{ currency.name }}</span>
@@ -3938,7 +3938,7 @@
 							{% endblock %}
 						</ul>
 					</div>
-					<div class="ftr__subftrContent{% block footer_subfooter_content_extra_classes %}{% endblock %}">
+					<div class="ftr__subftrContent {% block footer_subfooter_content_extra_classes %}{% endblock %}">
 						<span class="ftr__subftrContent__item">&copy; 2005-{% now 'Y' %} Kendall Media, Inc.</span>
 						<a
 							class="ftr__subftrContent__item ftr__a ftr__subftrContent__a"
