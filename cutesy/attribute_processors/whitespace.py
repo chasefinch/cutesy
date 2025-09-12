@@ -3,6 +3,7 @@
 import re
 
 from . import BaseAttributeProcessor
+from ..preprocessors import BasePreprocessor
 
 # Match "..." or '...' with escapes (no multiline strings)
 STRING_RE = re.compile(
@@ -47,10 +48,12 @@ class AttributeProcessor(BaseAttributeProcessor):
     def process(
         self,
         attr_name: str,
+        position: (int, int),
         indentation: str,
         current_indentation_level: int,
         tab_width: int,
         bounding_character: str,
+        preprocessor: BasePreprocessor | None,
         attr_body: str,
     ) -> str:
         """Trim excess whitespace, and adjust starting & ending whitespace."""

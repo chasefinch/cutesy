@@ -99,7 +99,6 @@ class PreprocessingError(Exception):
 
         self.errors = errors
 
-
 @unique
 class InstructionType(Enum):
     """A single letter to represent each type of dynamic instruction.
@@ -181,7 +180,7 @@ class InstructionType(Enum):
         }
 
     @property
-    def increase_indentation(self) -> bool:
+    def starts_block(self) -> bool:
         """Whether this instruction type causes an increase in indentation."""
         return self in {
             InstructionType.PARTIAL,
@@ -192,7 +191,7 @@ class InstructionType(Enum):
         }
 
     @property
-    def decrease_indentation(self) -> bool:
+    def ends_block(self) -> bool:
         """Whether this instruction type causes a decrease in indentation."""
         return self in {
             InstructionType.END_PARTIAL,

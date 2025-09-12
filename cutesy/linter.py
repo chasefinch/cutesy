@@ -142,7 +142,7 @@ class HTMLLinter(HTMLParser):
         # Tuners for attribute wrapping logic
         self.long_attr_length = 20
         self.xlong_attr_length = 38
-        self.xxlong_attr_length = 70
+        self.xxlong_attr_length = 60
 
     def reset(self) -> None:
         """Reset the state of the linter so that it can be run again."""
@@ -294,7 +294,7 @@ class HTMLLinter(HTMLParser):
             if any(char in attr_string for char in ("\n", "\t")):
                 num_breaking_attrs += 1
 
-        max_attrs = 5
+        max_attrs = 3
         max_long_attrs = 2
         wrap = any(
             (
@@ -496,12 +496,12 @@ class HTMLLinter(HTMLParser):
         elif instruction_type == InstructionType.END_FREEFORM:
             self._freeform_level -= 1
 
-        if instruction_type.decrease_indentation:
+        if instruction_type.ends_block:
             self._indentation_level -= 1
 
         self._reconcile_indentation()  # Between the indentation change
 
-        if instruction_type.increase_indentation:
+        if instruction_type.starts_block:
             self._indentation_level += 1
 
         if self.fix:
@@ -931,9 +931,11 @@ class HTMLLinter(HTMLParser):
                         processed_value = processor.process(
                             attr_name=name,
                             indentation=self.indentation,
+                            position=self.getpos(),
                             current_indentation_level=self._indentation_level + 1,
                             tab_width=self.tab_width,
                             bounding_character=quote_char,
+                            preprocessor=self.preprocessor,
                             attr_body=processed_value,
                         )
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
