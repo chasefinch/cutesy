@@ -1,23 +1,2 @@
-# Venv
-pyvenv.cfg
-lib/*
-bin/*
-
-# PYPI
-build/*
-dist/*
-cutesy.egg-info
-
-# Build
-.ruff-cache
-
-# Other
-*.sw[po]
-*.py[co]
-*.DS_Store
-.cache
-.coverage
-.env
-node_modules
-.vscode/settings.json
-.zed/settings.json
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*

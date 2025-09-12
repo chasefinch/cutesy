@@ -1,5 +1,8 @@
 # Custom enumerations
 data-enum==2.0.1
 
+# Class properties
+classproperties==0.2.0
+
 # CLI tools
 click==8.1.3

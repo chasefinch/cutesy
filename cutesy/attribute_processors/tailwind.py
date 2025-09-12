@@ -52,39 +52,46 @@ class AttributeProcessor(BaseAttributeProcessor):
         if preprocessor:
             left, right = preprocessor.delimiters
             line, column = position
+
+            # Ensure that there aren't mid-class instructions
+            esc = re.escape
+            start_set = "".join(esc(type_.value) for type_ in InstructionType.block_starts)
+            end_set = "".join(esc(type_.value) for type_ in InstructionType.block_ends)
+
+            # "Bad left": a LEFT that is not at start and not immediately after RIGHT,
+            # *and* whose next char is in starting_chars.
+            bad_left = rf'(?<!{esc(right)}){esc(left)}(?=[{start_set}])'
+
+            # Bad RIGHT: in a segment that started with LEFT+ending_char,
+            # and this RIGHT is not followed by LEFT and not at end of string
+            bad_right = (
+                rf'{esc(left)}[{end_set}][^{esc(right)}]*?'
+                rf'{esc(right)}(?!{esc(left)}|$)'
+            )
+
+            raise_tw1 = any(
+                re.search(bad_left, class_name[1:]) or re.search(bad_right, class_name)
+                for class_name in class_names
+            )
+
+            class_names = expand_class_names(class_names, left, right, keep_empty=False)
             start_block_count = 0
-            raise_tw1 = False
             for index, class_name in enumerate(class_names):
-                cursor = 0
-                while cursor < len(class_name):
-                    if class_name[cursor] == left:
-                        cursor2 = class_name.find(right, cursor + 1)
-                        assert(cursor2 != -1)
-                        instruction_string = class_name[cursor:cursor2+1]
-                        min_instruction_string_length = 4
-                        assert(len(instruction_string) >= min_instruction_string_length)
-                        instruction_type = InstructionType(instruction_string[1])
-
-                        if instruction_type.starts_block:
-                            if cursor > 0:
-                                raise_tw1 = True
-                            start_block_count += 1
-
-                        if instruction_type.ends_block:
-                            if cursor2 + 1 < len(class_name) and start_block_count == 1:
-                                raise_tw1 = True
-                            start_block_count -= 1
-
-                        cursor = cursor2  # move to the end match
-                    cursor += 1
+                if class_name.startswith(left):
+                    min_instruction_string_length = 4
+                    assert(len(class_name) >= min_instruction_string_length)
+                    instruction_type = InstructionType(class_name[1])
+                    if instruction_type.starts_block:
+                        start_block_count += 1
+                    elif instruction_type.ends_block:
+                        start_block_count -= 1
 
                 if start_block_count < 0:
-                    raise_tw1 = True
+                    raise_tw1 - True
 
                 if current_preprocessed_index_range:
-                    if start_block_count:
-                        current_preprocessed_index_range = (current_preprocessed_index_range[0], index + 1)
-                    else:
+                    current_preprocessed_index_range = (current_preprocessed_index_range[0], index + 1)
+                    if not start_block_count:
                         preprocessed_index_ranges.append(current_preprocessed_index_range)
                         current_preprocessed_index_range = None
                 elif start_block_count:
@@ -106,6 +113,9 @@ class AttributeProcessor(BaseAttributeProcessor):
                 # Do this after & in reverse order, b/c editing class_names
                 stashed_class_names.append(class_names[index_range[0]:index_range[1]])
                 class_names[index_range[0]:index_range[1]] = [f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"]
+
+            if preprocessed_index_ranges:
+                print(class_names)
 
         max_single_line_classes = 5
         max_single_line_characters = 40
@@ -151,6 +161,49 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         attribute_lines.append(current_indentation_level * indentation)
         return '\n'.join(attribute_lines)
+
+
+def expand_class_names(
+    class_names: Iterable[str],
+    left: str,
+    right: str,
+    *,
+    keep_empty: bool = False,
+) -> list[str]:
+    """Break up delimited strings in a list of class names.
+
+    For each string in `class_names`, find every occurrence of text delimited by
+    `left` ... `right`, and expand that string into a sequence of alternating
+    outside-text and delimited-chunk entries. Returns the flattened list.
+
+    Example:
+        class_names = ["btn{primary}--lg{x}-shadow", "card"]
+        left, right = "{", "}"
+        -> ["btn", "{primary}", "--lg", "{x}", "-shadow", "card"]
+
+    Notes:
+      - Uses a non-greedy match; supports multiple delimited sections per string.
+      - Unmatched delimiters leave the string as-is (no split).
+      - Set keep_empty=True to retain empty outside pieces (default drops them).
+      - Does not attempt to handle nested delimiters (e.g., “{ a { b } }”).
+
+    """
+    pattern = re.compile(f"({re.escape(left)}.*?{re.escape(right)})")
+    out: List[str] = []
+
+    for s in class_names:
+        # If there are no delimited chunks, keep the string as-is.
+        if not pattern.search(s):
+            out.append(s)
+            continue
+
+        parts = pattern.split(s)  # keeps the delimited chunks in the result
+        if not keep_empty:
+            parts = [p for p in parts if p != ""]
+
+        out.extend(parts)
+
+    return out
 
 def parse_tailwind_class(full: str) -> TailwindClass:
     """Parse a Tailwind class string into a TailwindClass object."""

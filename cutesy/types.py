@@ -3,7 +3,9 @@
 # Standard Library
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Self, Any
 from enum import Enum, auto, unique
+from classproperties import classproperty
 
 # Third Party
 from data_enum import DataEnum
@@ -148,6 +150,28 @@ class InstructionType(Enum):
     # Ignore for processing
     IGNORED = "n"  # noqa: WPS115 (Caps preferred for Enums)
 
+    @classproperty
+    def block_starts(cls) -> set[Self]:
+        """Return a set of instruction types which start a block."""
+        return {
+            cls.PARTIAL,
+            cls.CONDITIONAL,
+            cls.MID_CONDITIONAL,
+            cls.LAST_CONDITIONAL,
+            cls.REPEATABLE,
+        }
+
+    @classproperty
+    def block_ends(cls) -> set[Self]:
+        """Return a set of instruction types which end a block."""
+        return {
+            cls.END_PARTIAL,
+            cls.MID_CONDITIONAL,
+            cls.LAST_CONDITIONAL,
+            cls.END_CONDITIONAL,
+            cls.END_REPEATABLE,
+        }
+
     @classmethod
     def regex_range(cls) -> str:
         """Match all (and only) the character values."""
@@ -182,21 +206,9 @@ class InstructionType(Enum):
     @property
     def starts_block(self) -> bool:
         """Whether this instruction type causes an increase in indentation."""
-        return self in {
-            InstructionType.PARTIAL,
-            InstructionType.CONDITIONAL,
-            InstructionType.MID_CONDITIONAL,
-            InstructionType.LAST_CONDITIONAL,
-            InstructionType.REPEATABLE,
-        }
+        return self in self.block_starts
 
     @property
     def ends_block(self) -> bool:
         """Whether this instruction type causes a decrease in indentation."""
-        return self in {
-            InstructionType.END_PARTIAL,
-            InstructionType.MID_CONDITIONAL,
-            InstructionType.LAST_CONDITIONAL,
-            InstructionType.END_CONDITIONAL,
-            InstructionType.END_REPEATABLE,
-        }
+        return self in self.block_ends
