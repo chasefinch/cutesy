@@ -46,4 +46,4 @@ class TestRules:
 
     def test_f1(self) -> None:
         """Test rule F1."""
-        self.run_test("<!DOCTYPE HTML>", "F1")
+        self.run_test("<!DOCTYPE HTML>\n", "F1")

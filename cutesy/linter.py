@@ -81,8 +81,10 @@ def attr_sort(attr: tuple[str | None, Any]) -> tuple[Any, ...]:
         attr[0] != "itemtype",
         attr[0] != "itemprop",
         attr[0] != "style",
-        # Push these keys to the end
+        # Push these keys to the end (in reverse order)
         (attr[0] or "").startswith("on"),
+        (attr[0] or "").startswith("@"),
+        (attr[0] or "").startswith("x-"),
         (attr[0] or "").startswith("data-"),
         attr[0],
     )
@@ -140,9 +142,8 @@ class HTMLLinter(HTMLParser):
         # mean in the incoming HTML document
         self.tab_width = 4
         # Tuners for attribute wrapping logic
-        self.long_attr_length = 20
-        self.xlong_attr_length = 38
-        self.xxlong_attr_length = 60
+        self.max_attrs_per_line = 5
+        self.max_chars_per_line = 99
 
     def reset(self) -> None:
         """Reset the state of the linter so that it can be run again."""
@@ -162,7 +163,7 @@ class HTMLLinter(HTMLParser):
         self._column = 0
 
     def lint(self, html: str) -> tuple[str, Sequence[Error]]:
-        """Run the server-side-rendering routine."""
+        """Run the linting routine."""
         self.reset()
 
         html_data = html
@@ -186,6 +187,14 @@ class HTMLLinter(HTMLParser):
 
         result = "".join(self._result) if self.fix else html_data
         errors = self._errors
+
+        # Enforce a final blank line for full HTML documents.
+        if self._mode == Mode.DOCUMENT and not result.endswith("\n"):
+            if self.fix:
+                # Normalize to exactly one blank line at EOF.
+                result = "".join((result.rstrip("\n"), "\n"))
+            else:
+                self._log_error("D9", column=0)
 
         if preprocessor:
             # Restore the instructions into the placeholder slots
@@ -279,30 +288,26 @@ class HTMLLinter(HTMLParser):
         _, attr_strings = self._make_attr_strings(attrs)
 
         # Decide whether this should be kept on one line or should wrap
-        num_long_attrs = 0
-        num_xlong_attrs = 0
-        num_xxlong_attrs = 0
-        num_breaking_attrs = 0
-        for attr_string in attr_strings:
-            value_length = len(attr_string)
-            if value_length >= self.long_attr_length:
-                num_long_attrs += 1
-            if value_length >= self.xlong_attr_length:
-                num_xlong_attrs += 1
-            if value_length >= self.xxlong_attr_length:
-                num_xxlong_attrs += 1
-            if any(char in attr_string for char in ("\n", "\t")):
-                num_breaking_attrs += 1
 
-        max_attrs = 3
-        max_long_attrs = 2
+        has_breaking_attr = any(
+            char in attr_string for attr_string in attr_strings for char in ("\n", "\t")
+        )
+
+        len_angle_brackets = 2
+        len_attrs = sum(len(attr_string) for attr_string in attr_strings)
+        num_spaces = len(attr_strings)
+        num_chars = (
+            len_angle_brackets
+            + len_attrs
+            + num_spaces
+            + len(tag)
+            + self.tab_width * self._indentation_level
+        )
         wrap = any(
             (
-                len(attr_strings) > max_attrs,
-                num_long_attrs > max_long_attrs,
-                num_xlong_attrs > 0 and num_long_attrs > 1,
-                num_xxlong_attrs > 0 and len(attr_strings) > 1,
-                num_breaking_attrs > 0,
+                len(attr_strings) > self.max_attrs_per_line,
+                len(attr_strings) > 1 and num_chars > self.max_chars_per_line,
+                has_breaking_attr,
             ),
         )
 
@@ -496,12 +501,12 @@ class HTMLLinter(HTMLParser):
         elif instruction_type == InstructionType.END_FREEFORM:
             self._freeform_level -= 1
 
-        if instruction_type.ends_block:
+        if instruction_type.ends_block or instruction_type.continues_block:
             self._indentation_level -= 1
 
         self._reconcile_indentation()  # Between the indentation change
 
-        if instruction_type.starts_block:
+        if instruction_type.starts_block or instruction_type.continues_block:
             self._indentation_level += 1
 
         if self.fix:
@@ -934,6 +939,8 @@ class HTMLLinter(HTMLParser):
                             position=self.getpos(),
                             current_indentation_level=self._indentation_level + 1,
                             tab_width=self.tab_width,
+                            max_chars_per_line=self.max_chars_per_line,
+                            max_items_per_line=self.max_attrs_per_line,
                             bounding_character=quote_char,
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
@@ -956,15 +963,24 @@ class HTMLLinter(HTMLParser):
         attr_strings = []
         for _, group in attr_keys_and_groups:
             num_dynamic_tag_parts = 3
-            num_broken_line_tag_parts = 2
-            if (  # noqa: WPS337 (Dynamic loop condition)
-                len(group) == num_dynamic_tag_parts
-                and "\n" not in group[1]
-                and len(group[1][len(self.indentation)]) <= self.long_attr_length
-            ):
-                group[1] = group[1][len(self.indentation) :]  # Strip leading indentation
-                attr_strings.append("".join(group))
-            elif len(group) == num_broken_line_tag_parts:
+            num_empty_dyamic_context_attrs = 2
+
+            is_flattenable = (
+                num_dynamic_tag_parts <= len(group) <= self.max_attrs_per_line
+                and not any("\n" in item for item in group)
+                and sum(len(item) for item in group)
+                + self.tab_width * (self._indentation_level + 1)
+                <= self.max_chars_per_line
+            )
+
+            if is_flattenable:
+                # strip one indent from every inner item, if present
+                inner_items = [item.removeprefix(self.indentation) for item in group[1:-1]]
+                flat = f"{group[0]}{' '.join(inner_items)}{group[-1]}"
+                attr_strings.append(flat)
+
+            elif len(group) == num_empty_dyamic_context_attrs:
+                # Nothing between start/end tokens – just glue them together
                 attr_strings.append("".join(group))
             else:
                 attr_strings.extend(group)

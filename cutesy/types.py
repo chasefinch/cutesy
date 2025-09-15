@@ -3,8 +3,9 @@
 # Standard Library
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Self, Any
 from enum import Enum, auto, unique
+from typing import cast
+
 from classproperties import classproperty
 
 # Third Party
@@ -38,6 +39,7 @@ Rule("D5", "Unnecessary self-closing of {tag}")
 Rule("D6", "Self-closing of non-void element {tag}")
 Rule("D7", "Malformed tag")
 Rule("D8", "Malformed closing tag")
+Rule("D9", "Expected blank line at end of document")
 
 # Formatting rules
 Rule("F1", "Doctype not lowercase")
@@ -101,6 +103,7 @@ class PreprocessingError(Exception):
 
         self.errors = errors
 
+
 @unique
 class InstructionType(Enum):
     """A single letter to represent each type of dynamic instruction.
@@ -151,26 +154,33 @@ class InstructionType(Enum):
     IGNORED = "n"  # noqa: WPS115 (Caps preferred for Enums)
 
     @classproperty
-    def block_starts(cls) -> set[Self]:
+    def block_starts(cls) -> set["InstructionType"]:  # noqa: N805 (Classproperty convention)
         """Return a set of instruction types which start a block."""
-        return {
-            cls.PARTIAL,
-            cls.CONDITIONAL,
-            cls.MID_CONDITIONAL,
-            cls.LAST_CONDITIONAL,
-            cls.REPEATABLE,
+        starts: set[InstructionType] = {
+            cast("InstructionType", cls.PARTIAL),
+            cast("InstructionType", cls.CONDITIONAL),
+            cast("InstructionType", cls.REPEATABLE),
         }
+        return starts
 
     @classproperty
-    def block_ends(cls) -> set[Self]:
-        """Return a set of instruction types which end a block."""
-        return {
-            cls.END_PARTIAL,
-            cls.MID_CONDITIONAL,
-            cls.LAST_CONDITIONAL,
-            cls.END_CONDITIONAL,
-            cls.END_REPEATABLE,
+    def block_continuations(cls) -> set["InstructionType"]:  # noqa: N805
+        """Return a set of instruction types which continue a block."""
+        continuations: set[InstructionType] = {
+            cast("InstructionType", cls.MID_CONDITIONAL),
+            cast("InstructionType", cls.LAST_CONDITIONAL),
         }
+        return continuations
+
+    @classproperty
+    def block_ends(cls) -> set["InstructionType"]:  # noqa: N805
+        """Return a set of instruction types which end a block."""
+        ends: set[InstructionType] = {
+            cast("InstructionType", cls.END_PARTIAL),
+            cast("InstructionType", cls.END_CONDITIONAL),
+            cast("InstructionType", cls.END_REPEATABLE),
+        }
+        return ends
 
     @classmethod
     def regex_range(cls) -> str:
@@ -207,6 +217,11 @@ class InstructionType(Enum):
     def starts_block(self) -> bool:
         """Whether this instruction type causes an increase in indentation."""
         return self in self.block_starts
+
+    @property
+    def continues_block(self) -> bool:
+        """Whether this instruction type continues a block."""
+        return self in self.block_continuations
 
     @property
     def ends_block(self) -> bool:

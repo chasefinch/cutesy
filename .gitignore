@@ -1,2 +1,25 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# Venv
+pyvenv.cfg
+lib/*
+bin/*
+
+# PyPI
+build/*
+dist/*
+
+# Pyenv
+.python-version
+
+# Ruff
+.ruff-cache
+
+# Other
+.cache
+*.sw[po]
+*.py[co]
+*.bak
+*.DS_Store
+.coverage
+coverage
+
+cutesy.egg-info

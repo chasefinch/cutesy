@@ -3,19 +3,31 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
-from collections.abc import Iterable
-from typing import NamedTuple
-from ..preprocessors import BasePreprocessor
-from ..types import InstructionType, PreprocessingError, Rule
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Final, NamedTuple, TypeAlias
 
+from more_itertools import collapse
+
+from ..types import InstructionType, Rule
 from . import BaseAttributeProcessor
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from ..preprocessors import BasePreprocessor
 
 
 DYNAMIC_LIST_ITEM_SENTINEL = "__LIST_ITEM_SENTINEL_A3VJ3FL__"
 
 
 Rule("TW1", "Control instruction overlaps class names")
+
+
+StashItem: TypeAlias = "str | list[StashItem]"
+
+StackNode: TypeAlias = list["int | StackNode"]
+
+IndexRangeNode: TypeAlias = list["int | IndexRangeNode"]
 
 
 class TailwindClass(NamedTuple):
@@ -29,13 +41,17 @@ class TailwindClass(NamedTuple):
 class AttributeProcessor(BaseAttributeProcessor):
     """Sort classes according to the Tailwind style."""
 
+    stashed_class_names: list[StashItem]
+
     def process(
         self,
         attr_name: str,
-        position: (int, int),
+        position: tuple[int, int],
         indentation: str,
         current_indentation_level: int,
         tab_width: int,
+        max_chars_per_line: int,
+        max_items_per_line: int,
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
@@ -44,10 +60,16 @@ class AttributeProcessor(BaseAttributeProcessor):
         if attr_name != "class":
             return attr_body
 
+        self.indentation = indentation
+
+        self.max_length = max_chars_per_line - ((current_indentation_level + 1) * tab_width)
+        self.max_items_per_line = max_items_per_line
+
+        self.stashed_class_names = []
+
         adjusted_attr_body = attr_body.strip()
         class_names = adjusted_attr_body.split()
-        stashed_class_names: list = []
-        preprocessed_index_ranges: list[list[int] | int] = []
+        preprocessed_index_ranges: list[IndexRangeNode] = []
 
         if preprocessor:
             left, right = preprocessor.delimiters
@@ -55,18 +77,20 @@ class AttributeProcessor(BaseAttributeProcessor):
 
             # Ensure that there aren't mid-class instructions
             esc = re.escape
-            start_set = "".join(esc(type_.value) for type_ in InstructionType.block_starts)
-            end_set = "".join(esc(type_.value) for type_ in InstructionType.block_ends)
+            block_starts = InstructionType.block_starts | InstructionType.block_continuations
+            block_ends = InstructionType.block_ends
+            start_set = "".join(esc(type_.value) for type_ in block_starts)
+            end_set = "".join(esc(type_.value) for type_ in block_ends)
 
             # "Bad left": a LEFT that is not at start and not immediately after RIGHT,
             # *and* whose next char is in starting_chars.
-            bad_left = rf'(?<!{esc(right)}){esc(left)}(?=[{start_set}])'
+            bad_left = rf"(?<!{esc(right)}){esc(left)}(?=[{start_set}])"
 
             # Bad RIGHT: in a segment that started with LEFT+ending_char,
             # and this RIGHT is not followed by LEFT and not at end of string
             bad_right = (
-                rf'{esc(left)}[{end_set}][^{esc(right)}]*?'
-                rf'{esc(right)}(?!{esc(left)}|$)'
+                rf"{esc(left)}[{end_set}][^{esc(right)}]*?"
+                rf"{esc(right)}(?!{esc(left)}|$)"
             )
 
             raise_tw1 = any(
@@ -75,30 +99,34 @@ class AttributeProcessor(BaseAttributeProcessor):
             )
 
             class_names = expand_class_names(class_names, left, right, keep_empty=False)
-            stack: list[list[int] | int] = []
+            stack: list[StackNode] = []
 
             for index, class_name in enumerate(class_names):
-                starts = ends = False
                 if class_name.startswith(left):
                     min_instruction_string_length = 4
                     assert len(class_name) >= min_instruction_string_length
                     instruction_type = InstructionType(class_name[1])
-                    starts = getattr(instruction_type, "starts_block", False)
-                    ends = getattr(instruction_type, "ends_block", False)
 
-                if starts:
-                    node: list = [index] # start index
-                    if stack:
-                        stack[-1].append(node) # nest under current open node
-                    else:
-                        preprocessed_index_ranges.append(node) # top-level
-                    stack.append(node)
+                    if instruction_type.starts_block:
+                        node: list = [index]  # start index
+                        if stack:
+                            stack[-1].append(node)  # nest under current open node
+                        else:
+                            preprocessed_index_ranges.append(node)  # top-level
+                        stack.append(node)
 
-                if ends:
-                    if not stack:
-                        raise ValueError(f"Unbalanced block ending at index {index}")
-                    stack[-1].append(index + 1) # end index (exclusive)
-                    stack.pop()
+                    elif instruction_type.continues_block:
+                        if not stack:
+                            error_message = f"Continuation outside a block at index {index}"
+                            raise ValueError(error_message)
+                        stack[-1].append(index)  # continuation marker
+
+                    elif instruction_type.ends_block:
+                        if not stack:
+                            error_message = f"Unbalanced block ending at index {index}"
+                            raise ValueError(error_message)
+                        stack[-1].append(index + 1)  # end index (exclusive)
+                        stack.pop()
 
             if stack:
                 raise_tw1 = True
@@ -115,73 +143,149 @@ class AttributeProcessor(BaseAttributeProcessor):
             for index, index_range in enumerate(reversed(preprocessed_index_ranges)):
                 sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"
                 class_names, stash = extract_with_sentinel(class_names, index_range, sentinel)
-                stashed_class_names.append(stash)
-
-        max_single_line_classes = 5
-        max_single_line_characters = 40
-        single_line_mode = len(class_names) <= max_single_line_classes and len(adjusted_attr_body) <= max_single_line_characters
+                self.stashed_class_names.append(stash)
 
         classes = []
         for class_name in class_names:
             tailwind_class = parse_tailwind_class(class_name)
             classes.append(tailwind_class)
 
-        full_instruction_size = 3
-        sorted_classes = group_and_sort_tailwind(classes)
+        # Single-line mode
+        sorted_class_groups = group_and_sort_tailwind(classes)
+        sorted_class_groups = self._hydrate_class_groups(sorted_class_groups)
+        all_class_names = list(collapse(sorted_class_groups, base_type=str))
+        all_class_names_on_one_line = " ".join(all_class_names)
+
+        max_attr_chars_per_line = self.max_length - len('class=""')
+        single_line_mode = (
+            len(all_class_names) <= max_items_per_line
+            and len(all_class_names_on_one_line) <= max_attr_chars_per_line
+        )
+
         if single_line_mode:
-            all_class_names = []
-            for class_list in sorted_classes:
-                for tailwind_class in class_list:
-                    line = tailwind_class.full_string
-                    if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
-                        index = int(line.split('_')[-1])
-                        stash = stashed_class_names.pop(index)
-                        if len(stash) >= full_instruction_size:
-                            # Remove the first & last space in this conditional
-                            last_item = stash.pop(-1)
-                            stash[-1] = ''.join((stash[-1], last_item))
-                            second_item = stash.pop(1)
-                            stash[0] = ''.join((stash[0], second_item))
-                        all_class_names.extend(stash)
-                    else:
-                        all_class_names.append(line)
+            return all_class_names_on_one_line
 
-            return ' '.join(all_class_names)
-
+        # Multi-line modes...
         attribute_lines = [""]
         line_indentation = (current_indentation_level + 1) * indentation
-        if len(sorted_classes) == 1:
-            # Only one group, but long enough to merit multiple lines.
-            for tailwind_class in sorted_classes[0]:
-                line = tailwind_class.full_string
-                if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
-                    index = int(line.split('_')[-1])
-                    original_class_names = stashed_class_names.pop(index)
-                    for index, class_name in enumerate(original_class_names):
-                        line_string = f'{line_indentation}{class_name}'
-                        if len(original_class_names) >= full_instruction_size and 0 < index < len(original_class_names) - 1:
-                            # Add an extra indentation for blocks.
-                            line_string = f'{indentation}{line_string}'
-                        attribute_lines.append(line_string)
-                else:
-                    attribute_lines.append(f'{line_indentation}{line}')
-        else:
-            for group in sorted_classes:
-                class_names = []
-                for tailwind_class in group:
-                    line = tailwind_class.full_string
-                    if line.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
-                        index = int(line.split('_')[-1])
-                        original_class_names = stashed_class_names.pop(index)
-                        for class_name in original_class_names:
-                            class_names.append(f'{class_name}')
-                    else:
-                        class_names.append(line)
-                joined_line = ' '.join(class_names)
-                attribute_lines.append(f'{line_indentation}{joined_line}')
 
+        # ...#1: One group, but long enough to merit multiple lines.
+        if len(sorted_class_groups) == 1:
+            # Only one group, but long enough to merit multiple lines.
+            for group_entry in sorted_class_groups[0]:
+                lines = self._extract_columns_and_lines(group_entry)
+                for column_index, line_value in lines:
+                    extra_indentation: str = indentation * column_index
+                    attribute_lines.append(f"{line_indentation}{extra_indentation}{line_value}")
+
+        else:
+            for group in sorted_class_groups:
+                multiple_lines = any(isinstance(item, list) for item in group)
+                if multiple_lines:
+                    for multi_group_entry in group:
+                        lines = self._extract_columns_and_lines(multi_group_entry)
+                        for column_index, line_value in lines:
+                            extra_indentation = indentation * column_index
+                            attribute_lines.append(
+                                f"{line_indentation}{extra_indentation}{line_value}",
+                            )
+                else:
+                    attribute_lines.append(" ".join(group))
+
+        # Add the final line
         attribute_lines.append(current_indentation_level * indentation)
-        return '\n'.join(attribute_lines)
+        return "\n".join(attribute_lines)
+
+    def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[str]:
+        """Recursively flatten `stash`.
+
+        - Nested lists are flattened
+        - Any list that becomes a single string returns that string directly
+        - If a list can be compacted within limits, it joins into a single
+          string with special spacing rules:
+            * No space between first & second items
+            * No space between second-to-last & last items
+            * Single space between everything else
+        - Otherwise return a list[str].
+        """
+        if isinstance(stash, str):
+            return stash
+
+        flat_parts: list[str] = []
+
+        for item in stash:
+            if isinstance(item, str):
+                flat_parts.append(item)
+            else:
+                collapsed = self._flatten_stash(item)
+                if isinstance(collapsed, str):
+                    flat_parts.append(collapsed)
+                else:
+                    flat_parts.extend(collapsed)  # collapsed is list[str]
+
+        # If it collapsed to a single string, return that directly
+        if len(flat_parts) == 1:
+            return flat_parts[0]
+
+        # If it fits on one line, compact it
+        if len(flat_parts) <= self.max_items_per_line:
+            # Strip leading & trailing spaces from this one-liner
+            pieces: list[str] = []
+            for index, part in enumerate(flat_parts):
+                if index == 0:
+                    pieces.append(part)
+                elif index == 1 or index == len(flat_parts) - 1:
+                    pieces[-1] += part
+                else:
+                    pieces.append(part)
+            candidate = " ".join(pieces)
+            if len(candidate) <= self.max_length:
+                return candidate
+
+        # Otherwise, return the list of strings
+        return flat_parts
+
+    def _hydrate_class_groups(self, class_groups: list[list[str]]) -> list[list[str]]:
+        """Hydrate a stash into a list of class groups."""
+        if not class_groups:
+            return []
+
+        hydrated_class_groups = class_groups[:-1]
+        flat_class_entries: list[str] = []
+        for user_defined_item in class_groups[-1]:
+            if user_defined_item.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
+                index = int(user_defined_item.split("_")[-1])
+                flattened = self._flatten_stash(self.stashed_class_names.pop(index))
+                if isinstance(flattened, str):
+                    flat_class_entries.append(flattened)
+                else:
+                    flat_class_entries.extend(flattened)  # list[str]
+            else:
+                flat_class_entries.append(user_defined_item)
+        hydrated_class_groups.append(flat_class_entries)
+        return hydrated_class_groups
+
+    def _extract_columns_and_lines(
+        self,
+        item: StashItem,
+        column: int = 0,
+    ) -> list[tuple[int, str]]:
+        if isinstance(item, list):
+            min_wrapped_instruction_length = 2
+            assert len(item) >= min_wrapped_instruction_length
+            # First and last entries of a wrapped block are always strings
+            assert isinstance(item[0], str)
+            assert isinstance(item[-1], str)
+
+            columns_and_lines: list[tuple[int, str]] = [(column, item[0])]
+            for subitem in item[1:-1]:
+                columns_and_lines.extend(self._extract_columns_and_lines(subitem, column + 1))
+            columns_and_lines.append((column, item[-1]))
+            return columns_and_lines
+
+        # Base case: item must be a string here
+        assert isinstance(item, str)
+        return [(column, item)]
 
 
 def expand_class_names(
@@ -207,55 +311,48 @@ def expand_class_names(
       - Unmatched delimiters leave the string as-is (no split).
       - Set keep_empty=True to retain empty outside pieces (default drops them).
       - Does not attempt to handle nested delimiters (e.g., “{ a { b } }”).
+
     """
     pattern = re.compile(f"({re.escape(left)}.*?{re.escape(right)})")
     out: list[str] = []
 
-    for s in class_names:
+    for class_name in class_names:
         # If there are no delimited chunks, keep the string as-is.
-        if not pattern.search(s):
-            out.append(s)
+        if not pattern.search(class_name):
+            out.append(class_name)
             continue
 
-        parts = pattern.split(s)  # keeps the delimited chunks in the result
+        parts = pattern.split(class_name)  # keeps the delimited chunks in the result
         if not keep_empty:
-            parts = [p for p in parts if p != ""]
+            parts = [part for part in parts if part != ""]
 
         out.extend(parts)
 
     return out
 
 
-def _build_stash(class_names: list[str], tree: list) -> list:
-    start = tree[0]
-    end = tree[-1]
-    children = tree[1:-1]
+def extract_with_sentinel(
+    class_names: list[str],
+    index_tree: IndexRangeNode,
+    sentinel: str,
+) -> tuple[list[str], StashItem]:
+    """Extract a span of class names and replace it with a sentinel.
 
-    stash: list = []
-    cursor = start
+    Returns (new_class_names, stash), where new_class_names has
+    class_names[start:end] replaced by the sentinel, and stash is a nested
+    structure of the removed items.
 
-    for child in children:
-        first, last = child[0], child[-1]
-        stash.extend(class_names[cursor:first])  # plain items before child
-        stash.append(_build_stash(class_names, child))  # nested child
-        cursor = last
-
-    stash.extend(class_names[cursor:end])  # tail after last child
-    return stash
-
-
-def extract_with_sentinel(class_names: list[str], index_tree: list, sentinel: str):
-    """Extract and replace from a class list.
-
-    Replace class_names[start:end] with a sentinel., and return
-    (new_class_names, stash) where stash is the nested list of the removed
-    items per the index tree.
+    In the stash, plain strings are class names, and lists represent nested
+    blocks.
     """
     start = index_tree[0]
     end = index_tree[-1]
 
+    assert isinstance(start, int)
+    assert isinstance(end, int)
+
     stash = _build_stash(class_names, index_tree)
-    new_class_names = class_names[:start] + [sentinel] + class_names[end:]
+    new_class_names = [*class_names[:start], sentinel, *class_names[end:]]
     return new_class_names, stash
 
 
@@ -298,9 +395,7 @@ def parse_tailwind_class(full: str) -> TailwindClass:
     )
 
 
-# -------------------- Group definitions (order matters) -----------------------
-
-GROUPS_IN_ORDER: list[tuple[str, Iterable[str]]] = [
+GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     (
         "display/position",
         (
@@ -373,16 +468,17 @@ GROUPS_IN_ORDER: list[tuple[str, Iterable[str]]] = [
     ),
     ("svg", (r"(?:fill-|stroke-)",)),
     ("accessibility", (r"(?:sr-only|not-sr-only)",)),
-]
+)
 
-_COMPILED: list[tuple[str, list[re.Pattern[str]]]] = [
-    (name, [re.compile(rf"^{p}") for p in patterns]) for name, patterns in GROUPS_IN_ORDER
-]
+_COMPILED: Final[tuple[tuple[str, list[re.Pattern[str]]], ...]] = tuple(
+    (name, [re.compile(rf"^{pattern}") for pattern in patterns])
+    for name, patterns in GROUPS_IN_ORDER
+)
 
 # Full group order we will emit
-REAL_GROUPS_ORDER: tuple[str, ...] = tuple(name for name, _ in GROUPS_IN_ORDER)
+REAL_GROUPS_ORDER: Final[tuple[str, ...]] = tuple(name for name, _ in GROUPS_IN_ORDER)
 
-# -------------------- Modifier ordering (relative lists) ----------------------
+# Modifier ordering (relative lists) ------------------------------------------
 
 RESPONSIVE_ORDER = ("xs", "sm", "md", "lg", "xl", "2xl")
 
@@ -415,42 +511,131 @@ STATE_ORDER = (
     "ltr",
 )
 
-
-def _index_in(seq: tuple[str, ...], val: str, default: int) -> int:
-    try:
-        return seq.index(val)
-    except ValueError:
-        return default
+# Group finder & user-class placement -----------------------------------------
 
 
-def _modifier_key(mods: list[str]) -> tuple:
-    """Build a tuple that sorts by the following criteria.
+def group_and_sort_tailwind(
+    classes: list[TailwindClass],
+) -> list[list[str]]:
+    """Return groups of tailwind class strings in fixed order.
 
-    - unmodified first (handled outside by flag),
-    - then by responsive in RESP_ORDER sequence (left to right),
-    - then by states in STATE_ORDER (left to right),
-    - then arbitrary/unknown (kept in written order, used as tiebreak).
+    All user- defined classes will be collected into one final bucket at the
+    bottom (preserving original order).
+
+    Real Tailwind groups appear in REAL_GROUPS_ORDER, then "other (tailwind)",
+    sorted by _intragroup_sort_key.
+
+    User-defined classes (not recognized as Tailwind) are not mixed into
+    groups; they are emitted as one final list at the end, in original order.
     """
-    resp = tuple(_index_in(RESPONSIVE_ORDER, m, 999) for m in mods if m in RESPONSIVE_ORDER)
-    state = tuple(_index_in(STATE_ORDER, m, 999) for m in mods if m in STATE_ORDER)
-    # Anything not caught above: keep literal for stable compare
-    other = tuple(m for m in mods if (m not in RESPONSIVE_ORDER and m not in STATE_ORDER))
-    return (resp, state, other)
+    # Buckets for real groups (track original index for stable sort)
+    group_items: dict[str, list[tuple[int, TailwindClass]]] = {
+        group: [] for group in REAL_GROUPS_ORDER
+    }
+    group_items["other (tailwind)"] = []
+
+    # Single bucket for all user-defined classes (preserve original order)
+    user_defined: list[str] = []
+
+    # Partition into Tailwind groups vs user-defined
+    for index, tailwind_class in enumerate(classes):
+        group = _find_group(tailwind_class.class_name)  # returns a group name or None
+        if group is None:
+            user_defined.append(tailwind_class.full_string)
+        else:
+            group_items[group].append((index, tailwind_class))
+
+    # Emit results as a list of lists (group contents only)
+    out: list[list[str]] = []
+
+    # Real groups in fixed order, then "other (tailwind)"
+    for group_name in (*REAL_GROUPS_ORDER, "other (tailwind)"):  # noqa: WPS426
+        if not group_items[group_name]:
+            continue
+        sorted_group = sorted(
+            group_items[group_name],
+            key=lambda pair: _intragroup_sort_key(group_name, pair[1], pair[0]),
+        )
+        out.append([item.full_string for _, item in sorted_group])
+
+    # Finally, all user-defined classes at the bottom (original order)
+    if user_defined:
+        out.append(user_defined)
+
+    return out
 
 
-# -------------------- Intra-group ordering (simple, stable) -------------------
+# Loop, sort, and parse helpers -----------------------------------------------
+
+
+def _build_stash(class_names: list[str], tree: list) -> list[StashItem]:
+    start = tree[0]
+    end = tree[-1]
+    interior = tree[1:-1]
+
+    stash: list = []
+    cursor = start
+
+    for child in interior:
+        if isinstance(child, int):
+            # Copy items before the scalar, then include the scalar item itself
+            stash.extend(class_names[cursor:child])
+            stash.append(class_names[child])
+            cursor = child + 1
+        else:
+            # Nested block: child is a list like [start, ..., end]
+            child_start = child[0]
+            child_end = child[-1]
+            # Copy items before the child block
+            stash.extend(class_names[cursor:child_start])
+            # Recurse for the nested block
+            stash.append(_build_stash(class_names, child))
+            cursor = child_end
+
+    # Tail after last interior element up to (but not including) end
+    stash.extend(class_names[cursor:end])
+    return stash
+
+
+RESPONSIVE_ORDER_INDEX: Final = MappingProxyType(
+    {modifier: index for index, modifier in enumerate(RESPONSIVE_ORDER)},
+)
+STATE_ORDER_INDEX: Final = MappingProxyType(
+    {modifier: index for index, modifier in enumerate(STATE_ORDER)},
+)
+
+
+def _modifier_key(
+    modifiers: list[str],
+) -> tuple[tuple[int, ...], tuple[int, ...], tuple[str, ...]]:
+    """Sort by responsive order, then state order, then literal (stable)."""
+    responsive = tuple(
+        RESPONSIVE_ORDER_INDEX[modifier]
+        for modifier in modifiers
+        if modifier in RESPONSIVE_ORDER_INDEX
+    )
+    state = tuple(
+        STATE_ORDER_INDEX[modifier] for modifier in modifiers if modifier in STATE_ORDER_INDEX
+    )
+    other = tuple(
+        modifier
+        for modifier in modifiers
+        if modifier not in RESPONSIVE_ORDER_INDEX and modifier not in STATE_ORDER_INDEX
+    )
+    return (responsive, state, other)
+
 
 _SPACING_AXIS = ("x", "y")
-_SPACING_SIDES = ("t", "r", "b", "l")
+_SPACING_SIDES = ("t", "b", "r", "l", "s", "e")
 
 
 def _spacing_specificity(name: str) -> int:
     # p- / m- < px-/py-/mx-/my- < pt-/pr-/.../ml-
     if name.startswith(("p-", "m-")):
         return 0
-    if any(name.startswith(f"p{a}-") or name.startswith(f"m{a}-") for a in _SPACING_AXIS):
+    if any(name.startswith((f"p{axis}-", f"m{axis}-")) for axis in _SPACING_AXIS):
         return 1
-    if any(name.startswith(f"p{s}-") or name.startswith(f"m{s}-") for s in _SPACING_SIDES):
+    if any(name.startswith((f"p{side}-", f"m{side}-")) for side in _SPACING_SIDES):
         return 2
     return 0
 
@@ -458,9 +643,9 @@ def _spacing_specificity(name: str) -> int:
 def _border_specificity(name: str) -> int:
     # border-* < border-x/y-* < border-t/r/b/l-* ; for rounded: rough by hyphen count
     if name.startswith("border-"):
-        if any(name.startswith(f"border-{a}-") for a in _SPACING_AXIS):
+        if any(name.startswith(f"border-{axis}-") for axis in _SPACING_AXIS):
             return 1
-        if any(name.startswith(f"border-{s}-") for s in _SPACING_SIDES):
+        if any(name.startswith(f"border-{side}-") for side in _SPACING_SIDES):
             return 2
         return 0
     if name.startswith("rounded-"):
@@ -469,7 +654,7 @@ def _border_specificity(name: str) -> int:
 
 
 def _family_key(group_name: str, class_name: str) -> tuple:
-    """A cheap key so similar utilities cluster inside a group."""
+    """Cluster similar utilities inside a group."""
     head = class_name.split("-", 1)[0]  # e.g., 'bg', 'text', 'p', 'border'
     if group_name == "spacing (margin/padding)":
         return (head, _spacing_specificity(class_name))
@@ -479,11 +664,14 @@ def _family_key(group_name: str, class_name: str) -> tuple:
     return (head, class_name.count("-"))
 
 
-def _intragroup_sort_key(group_name: str, item, original_index: int) -> tuple:
-    """Unmodified first, then modifiers in consistent order, then name, then
-    stable index."""
-    base = item.class_name
+def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: int) -> tuple:
+    """Sort within a group.
+
+    Unmodified first, then modifiers in consistent order, then name, then
+    stable index.
+    """
     has_mods = 1 if item.modifiers else 0
+    base = item.class_name
     return (
         _family_key(group_name, base),
         has_mods,  # 0 (no mods) before 1 (has mods)
@@ -493,10 +681,10 @@ def _intragroup_sort_key(group_name: str, item, original_index: int) -> tuple:
     )
 
 
-# -------------------- Group finder & user-class placement ---------------------
-
-
 def _find_group(class_name: str) -> str | None:
+    unwanted_keys = ("--", "__")
+    if any(key in class_name for key in unwanted_keys):
+        return None
     for group_name, compiled_list in _COMPILED:
         if any(pat.match(class_name) for pat in compiled_list):
             return group_name
@@ -504,67 +692,3 @@ def _find_group(class_name: str) -> str | None:
     if class_name in {"container", "flex", "grid", "contents", "hidden"}:
         return "other (tailwind)"
     return None  # None means: user-defined
-
-
-def group_and_sort_tailwind(
-    classes: list[TailwindClass],
-) -> list[list[TailwindClass]]:
-    """Returns a list of (group_name, [TailwindClass...]) where:
-
-    • Real Tailwind groups appear in the fixed order defined above. • Each
-    group’s items are sorted (unmodified → modified, then responsive/state
-    order). • User classes are *not* mixed into groups; instead they are
-    emitted as their own 'user-defined (after <group>)' bucket right *after*
-    the preceding non-user group. User classes preserve their original order
-    inside that bucket. • Any 'leading' user classes (before the first non-
-    user) go to 'user-defined (leading)' at top.
-    """
-    # Buckets for real groups
-    group_items: dict[str, list[tuple[int, object]]] = {g: [] for g in REAL_GROUPS_ORDER}
-    group_items["other (tailwind)"] = []
-
-    # Buckets for user classes after a given group, and leading users
-    user_after: dict[str, list[object]] = defaultdict(list)
-    leading_users: list[object] = []
-
-    last_seen_real_group: str | None = None
-
-    for idx, it in enumerate(classes):
-        g = _find_group(it.class_name)
-        if g is None:
-            # user-defined: attach after last seen group, or to leading if none
-            if last_seen_real_group is None:
-                leading_users.append(it)
-            else:
-                user_after[last_seen_real_group].append(it)
-        else:
-            last_seen_real_group = g
-            group_items[g].append((idx, it))  # keep original index for stability
-
-    # Emit results
-    out: list[tuple[str, list]] = []
-
-    if leading_users:
-        out.append(("user-defined (leading)", leading_users))
-
-    for gname in REAL_GROUPS_ORDER + ("other (tailwind)",):
-        if not group_items[gname]:
-            # still may have user-after bucket even if empty group; if both empty, skip entirely
-            if user_after.get(gname):
-                # if the group is empty but users reference it, we still “honor” the place:
-                out.append((gname, []))
-                out.append((f"user-defined (after {gname})", user_after[gname]))
-            continue
-
-        # sort inside group (stable)
-        sorted_group = sorted(
-            group_items[gname],
-            key=lambda pair: _intragroup_sort_key(gname, pair[1], pair[0]),
-        )
-        out.append((gname, [it for _, it in sorted_group]))
-
-        # then any user classes that should appear after this group
-        if user_after.get(gname):
-            out.append((f"user-defined (after {gname})", user_after[gname]))
-
-    return [out[1] for out in out]

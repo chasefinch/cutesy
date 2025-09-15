@@ -54,18 +54,10 @@
 	{% block extra_preloads %}
 	{% endblock %}
 
-	<link
-		rel="preconnect"
-		href="{% photos_host %}"
-		crossorigin
-	>
+	<link rel="preconnect" href="{% photos_host %}" crossorigin>
 
 	{# Preloads here; The actual CSS files are imported in main.less #}
-	<link
-		rel="preconnect dns-prefetch"
-		href="https://fonts.gstatic.com/"
-		crossorigin
-	>
+	<link rel="preconnect dns-prefetch" href="https://fonts.gstatic.com/" crossorigin>
 
 	{% amp_include_main %}
 
@@ -218,18 +210,14 @@
 </head>
 <body
 	id="body"
-	class="{% block body_class %}body {% if is_map %} fixedLock{% endif %}{% endblock %}"
+	class="{% block body_class %}body {% if is_map %}fixedLock{% endif %}{% endblock %}"
 	[class]="{% block body_class_expr %}'body' + (isMapMode ? ' fixedLock': '') + (isFixedFixMode ? ' fixedFix' : ''){% endblock %}"
 	{# fixedLock prevents overscrolling when a fixed div takes over the screen #}
 >
 	{% block body_top %}
 	{% endblock %}
 
-	<script
-		type="text/plain"
-		id="autocomplete"
-		target="amp-script"
-	>{% include '_elements/scripts/autocomplete.amp.js' only %}</script>
+	<script type="text/plain" id="autocomplete" target="amp-script">{% include '_elements/scripts/autocomplete.amp.js' only %}</script>
 
 	{# Enter the base URL in amp-state so it can be accessed by amp-script #}
 	<amp-state id="baseURL">
@@ -504,7 +492,7 @@
 
 	{# Fixed header which is translucent in map mode #}
 	<header
-		class="hdr {% if is_map %} hdr--seeThru{% endif %}"
+		class="hdr {% if is_map %}hdr--seeThru{% endif %}"
 		[class]="'hdr' + (isMapMode ? ' hdr--seeThru': '') + (searchFormIsModified ? ' hdr--active' : '')"
 	>
 		{% block header %}
@@ -523,7 +511,12 @@
 								layerIn.start
 							"
 						>
-							<svg class="hdr__img adjustedInlineIcon adjustedInlineIcon--slight" width="24px" height="19px" viewbox="0 0 24 19">
+							<svg
+								class="hdr__img adjustedInlineIcon adjustedInlineIcon--slight"
+								width="24px"
+								height="19px"
+								viewbox="0 0 24 19"
+							>
 								<title>{% trans 'Menu' %}</title>
 								<g
 									class="strokeColor--touchable"
@@ -539,7 +532,12 @@
 						</button>
 						<div>
 							<a class="hdr__logo" href="/">
-								<svg class="hdr__img hdr__img--logo" width="191px" height="40px" viewbox="180 19 191 40">
+								<svg
+									class="hdr__img hdr__img--logo"
+									width="191px"
+									height="40px"
+									viewbox="180 19 191 40"
+								>
 									<title>BringFido: Pet Friendly Hotels &amp; Dog Travel Directory</title>
 									<path
 										d="M276.338189,29.932744 L279.115689,25.603944 L282.268389,29.090344 C281.309389,30.318844 279.636589,31.661644 278.703589,32.361944 C279.736689,33.768844 280.354889,35.050644 280.354389,37.018144 C280.353689,39.637344 279.171889,42.130944 277.123389,43.328544 C278.402589,44.432944 279.830789,46.173644 279.830789,48.969544 C279.792689,54.062044 275.949589,58.528944 270.463889,58.528944 C266.203489,58.460844 263.204289,55.994444 263.204289,52.695244 C263.204289,48.818944 266.899189,45.950944 271.381689,46.955844 C271.381689,46.955844 271.442689,49.719744 271.381689,50.975444 C269.539889,50.737744 267.591689,51.520644 267.591689,52.634344 C267.591689,53.478144 268.201689,54.264444 271.069689,54.264444 C273.595089,54.264444 275.485289,52.068344 275.523289,49.202744 C275.523289,46.781444 274.231889,45.635044 272.925689,44.897844 C272.306989,44.995544 271.693389,45.088744 271.013089,45.098644 C266.227089,45.090844 261.988589,41.848744 261.920189,37.273244 C261.859889,32.511944 265.779889,28.552144 271.021989,28.545344 C273.240689,28.542344 275.154489,29.107244 276.338189,29.932744 L276.338189,29.932744 Z M185.133089,24.186244 C184.001389,24.215744 182.826989,24.485244 181.557589,24.762944 L180.404389,20.641344 C191.154689,17.098144 201.402189,19.682144 201.530289,24.665744 C201.598589,27.322744 200.365689,29.389744 197.848989,31.271444 C201.968789,32.560444 204.523289,35.211644 205.064389,39.688544 C206.048389,48.046844 197.745389,56.264644 182.643989,53.393444 C182.807689,51.787044 183.039789,49.123944 183.039789,49.123944 C183.973189,49.249544 184.842489,49.484144 185.721089,49.526144 L185.133089,24.186244 Z M335.257389,32.136644 C335.353389,28.312044 335.305389,26.476644 335.372389,24.768644 C333.773389,24.678644 330.731389,24.034244 330.731389,24.034244 L330.731389,20.158644 L339.987389,20.461144 C339.987389,20.461144 338.704389,41.940544 338.597389,44.620544 C338.490389,47.300444 338.799389,48.883244 339.740389,48.973644 C340.733389,49.048944 341.586389,46.599244 341.586389,46.599244 L344.963389,49.034544 C344.963389,49.034544 342.298389,53.232244 339.793389,53.098544 C337.861389,52.958544 336.115389,52.075544 335.490389,49.684744 C334.033389,51.274744 332.066389,52.117544 329.634389,52.049644 C324.847389,51.916144 320.988389,47.661244 320.999389,40.996444 C321.010389,34.597044 325.072389,29.562744 329.615389,29.429144 C332.024389,29.429044 334.188389,30.640844 335.257389,32.136644 L335.257389,32.136644 Z M287.705389,23.899044 C285.293389,24.020344 283.792389,24.224544 283.792389,24.224544 L282.979389,19.886644 C282.979389,19.886644 297.799389,19.054744 307.518389,19.598144 C307.296389,22.283144 307.869389,28.651944 307.869389,28.651944 L303.338389,28.907644 C303.338389,28.907644 303.161389,26.302944 303.195389,23.809744 C301.045389,23.460544 296.853389,23.466044 292.367389,23.643144 L292.510389,32.352444 L296.660389,32.304944 L296.594389,27.972644 L301.045389,27.925144 L301.412389,41.661944 L296.833389,41.837344 L296.708389,36.602544 L292.462389,36.747144 L292.557389,47.618644 C294.643389,47.670344 296.828389,47.848644 299.063389,47.982044 L299.430389,51.714944 C299.430389,51.714944 286.191389,52.079644 284.623389,52.210044 C284.398389,50.742144 284.353389,47.487744 284.353389,47.487744 C284.353389,47.487744 285.910389,47.433244 288.224389,47.464544 L287.705389,23.899044 Z M343.358389,40.957944 C343.370389,34.515544 347.535389,29.467544 353.021389,29.411844 C359.343389,29.347644 363.387389,33.629044 363.438389,40.821044 C363.481389,46.927844 358.771389,52.264044 353.242389,52.129544 C347.713389,51.995144 343.345389,47.667644 343.358389,40.957944 L343.358389,40.957944 Z M212.195289,29.823944 L212.233389,31.543944 C212.233389,31.543944 213.371589,29.504244 217.237989,29.504244 C220.065589,29.504244 222.416089,31.311544 222.416089,34.204444 C222.416089,35.811244 221.439589,37.673144 219.413789,37.696944 C217.616789,37.717944 216.264189,36.386044 216.230789,35.080844 C216.199389,34.169844 216.349189,33.270444 216.927189,32.868044 C215.891689,32.539844 212.500189,34.160844 212.674789,38.404644 C212.849389,42.648444 212.849889,46.141644 212.915289,47.753344 C214.259289,47.702944 216.970889,48.324844 216.970889,48.324844 L216.976189,51.891144 L205.338389,52.069244 L205.285089,48.286844 C205.285089,48.286844 207.463189,47.867744 208.535489,47.849244 C208.648889,45.657244 208.393189,34.199144 208.393189,34.199144 C206.700589,33.988844 204.740889,33.384044 204.740889,33.384044 L205.014889,29.861944 L212.195289,29.823944 Z M246.731489,32.053844 L246.358589,29.641244 L237.621789,29.998944 L237.815089,33.312544 C239.566589,34.049744 242.530489,34.285144 242.530489,34.285144 L242.697989,47.442044 C242.697989,47.442044 239.978489,47.682044 239.194089,48.152844 L239.151489,51.875144 C239.151489,51.875144 248.456389,51.583044 249.981089,51.898744 L250.066389,48.169644 C249.452489,47.862744 247.381389,47.531844 247.381389,47.531844 L247.265689,39.082744 C247.263989,35.907944 249.706789,33.252644 252.218589,33.133544 C254.381889,33.091644 254.294789,35.957744 254.408889,38.187744 C254.408889,40.417844 254.308089,46.565144 253.987289,51.975644 C257.129289,51.994844 261.803189,52.001444 261.803189,52.001444 L262.096989,48.195544 C262.096989,48.195544 259.802789,47.677844 258.938589,47.723644 C259.129289,45.159144 259.050089,41.191944 258.964489,37.539344 C258.835489,32.034244 256.936689,28.536044 253.227789,28.528644 C249.127589,28.611044 246.731489,32.053844 246.731489,32.053844 L246.731489,32.053844 Z M321.694389,51.958844 L309.268389,51.911244 C309.268389,51.911244 309.154389,49.529444 309.316389,48.216444 C310.755389,47.734444 312.960389,47.386544 312.960389,47.386544 L312.816389,34.352144 C312.816389,34.352144 308.723389,33.796744 307.989389,33.410744 L308.085389,29.944144 L317.187389,29.768744 C317.187389,29.768744 317.265389,45.487144 317.426389,47.258644 C319.194389,47.366544 321.694389,48.024244 321.694389,48.024244 L321.694389,51.958844 Z M238.135489,51.890344 L225.231989,52.004544 C225.231989,52.004544 225.146789,49.401944 225.308089,48.088944 C226.747989,47.607044 228.809689,47.287544 228.809689,47.287544 L228.827989,34.287444 C228.827989,34.287444 224.687089,33.617944 223.953489,33.231844 L223.953489,29.632144 L233.249589,29.504244 C233.249589,29.504244 233.280089,45.350144 233.441389,47.121644 C234.305889,47.039244 238.097489,47.849244 238.097489,47.849244 L238.135489,51.890344 Z M190.131489,49.371744 C196.393889,48.871044 201.343589,45.568444 200.901789,40.668744 C200.404089,35.150344 195.621989,33.782144 192.042689,34.931044 C191.090689,35.410244 190.579289,35.603344 189.933289,35.878144 L190.131489,49.371744 Z M347.620389,40.676044 C347.628389,36.292444 350.191389,33.853144 353.331389,33.761644 C356.776389,33.809044 359.400389,36.106944 359.304389,40.900444 C359.221389,45.054944 356.906389,47.600144 353.383389,47.508644 C350.099389,47.417144 347.611389,45.241444 347.620389,40.676044 L347.620389,40.676044 Z M325.721389,40.919044 C325.727389,36.659044 327.551389,34.258444 330.047389,34.169544 C332.802389,34.216944 334.652389,37.192544 334.577389,41.229544 C334.502389,44.743344 333.019389,47.494344 330.088389,47.405444 C327.442389,47.411644 325.714389,44.927544 325.721389,40.919044 L325.721389,40.919044 Z M366.811389,46.317944 C365.309389,45.817644 364.016389,44.206244 364.610389,42.577944 C365.204389,40.949644 367.005389,40.631644 368.440389,41.103544 C369.874389,41.575444 370.890389,43.006244 370.358389,44.572044 C369.826389,46.137744 368.312389,46.818344 366.811389,46.317944 L366.811389,46.317944 Z M266.548389,37.253444 C266.519189,35.336644 268.007489,32.925844 271.166989,32.921944 C274.129089,32.917844 276.019589,34.861244 276.018989,37.301444 C276.018389,39.490744 274.345989,40.935144 271.207489,40.980244 C268.575089,40.975644 266.581589,39.440844 266.548389,37.253444 L266.548389,37.253444 Z M368.886389,38.296244 C367.351389,38.706844 365.375389,38.070644 364.973389,36.376644 C364.571389,34.682544 365.905389,33.420044 367.369389,33.022544 C368.833389,32.625044 370.477389,33.263044 370.896389,34.870344 C371.316389,36.477644 370.422389,37.885744 368.886389,38.296244 L368.886389,38.296244 Z M189.920389,31.584644 C193.593489,30.258544 196.479589,26.962844 196.479589,25.449044 C196.479589,23.935144 193.962189,23.283144 189.870789,23.613544 L189.920389,31.584644 Z M366.692389,30.110644 C365.780389,31.445944 363.835389,32.265844 362.401389,31.226344 C360.967389,30.186844 361.158389,28.328144 362.024389,27.050444 C362.889389,25.772844 364.580389,25.174544 365.969389,26.135644 C367.359389,27.096844 367.604389,28.775244 366.692389,30.110644 L366.692389,30.110644 Z M359.979389,25.560144 C359.750389,27.173844 358.358389,28.782444 356.598389,28.482444 C354.839389,28.182444 354.183389,26.417144 354.395389,24.876444 C354.607389,23.335844 355.868389,22.041044 357.553389,22.289944 C359.238389,22.538844 360.208389,23.946544 359.979389,25.560144 L359.979389,25.560144 Z M226.447089,24.014344 C226.293289,22.181044 227.507289,20.338944 229.474589,20.269644 C231.593889,20.195044 232.785189,21.812344 232.889989,23.500844 C232.989789,25.107544 231.847589,27.012544 229.885289,27.053244 C227.922989,27.094044 226.603189,25.874944 226.447089,24.014344 L226.447089,24.014344 Z M310.590389,24.109444 C310.464389,21.909944 311.755389,20.241744 313.646389,20.155544 C315.679389,20.116744 316.850389,21.655244 317.023389,23.548444 C317.149389,25.251344 315.676389,26.803244 314.056389,26.920144 C312.436389,27.036944 310.715389,25.975944 310.590389,24.109444 L310.590389,24.109444 Z"
@@ -554,7 +552,12 @@
 							<ul class="hdr__menu">
 								<li class="hdr__menu__li">
 									<a
-										class="{% block lodging_class %}hdr__link hdr__menu__link{% endblock %}"
+										class="
+											{% block lodging_class %}
+											hdr__link
+											hdr__menu__link
+											{% endblock %}
+										"
 										href="{% make_search_href 'lodging' search_form is_map=is_map type_slug_override='' location=location %}"
 										[href]="{% make_search_href_expression 'lodging' search_form allows_map=True type_slug_override='' %}"
 									>
@@ -563,7 +566,12 @@
 								</li>
 								<li class="hdr__menu__li">
 									<a
-										class="{% block restaurant_class %}hdr__link hdr__menu__link{% endblock %}"
+										class="
+											{% block restaurant_class %}
+											hdr__link
+											hdr__menu__link
+											{% endblock %}
+										"
 										href="{% make_search_href 'restaurant' search_form is_map=is_map type_slug_override='' location=location %}"
 										[href]="{% make_search_href_expression 'restaurant' search_form allows_map=True type_slug_override='' %}"
 									>
@@ -572,7 +580,12 @@
 								</li>
 								<li class="hdr__menu__li">
 									<a
-										class="{% block attraction_class %}hdr__link hdr__menu__link{% endblock %}"
+										class="
+											{% block attraction_class %}
+											hdr__link
+											hdr__menu__link
+											{% endblock %}
+										"
 										href="{% make_search_href 'attraction' search_form is_map=is_map type_slug_override='' location=location %}"
 										[href]="{% make_search_href_expression 'attraction' search_form allows_map=True type_slug_override='' %}"
 									>
@@ -581,7 +594,12 @@
 								</li>
 								<li class="hdr__menu__li">
 									<a
-										class="{% block event_class %}hdr__link hdr__menu__link{% endblock %}"
+										class="
+											{% block event_class %}
+											hdr__link
+											hdr__menu__link
+											{% endblock %}
+										"
 										href="{% make_search_href 'event' search_form is_map=is_map location=location %}"
 										[href]="{% make_search_href_expression 'event' search_form allows_map=True %}"
 									>
@@ -590,7 +608,12 @@
 								</li>
 								<li class="hdr__menu__li">
 									<a
-										class="{% block resource_class %}hdr__link hdr__menu__link{% endblock %}"
+										class="
+											{% block resource_class %}
+											hdr__link
+											hdr__menu__link
+											{% endblock %}
+										"
 										href="{% make_search_href 'resource' search_form is_map=is_map type_slug_override='' location=location %}"
 										[href]="{% make_search_href_expression 'resource' search_form allows_map=True type_slug_override='' %}"
 									>
@@ -599,7 +622,13 @@
 								</li>
 								<li class="hdr__menu__li">
 									<a
-										class="{% block blog_class %}hdr__link hdr__menu__link hdr__xlOnly{% endblock %}"
+										class="
+											{% block blog_class %}
+											hdr__link
+											hdr__menu__link
+											hdr__xlOnly
+											{% endblock %}
+										"
 										href="{% make_search_href 'blog' search_form location=location %}"
 										[href]="{% make_search_href_expression 'blog' search_form %}"
 									>
@@ -626,16 +655,33 @@
 										"
 									>
 										<span>{% trans 'More' %}</span>
-										<svg class="dropdownDeco" width="12" height="7" viewbox="0 0 12 7">
-											<g class="hdr__link__fill" stroke="none" transform="translate(1, 1)">
+										<svg
+											class="dropdownDeco"
+											width="12"
+											height="7"
+											viewbox="0 0 12 7"
+										>
+											<g
+												class="hdr__link__fill"
+												stroke="none"
+												transform="translate(1, 1)"
+											>
 												<polyline points="0 0 4.75 3.8 9.5 0"></polyline>
 											</g>
 										</svg>
 									</button>
-									<ul class="dropdown" hidden [hidden]="openPopout != 'hdrMoreMenu'">
+									<ul
+										class="dropdown"
+										hidden
+										[hidden]="openPopout != 'hdrMoreMenu'"
+									>
 										<li class="dropdown__li hdr__lgOnly">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% make_search_href 'blog' search_form location=location %}"
 												[href]="{% make_search_href_expression 'blog' search_form %}"
 											>
@@ -644,7 +690,11 @@
 										</li>
 										<li class="dropdown__li">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% make_search_href 'photo' search_form location=location %}"
 												[href]="{% make_search_href_expression 'photo' search_form %}"
 											>
@@ -653,7 +703,11 @@
 										</li>
 										<li class="dropdown__li">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% make_search_href 'destination' search_form location=location %}"
 												[href]="{% make_search_href_expression 'destination' search_form %}"
 											>
@@ -681,7 +735,11 @@
 										</li>
 										<li class="dropdown__li">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% url 'travel_main' %}"
 											>
 												<span class="bgImg--airplane">{% trans 'Airlines' %}</span>
@@ -689,7 +747,11 @@
 										</li>
 										<li class="dropdown__li">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% url 'travel_countries' %}"
 											>
 												<span class="bgImg--suitcase">{% trans 'International' %}</span>
@@ -697,7 +759,11 @@
 										</li>
 										<li class="dropdown__li">
 											<a
-												class="hdr__dropdownItem dropdown__item dropdown__item--decorated"
+												class="
+													hdr__dropdownItem
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% url 'insurance_main' %}"
 											>
 												<span class="bgImg--heart">{% trans 'Pet Insurance' %}</span>
@@ -737,24 +803,46 @@
 									"
 								>
 
-									<svg class="hdr__img adjustedInlineIcon" width="20px" height="20px" viewbox="0 0 20 20">
+									<svg
+										class="hdr__img adjustedInlineIcon"
+										width="20px"
+										height="20px"
+										viewbox="0 0 20 20"
+									>
 										<title>Post</title>
 										<g class="hdr__link__fill">
 											<path d="M8.55,8.55 L4.75,8.55 C4.22532949,8.55 3.8,8.97532949 3.8,9.5 C3.8,10.0246705 4.22532949,10.45 4.75,10.45 L8.55,10.45 L8.55,14.25 C8.55,14.7746705 8.97532949,15.2 9.5,15.2 C10.0246705,15.2 10.45,14.7746705 10.45,14.25 L10.45,10.45 L14.25,10.45 C14.7746705,10.45 15.2,10.0246705 15.2,9.5 C15.2,8.97532949 14.7746705,8.55 14.25,8.55 L10.45,8.55 L10.45,4.75 C10.45,4.22532949 10.0246705,3.8 9.5,3.8 C8.97532949,3.8 8.55,4.22532949 8.55,4.75 L8.55,8.55 Z M9.5,19 C4.25329488,19 0,14.7467051 0,9.5 C0,4.25329488 4.25329488,0 9.5,0 C14.7467051,0 19,4.25329488 19,9.5 C19,14.7467051 14.7467051,19 9.5,19 Z"></path>
 										</g>
 									</svg>
 
-									<svg class="dropdownDeco" width="12" height="7" viewbox="0 0 12 7">
-										<g class="hdr__link__fill" stroke="none" transform="translate(1, 1)">
+									<svg
+										class="dropdownDeco"
+										width="12"
+										height="7"
+										viewbox="0 0 12 7"
+									>
+										<g
+											class="hdr__link__fill"
+											stroke="none"
+											transform="translate(1, 1)"
+										>
 											<polyline points="0 0 4.75 3.8 9.5 0"></polyline>
 										</g>
 									</svg>
 								</button>
 
-								<ul class="dropdown dropdown--right" hidden [hidden]="openPopout != 'hdrPostMenu'">
+								<ul
+									class="dropdown dropdown--right"
+									hidden
+									[hidden]="openPopout != 'hdrPostMenu'"
+								>
 									<li class="dropdown__li hdr__dropdownItem">
 										<a
-											class="dropdown__item dropdown__item--decorated dropdown__item--decorated"
+											class="
+												dropdown__item
+												dropdown__item--decorated
+												dropdown__item--decorated
+											"
 											href="{% url 'user_property_post' %}"
 										>
 											<span class="bgImg--pin--post">{% trans 'Post&nbsp;a&nbsp;Spot' %}</span>
@@ -787,7 +875,10 @@
 									{% if user.is_authenticated and user.is_staff %}
 										<li class="dropdown__li hdr__dropdownItem">
 											<a
-												class="dropdown__item dropdown__item--decorated"
+												class="
+													dropdown__item
+													dropdown__item--decorated
+												"
 												href="{% url 'user_tracking_url_add' %}"
 											>
 												<span class="bgImg--object--link">{% trans 'Make&nbsp;a&nbsp;Link' %}</span>
@@ -799,7 +890,12 @@
 
 							{% if not user.is_authenticated %}
 								<button
-									class="hdr__link hdr__link--lowkey hdr__link--spaced nakedIcon"
+									class="
+										hdr__link
+										hdr__link--lowkey
+										hdr__link--spaced
+										nakedIcon
+									"
 									amp-access="NOT isLoggedIn"
 									on="
 										tap:
@@ -813,7 +909,12 @@
 										registration.show
 									"
 								>
-									<svg class="hdr__img adjustedInlineIcon" width="20px" height="21px" viewbox="0 0 20 21">
+									<svg
+										class="hdr__img adjustedInlineIcon"
+										width="20px"
+										height="21px"
+										viewbox="0 0 20 21"
+									>
 										<title>{% trans 'User' %}</title>
 										<g class="hdr__link__fill" fill-rule="nonzero">
 											<path d="M10.0068684,0.91534392 C12.9196934,0.91534392 15.2845903,3.35659624 15.2845903,6.36361174 C15.2845903,9.37062725 12.9196934,11.8118796 10.0068684,11.8118796 C7.09415712,11.8118796 4.72926017,9.37062725 4.72926017,6.36361174 C4.72926017,3.35659624 7.09415712,0.91534392 10.0068684,0.91534392 Z M5.34709772,11.9184947 C5.91034677,12.4223977 6.54997433,12.8351505 7.23670009,13.1347274 C8.1111377,13.5161987 9.05764123,13.7131438 10.006982,13.7131438 C10.9562092,13.7131438 11.9027127,13.5161987 12.777264,13.1347274 C13.4638762,12.8351505 14.1035037,12.4222805 14.6667528,11.9184947 C20.5519846,14.2550064 19.9852173,20.7552494 19.9852173,20.7552494 L0.0137659824,20.7552494 C0.0137659824,20.7552494 -0.538134085,14.2550064 5.34709772,11.9184947 Z"></path>
@@ -905,14 +1006,27 @@
 											<span class="hdr__xlOnly">&nbsp;&nbsp; {{ user.first_name }}&nbsp;</span>
 										{% endif %}
 									{% endif %}
-									<svg class="dropdownDeco" width="12" height="7" viewbox="0 0 12 7">
-										<g class="hdr__link__fill" stroke="none" transform="translate(1, 1)">
+									<svg
+										class="dropdownDeco"
+										width="12"
+										height="7"
+										viewbox="0 0 12 7"
+									>
+										<g
+											class="hdr__link__fill"
+											stroke="none"
+											transform="translate(1, 1)"
+										>
 											<polyline points="0 0 4.75 3.8 9.5 0"></polyline>
 										</g>
 									</svg>
 								</button>
 
-								<ul class="dropdown dropdown--right" hidden [hidden]="openPopout != 'hdrUserMenu'">
+								<ul
+									class="dropdown dropdown--right"
+									hidden
+									[hidden]="openPopout != 'hdrUserMenu'"
+								>
 									<li class="dropdown__li hdr__dropdownItem">
 										<a class="dropdown__item" href="{% url 'user_account' %}">
 											<span>{% trans 'Account Settings' %}</span>
@@ -937,7 +1051,10 @@
 										</a>
 									</li>
 									<li class="dropdown__li hdr__dropdownItem">
-										<a class="dropdown__item" href="{% url 'user_favorites' %}">
+										<a
+											class="dropdown__item"
+											href="{% url 'user_favorites' %}"
+										>
 											<span>{% trans 'Favorites' %}</span>
 										</a>
 									</li>
@@ -1055,11 +1172,7 @@
 	{% block body_middle %}
 	{% endblock %}
 
-	<div
-		class="contentWrapper"
-		{% if is_map %}hidden{% endif %}
-		[hidden]="isMapMode"
-	>
+	<div class="contentWrapper" {% if is_map %}hidden{% endif %} [hidden]="isMapMode">
 		{% block maybe_hero %}
 		{% endblock %}
 
@@ -1098,7 +1211,15 @@
 
 							<aside class="{% block aside_class %}block lgXlOnly{% endblock %}">
 								{% block aside %}
-									<div class="{% block aside_row_class %}block__row block__row--padded block__row--padded--evenly{% endblock %}">
+									<div
+										class="
+											{% block aside_row_class %}
+											block__row
+											block__row--padded
+											block__row--padded--evenly
+											{% endblock %}
+										"
+									>
 										{% block aside_map_area %}
 											{% block aside_map %}
 												{% render_location_map_link location persistent_data request=request %}
@@ -1117,7 +1238,10 @@
 													>
 														{% if location %}{{ location.name }}{% else %}{% trans 'Worldwide' %}{% endif %} {% trans 'Quick&nbsp;Links' %}
 													</h2>
-													<amp-accordion class="ctgLinks" disable-session-states>
+													<amp-accordion
+														class="ctgLinks"
+														disable-session-states
+													>
 														{% render_category_links worldwide_counts search_form location %}
 													</amp-accordion>
 												</nav>
@@ -1203,7 +1327,12 @@
 					<input
 						type="search"
 						id="mainMenuInput"
-						class="input autocomplete__input autocomplete--watermarked__input input--navigational"
+						class="
+							input
+							autocomplete__input
+							autocomplete--watermarked__input
+							input--navigational
+						"
 						value="{% if location %}{{ location.full_name }}{% endif %}"
 						[value]="mainMenuLocation ? mainMenuLocation.fullName : ''"
 						placeholder="{% trans 'Enter destination' %}"
@@ -1214,7 +1343,10 @@
 					>
 
 					<ul
-						class="autocomplete__suggestions autocomplete__suggestions--navigational"
+						class="
+							autocomplete__suggestions
+							autocomplete__suggestions--navigational
+						"
 						[class]="
 							'autocomplete__suggestions autocomplete__suggestions--navigational' +
 							(mainMenuCollapsedSuggestions ? ' autocomplete__suggestions--collapsed' : '')
@@ -1223,7 +1355,10 @@
 
 					<button
 						type="button"
-						class="autocomplete__suggestions__more autocomplete__suggestions__more--watermarked"
+						class="
+							autocomplete__suggestions__more
+							autocomplete__suggestions__more--watermarked
+						"
 						hidden
 						[hidden]="!mainMenuCollapsedSuggestions"
 						tabindex="-1"
@@ -1291,10 +1426,7 @@
 				</p>
 			</div>
 
-			<a
-				class="ctgLinks__item ctgLinks--spread__item"
-				href="{% url 'user_property_post' %}"
-			>
+			<a class="ctgLinks__item ctgLinks--spread__item" href="{% url 'user_property_post' %}">
 				<div class="ctr">
 					<div class="ctgLinks__itemBox ctgLinks--spread__itemBox bgImg--pin--post">
 						{% trans 'Post&nbsp;a&nbsp;Spot' %}
@@ -1338,10 +1470,7 @@
 				</p>
 			</div>
 
-			<a
-				class="ctgLinks__item ctgLinks--spread__item"
-				href="{% url 'hotel_main' %}"
-			>
+			<a class="ctgLinks__item ctgLinks--spread__item" href="{% url 'hotel_main' %}">
 				<div class="ctr">
 					<div class="ctgLinks__itemBox ctgLinks--spread__itemBox bgImg--hotel">
 						{% trans 'Top Pet Friendly Hotels Worldwide' %}
@@ -1349,10 +1478,7 @@
 				</div>
 			</a>
 
-			<a
-				class="ctgLinks__item ctgLinks--spread__item"
-				href="{% url 'article_main' %}"
-			>
+			<a class="ctgLinks__item ctgLinks--spread__item" href="{% url 'article_main' %}">
 				<div class="ctr">
 					<div class="ctgLinks__itemBox ctgLinks--spread__itemBox bgImg--megaphone">
 						{% trans 'Pet Travel Blog' %}
@@ -1360,10 +1486,7 @@
 				</div>
 			</a>
 
-			<a
-				class="ctgLinks__item ctgLinks--spread__item"
-				href="{% url 'travel_main' %}"
-			>
+			<a class="ctgLinks__item ctgLinks--spread__item" href="{% url 'travel_main' %}">
 				<div class="ctr">
 					<div class="ctgLinks__itemBox ctgLinks--spread__itemBox bgImg--airplane">
 						{% trans 'Airline Pet Policies' %}
@@ -1384,7 +1507,12 @@
 							<div class="ctgLinks__itemBox ctgLinks__itemBox--unindented">
 								{% trans 'Company Information' %}
 								<span class="ctgLinks__hdrDeco ctgLinks--spread__hdrDeco">
-									<svg class="dropdownDeco" width="12" height="8" viewbox="0 0 12 8">
+									<svg
+										class="dropdownDeco"
+										width="12"
+										height="8"
+										viewbox="0 0 12 8"
+									>
 										<g
 											class="ctgLinks__hdr__stroke"
 											fill="none"
@@ -1506,7 +1634,12 @@
 							<div class="ctgLinks__itemBox ctgLinks__itemBox--unindented">
 								{% trans 'Partners' %}
 								<span class="ctgLinks__hdrDeco ctgLinks--spread__hdrDeco">
-									<svg class="dropdownDeco" width="12" height="8" viewbox="0 0 12 8">
+									<svg
+										class="dropdownDeco"
+										width="12"
+										height="8"
+										viewbox="0 0 12 8"
+									>
 										<g
 											class="ctgLinks__hdr__stroke"
 											fill="none"
@@ -1646,7 +1779,12 @@
 							<div class="ctgLinks__itemBox ctgLinks__itemBox--unindented">
 								{% trans 'Customer Service' %}
 								<span class="ctgLinks__hdrDeco ctgLinks--spread__hdrDeco">
-									<svg class="dropdownDeco" width="12" height="8" viewbox="0 0 12 8">
+									<svg
+										class="dropdownDeco"
+										width="12"
+										height="8"
+										viewbox="0 0 12 8"
+									>
 										<g
 											class="ctgLinks__hdr__stroke"
 											fill="none"
@@ -1742,7 +1880,12 @@
 			<div class="ctr">
 				<div class="toolbar">
 					<button
-						class="nakedIcon toolbar__brick toolbar__brick--right toolbar__brick--right--onlyItem"
+						class="
+							nakedIcon
+							toolbar__brick
+							toolbar__brick--right
+							toolbar__brick--right--onlyItem
+						"
 						on="tap:AMP.setState({isFixedFixMode: false}),userMenu.hide,layerReset.start"
 					>
 						<amp-img
@@ -1816,10 +1959,7 @@
 					</div>
 				</a>
 
-				<a
-					class="ctgLinks__item"
-					href="{% url 'user_reservations' %}"
-				>
+				<a class="ctgLinks__item" href="{% url 'user_reservations' %}">
 					<div class="ctr">
 						<div class="ctgLinks__itemBox">
 							{% trans 'Reservations' %}
@@ -1889,10 +2029,7 @@
 
 	{% if not user.is_authenticated %}
 		{% url 'email_verify' as verification_url %}
-		<template
-			type="amp-mustache"
-			id="loginSubmissionSuccessTemplate"
-		>
+		<template type="amp-mustache" id="loginSubmissionSuccessTemplate">
 			{{ '#error'|mustache }}
 			<div class="modal__notice modal__notice--error">
 				{{ 'error'|mustache }}
@@ -1905,10 +2042,7 @@
 			{{ '/error'|mustache }}
 		</template>
 
-		<template
-			type="amp-mustache"
-			id="registerSubmissionSuccessTemplate"
-		>
+		<template type="amp-mustache" id="registerSubmissionSuccessTemplate">
 			{{ '#error'|mustache }}
 			<div class="modal__notice modal__notice--error">
 				{{ 'error'|mustache }}
@@ -1940,10 +2074,7 @@
 			{{ '/error'|mustache }}
 		</template>
 
-		<template
-			type="amp-mustache"
-			id="resetPasswordSubmissionSuccessTemplate"
-		>
+		<template type="amp-mustache" id="resetPasswordSubmissionSuccessTemplate">
 			{{ '#error'|mustache }}
 			<div class="modal__notice modal__notice--error">
 				{{ 'error'|mustache }}
@@ -1989,7 +2120,14 @@
 					<div class="toolbar">
 						<button
 							id="dismissPromptBtn"
-							class="nakedIcon toolbar__brick toolbar__brick--right toolbar__brick--right--onlyItem trackedBtn--tracking modal__dismissBtn"
+							class="
+								nakedIcon
+								toolbar__brick
+								toolbar__brick--right
+								toolbar__brick--right--onlyItem
+								trackedBtn--tracking
+								modal__dismissBtn
+							"
 							on="
 								tap:
 								dismissWelcomeForm.submit,
@@ -2085,14 +2223,15 @@
 									submit-error:AMP.setState({loginFormIsSubmitting: false});
 								"
 							>
-								<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
+								<input
+									type="hidden"
+									name="next"
+									value="{{ request.site.base_url }}{{ request.get_full_path }}"
+								>
 
 								<h2 class="modal__h">{% blocktrans with bringfido='BringFido' %}Sign in to {{ bringfido }}{% endblocktrans %}</h2>
 
-								<div
-									submit-success
-									template="loginSubmissionSuccessTemplate"
-								></div>
+								<div submit-success template="loginSubmissionSuccessTemplate"></div>
 								<div submit-error>
 									<div class="modal__notice modal__notice--error">
 										{% trans 'Oops! We are temporarily unable to connect.' %}
@@ -2164,9 +2303,20 @@
 									</div>
 								</div>
 
-								<div class="form__row form__row--multiple form__row--lastOfGroup">
+								<div
+									class="
+										form__row
+										form__row--multiple
+										form__row--lastOfGroup
+									"
+								>
 									<span>
-										<input type="checkbox" id="promptedSession" name="remember_me" checked="checked">
+										<input
+											type="checkbox"
+											id="promptedSession"
+											name="remember_me"
+											checked="checked"
+										>
 										<label
 											for="promptedSession"
 											class="form__lbl form__lbl--checkbox"
@@ -2219,7 +2369,11 @@
 									submit-error:AMP.setState({facebookLoginFormIsSubmitting: false});
 								"
 							>
-								<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
+								<input
+									type="hidden"
+									name="next"
+									value="{{ request.site.base_url }}{{ request.get_full_path }}"
+								>
 								<input type="hidden" name="source_type" value="prompt">
 								<input
 									type="hidden"
@@ -2503,7 +2657,11 @@
 										submit-error:AMP.setState({facebookRegisterFormIsSubmitting: false});
 									"
 								>
-									<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
+									<input
+										type="hidden"
+										name="next"
+										value="{{ request.site.base_url }}{{ request.get_full_path }}"
+									>
 									<input type="hidden" name="source_type" value="prompt">
 									<input
 										type="hidden"
@@ -2532,26 +2690,43 @@
 									{% endblocktrans %}
 								</p>
 							</div>
-							<div class="modal__workflowComplete" hidden [hidden]="!registerSubmissionSuccess">
+							<div
+								class="modal__workflowComplete"
+								hidden
+								[hidden]="!registerSubmissionSuccess"
+							>
 								<amp-layout id="promptedSignedUpMarker"><h2 class="modal__h">{% trans 'Thanks for signing up.' %}</h2></amp-layout>
 
 								<div class="modal__workflowComplete__reward">
 									<div class="animatedIllustration">
 										<svg
-											class="animatedIllustration__svg animatedIllustration__svg--envelope"
+											class="
+												animatedIllustration__svg
+												animatedIllustration__svg--envelope
+											"
 											width="97px"
 											height="92px"
 											viewbox="0 0 97 92"
 										>
 											<g transform="translate(0.000000, 2.000000)">
-												<g id="part1" fill="none" stroke="#BFBFBF" stroke-width="2" transform="translate(1, 0)">
+												<g
+													id="part1"
+													fill="none"
+													stroke="#BFBFBF"
+													stroke-width="2"
+													transform="translate(1, 0)"
+												>
 													<polygon
 														fill="#FFFFFF"
 														fill-rule="nonzero"
 														points="0 28.7295479 47.3002718 0 94.5994568 28.7295479 94.5994568 30.2305908 0 30.2305908"
 													></polygon>
 												</g>
-												<g id="part2" fill="none" transform="translate(12, 14)">
+												<g
+													id="part2"
+													fill="none"
+													transform="translate(12, 14)"
+												>
 													<polygon
 														fill="#FFFFFF"
 														fill-rule="nonzero"
@@ -2565,10 +2740,22 @@
 														stroke-width="2"
 													></polygon>
 												</g>
-												<g id="part4" fill="none" stroke="#02B1E7" stroke-width="2" transform="translate(38, 24)">
+												<g
+													id="part4"
+													fill="none"
+													stroke="#02B1E7"
+													stroke-width="2"
+													transform="translate(38, 24)"
+												>
 													<polyline points="0.6294 13.5212 8.5021 20.6067 23.4603 0.1375"></polyline>
 												</g>
-												<g id="part3" fill="none" stroke="#BFBFBF" stroke-width="2" transform="translate(0, 32)">
+												<g
+													id="part3"
+													fill="none"
+													stroke="#BFBFBF"
+													stroke-width="2"
+													transform="translate(0, 32)"
+												>
 													<polygon
 														fill="#FFFFFF"
 														fill-rule="nonzero"
@@ -2608,7 +2795,11 @@
 								</p>
 							</div>
 						</div>
-						<div id="promptedResetPasswordPane" class="modal__pane resetPassword" hidden>
+						<div
+							id="promptedResetPasswordPane"
+							class="modal__pane resetPassword"
+							hidden
+						>
 							<form
 								id="promptedResetPasswordForm"
 								class="form"
@@ -2718,7 +2909,7 @@
 								class="notABtn modal__understatedLink"
 								on="
 									tap:
-									AMP.setState({isFixedFixMode: false}),									promptedRegistration.toggleClass(class='modal--animatePanes', force=false),
+									AMP.setState({isFixedFixMode: false}), promptedRegistration.toggleClass(class='modal--animatePanes', force=false),
 									promptedRegistration.hide
 								"
 							>
@@ -2753,7 +2944,13 @@
 			<div class="modal__contentCtr">
 				<div class="toolbar">
 					<button
-						class="nakedIcon toolbar__brick toolbar__brick--right toolbar__brick--right--onlyItem modal__dismissBtn"
+						class="
+							nakedIcon
+							toolbar__brick
+							toolbar__brick--right
+							toolbar__brick--right--onlyItem
+							modal__dismissBtn
+						"
 						on="
 							tap:
 							AMP.setState({isFixedFixMode: false}),
@@ -2797,17 +2994,33 @@
 								submit-error:AMP.setState({loginFormIsSubmitting: false});
 							"
 						>
-							<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
-							<input type="hidden" name="action" value="" [value]="blockedAction ? blockedAction.action : ''">
-							<input type="hidden" name="category" value="" [value]="blockedAction ? blockedAction.ctg : ''">
-							<input type="hidden" name="entity" value="" [value]="blockedAction ? blockedAction.entity : ''">
+							<input
+								type="hidden"
+								name="next"
+								value="{{ request.site.base_url }}{{ request.get_full_path }}"
+							>
+							<input
+								type="hidden"
+								name="action"
+								value=""
+								[value]="blockedAction ? blockedAction.action : ''"
+							>
+							<input
+								type="hidden"
+								name="category"
+								value=""
+								[value]="blockedAction ? blockedAction.ctg : ''"
+							>
+							<input
+								type="hidden"
+								name="entity"
+								value=""
+								[value]="blockedAction ? blockedAction.entity : ''"
+							>
 
 							<h2 class="modal__h">{% blocktrans with bringfido='BringFido' %}Sign in to {{ bringfido }}{% endblocktrans %}</h2>
 
-							<div
-								submit-success
-								template="loginSubmissionSuccessTemplate"
-							></div>
+							<div submit-success template="loginSubmissionSuccessTemplate"></div>
 							<div submit-error>
 								<div class="modal__notice modal__notice--error">
 									{% trans 'Oops! We are temporarily unable to connect.' %}
@@ -2907,7 +3120,12 @@
 
 							<div class="form__row form__row--multiple form__row--lastOfGroup">
 								<span>
-									<input type="checkbox" id="session" name="remember_me" checked="checked">
+									<input
+										type="checkbox"
+										id="session"
+										name="remember_me"
+										checked="checked"
+									>
 									<label for="session" class="form__lbl form__lbl--checkbox">{% trans 'Keep me signed in' %}</label>
 								</span>
 
@@ -2957,7 +3175,11 @@
 								submit-error:AMP.setState({facebookLoginFormIsSubmitting: false});
 							"
 						>
-							<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
+							<input
+								type="hidden"
+								name="next"
+								value="{{ request.site.base_url }}{{ request.get_full_path }}"
+							>
 
 							<button
 								type="submit"
@@ -3002,10 +3224,7 @@
 							>
 								<h2 class="modal__h">{% blocktrans with bringfido='BringFido' %}Welcome to {{ bringfido }}{% endblocktrans %}</h2>
 
-								<div
-									submit-success
-									template="registerSubmissionSuccessTemplate"
-								></div>
+								<div submit-success template="registerSubmissionSuccessTemplate"></div>
 								<div submit-error>
 									<div class="modal__notice modal__notice--error">
 										{% trans 'Oops! We are temporarily unable to connect.' %}
@@ -3225,7 +3444,11 @@
 									submit-error:AMP.setState({facebookRegisterFormIsSubmitting: false});
 								"
 							>
-								<input type="hidden" name="next" value="{{ request.site.base_url }}{{ request.get_full_path }}">
+								<input
+									type="hidden"
+									name="next"
+									value="{{ request.site.base_url }}{{ request.get_full_path }}"
+								>
 
 								<button
 									type="submit"
@@ -3247,26 +3470,43 @@
 								{% endblocktrans %}
 							</p>
 						</div>
-						<div class="modal__workflowComplete" hidden [hidden]="!registerSubmissionSuccess">
+						<div
+							class="modal__workflowComplete"
+							hidden
+							[hidden]="!registerSubmissionSuccess"
+						>
 							<h2 class="modal__h">{% trans 'Thanks for signing up.' %}</h2>
 
 							<div class="modal__workflowComplete__reward">
 								<div class="animatedIllustration">
 									<svg
-										class="animatedIllustration__svg animatedIllustration__svg--envelope"
+										class="
+											animatedIllustration__svg
+											animatedIllustration__svg--envelope
+										"
 										width="97px"
 										height="92px"
 										viewbox="0 0 97 92"
 									>
 										<g transform="translate(0.000000, 2.000000)">
-											<g id="part1" fill="none" stroke="#BFBFBF" stroke-width="2" transform="translate(1, 0)">
+											<g
+												id="part1"
+												fill="none"
+												stroke="#BFBFBF"
+												stroke-width="2"
+												transform="translate(1, 0)"
+											>
 												<polygon
 													fill="#FFFFFF"
 													fill-rule="nonzero"
 													points="0 28.7295479 47.3002718 0 94.5994568 28.7295479 94.5994568 30.2305908 0 30.2305908"
 												></polygon>
 											</g>
-											<g id="part2" fill="none" transform="translate(12, 14)">
+											<g
+												id="part2"
+												fill="none"
+												transform="translate(12, 14)"
+											>
 												<polygon
 													fill="#FFFFFF"
 													fill-rule="nonzero"
@@ -3280,10 +3520,22 @@
 													stroke-width="2"
 												></polygon>
 											</g>
-											<g id="part4" fill="none" stroke="#02B1E7" stroke-width="2" transform="translate(38, 24)">
+											<g
+												id="part4"
+												fill="none"
+												stroke="#02B1E7"
+												stroke-width="2"
+												transform="translate(38, 24)"
+											>
 												<polyline points="0.6294 13.5212 8.5021 20.6067 23.4603 0.1375"></polyline>
 											</g>
-											<g id="part3" fill="none" stroke="#BFBFBF" stroke-width="2" transform="translate(0, 32)">
+											<g
+												id="part3"
+												fill="none"
+												stroke="#BFBFBF"
+												stroke-width="2"
+												transform="translate(0, 32)"
+											>
 												<polygon
 													fill="#FFFFFF"
 													fill-rule="nonzero"
@@ -3342,10 +3594,7 @@
 						>
 							<h2 class="modal__h">{% trans 'Reset Password' %}</h2>
 
-							<div
-								submit-success
-								template="resetPasswordSubmissionSuccessTemplate"
-							></div>
+							<div submit-success template="resetPasswordSubmissionSuccessTemplate"></div>
 							<div submit-error>
 								<div class="modal__notice modal__notice--error">
 									{% trans 'Oops! We are temporarily unable to connect.' %}
@@ -3579,27 +3828,39 @@
 										<h2 class="h h--subtle ftr__h h--top">{% trans 'Company Info' %}</h2>
 										<ul class="ftr__ul">
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'about' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'about' %}"
+												>
 													{% trans 'About Us' %}
 												</a>
 											</li>
 
 											{% if is_usa %}
 												<li class="ftr__li">
-													<a class="ftr__a ftr__a--navigational" href="{% url 'jobs' %}">
+													<a
+														class="ftr__a ftr__a--navigational"
+														href="{% url 'jobs' %}"
+													>
 														{% trans 'Jobs' %}
 													</a>
 												</li>
 
 												<li class="ftr__li">
-													<a class="ftr__a ftr__a--navigational" href="{% url 'promos' %}">
+													<a
+														class="ftr__a ftr__a--navigational"
+														href="{% url 'promos' %}"
+													>
 														{% trans 'Promotions' %}
 													</a>
 												</li>
 											{% else %}
 												{# Moved here from the Customer Service column for visual balance #}
 												<li class="ftr__li">
-													<a class="ftr__a ftr__a--navigational" href="{% url 'contact' %}">
+													<a
+														class="ftr__a ftr__a--navigational"
+														href="{% url 'contact' %}"
+													>
 														{% trans 'Contact Us' %}
 													</a>
 												</li>
@@ -3655,13 +3916,19 @@
 
 										<ul class="ftr__ul">
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'advertising' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'advertising' %}"
+												>
 													{% trans 'Advertise with Us' %}
 												</a>
 											</li>
 
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'media' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'media' %}"
+												>
 													{% trans 'Media' %}
 												</a>
 											</li>
@@ -3685,7 +3952,10 @@
 											</li>
 
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'affiliate_link' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'affiliate_link' %}"
+												>
 													{% trans 'Link to Us' %}
 												</a>
 											</li>
@@ -3700,7 +3970,10 @@
 											</li>
 
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'website_main' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'website_main' %}"
+												>
 													{% trans 'Sites We Like' %}
 												</a>
 											</li>
@@ -3712,7 +3985,10 @@
 
 										<ul class="ftr__ul">
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'help' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'help' %}"
+												>
 													{% trans 'Cancel a Reservation' %}
 												</a>
 											</li>
@@ -3720,7 +3996,10 @@
 											{% if is_usa %}
 												{# This is moved over to the Company Info section otherwise #}
 												<li class="ftr__li">
-													<a class="ftr__a ftr__a--navigational" href="{% url 'contact' %}">
+													<a
+														class="ftr__a ftr__a--navigational"
+														href="{% url 'contact' %}"
+													>
 														{% trans 'Contact Us' %}
 													</a>
 												</li>
@@ -3745,7 +4024,10 @@
 											</li>
 
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'photo_post' %}">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'photo_post' %}"
+												>
 													{% trans 'Share a Photo' %}
 												</a>
 											</li>
@@ -3760,7 +4042,10 @@
 											</li>
 
 											<li class="ftr__li">
-												<a class="ftr__a ftr__a--navigational" href="{% url 'help' %}#FAQ">
+												<a
+													class="ftr__a ftr__a--navigational"
+													href="{% url 'help' %}#FAQ"
+												>
 													{% trans 'FAQ' %}
 												</a>
 											</li>
@@ -3769,7 +4054,13 @@
 								</nav>
 							</div>
 							<div class="grid__column grid__column--aside">
-								<div class="ftr__content ftr__content--withMaxSize ftr__content--alwaysCenter">
+								<div
+									class="
+										ftr__content
+										ftr__content--withMaxSize
+										ftr__content--alwaysCenter
+									"
+								>
 									{% url 'user_property_post' as post_url %}
 
 									<h2 class="h ftr__h h--top--true">
@@ -3781,11 +4072,19 @@
 									<p>
 										{% if location %}
 											{% blocktrans trimmed with location_name=location.short_phrase_name %}
-												Know of another great place to bring Fido? <a class="ftr__a ftr__a--inP" href="{{ post_url }}">Let&nbsp;us&nbsp;know</a> by sharing your dog’s favorite spot in {{ location_name }}.
+												Know of another great place to bring Fido?
+												<a
+													class="ftr__a ftr__a--inP"
+													href="{{ post_url }}"
+												>Let&nbsp;us&nbsp;know</a> by sharing your dog’s favorite spot in {{ location_name }}.
 											{% endblocktrans %}
 										{% else %}
 											{% blocktrans trimmed %}
-												Know of another great place to bring Fido? <a class="ftr__a ftr__a--inP" href="{{ post_url }}">Let&nbsp;us&nbsp;know</a> by sharing your dog’s favorite spot.
+												Know of another great place to bring Fido?
+												<a
+													class="ftr__a ftr__a--inP"
+													href="{{ post_url }}"
+												>Let&nbsp;us&nbsp;know</a> by sharing your dog’s favorite spot.
 											{% endblocktrans %}
 										{% endif %}
 									</p>
@@ -3826,7 +4125,10 @@
 											></amp-img>
 										</a>
 
-										<a rel="noopener" href="https://www.instagram.com/bringfido">
+										<a
+											rel="noopener"
+											href="https://www.instagram.com/bringfido"
+										>
 											<amp-img
 												class="ftr__socialIcons__img"
 												src="/assets/images/icon-footer-instagram.svg"
@@ -3838,7 +4140,10 @@
 											></amp-img>
 										</a>
 
-										<a rel="noopener" href="https://www.pinterest.com/bringfido/">
+										<a
+											rel="noopener"
+											href="https://www.pinterest.com/bringfido/"
+										>
 											<amp-img
 												class="ftr__socialIcons__img"
 												src="/assets/images/icon-footer-pintrest.svg"
@@ -3911,7 +4216,11 @@
 						>
 							<span>{{ request.currency.symbol }} {{ request.currency.code }}</span>
 							<svg class="dropdownDeco" width="12" height="7" viewbox="0 0 12 7">
-								<g class="ftr__link__fill" stroke="none" transform="translate(1, 1)">
+								<g
+									class="ftr__link__fill"
+									stroke="none"
+									transform="translate(1, 1)"
+								>
 									<polyline points="0 0 4.75 3.8 9.5 0"></polyline>
 								</g>
 							</svg>
@@ -3928,7 +4237,15 @@
 								{% for currency in currencies_in_order %}
 									<li class="dropdown__li">
 										<a
-											class="ftr__dropdownItem dropdown__item dropdown__item--decorated dropdown__item--grayOnly {% if currency == request.currency %} dropdown__item--decorated--selected{% endif %}"
+											class="
+												ftr__dropdownItem
+												dropdown__item
+												dropdown__item--decorated
+												dropdown__item--grayOnly
+												{% if currency == request.currency %}
+												dropdown__item--decorated--selected
+												{% endif %}
+											"
 											href="{% make_currency_href request currency %}"
 										>
 											<span>{{ currency.symbol }} {{ currency.code }} — {{ currency.name }}</span>
@@ -3938,7 +4255,12 @@
 							{% endblock %}
 						</ul>
 					</div>
-					<div class="ftr__subftrContent {% block footer_subfooter_content_extra_classes %}{% endblock %}">
+					<div
+						class="
+							ftr__subftrContent
+							{% block footer_subfooter_content_extra_classes %}{% endblock %}
+						"
+					>
 						<span class="ftr__subftrContent__item">&copy; 2005-{% now 'Y' %} Kendall Media, Inc.</span>
 						<a
 							class="ftr__subftrContent__item ftr__a ftr__subftrContent__a"
@@ -3986,13 +4308,23 @@
 						</p>
 						<p>
 							{% trans 'We use cookies to deliver our services, personalize content, and get feedback on how people use BringFido so that we can improve.' %}
-							{% trans 'By clicking OK, you accept this as outlined in our ' %} <a class="privacyNotice__a" href="{{ privacy_url }}#cookies" target="_blank">{% trans 'Cookie Policy' %}</a>.
+							{% trans 'By clicking OK, you accept this as outlined in our ' %}
+							<a
+								class="privacyNotice__a"
+								href="{{ privacy_url }}#cookies"
+								target="_blank"
+							>{% trans 'Cookie Policy' %}</a>.
 						</p>
 
 						{% if request.locale.requires_cookie_consent %}
 							<p>
 								<button
-									class="notABtn privacyNotice__a privacyNotice__a--subtle privacyNotice__a--extraSpace"
+									class="
+										notABtn
+										privacyNotice__a
+										privacyNotice__a--subtle
+										privacyNotice__a--extraSpace
+									"
 									[hidden]="chooseCookiesMenuIsOpen"
 									on="
 										tap:
@@ -4002,9 +4334,18 @@
 								>
 									{% trans 'Manage Preferences' %}
 								</button>
-								<div class="privacyNotice__choices" hidden [hidden]="!chooseCookiesMenuIsOpen">
+								<div
+									class="privacyNotice__choices"
+									hidden
+									[hidden]="!chooseCookiesMenuIsOpen"
+								>
 									<div class="privacyNotice__choice">
-										<input type="checkbox" id="necessaryCookies" checked disabled>&nbsp;<label for="necessaryCookies">{% trans 'Allow necessary cookies' %}</label>
+										<input
+											type="checkbox"
+											id="necessaryCookies"
+											checked
+											disabled
+										>&nbsp;<label for="necessaryCookies">{% trans 'Allow necessary cookies' %}</label>
 									</div>
 									<div class="privacyNotice__choice">
 										<input
@@ -4318,3 +4659,4 @@
 	</style>
 </body>
 </html>
+
