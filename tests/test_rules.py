@@ -2,7 +2,8 @@
 
 # Cutesy
 from cutesy import HTMLLinter
-from cutesy.attribute_processors import reindent, tailwind, whitespace
+from cutesy.attribute_processors import reindent, whitespace
+from cutesy.attribute_processors.class_ordering import tailwind
 from cutesy.preprocessors import django
 from cutesy.types import Rule
 

@@ -519,6 +519,7 @@
 													absolute z-1
 													empty:hidden
 													peer-[&:not(:focus)]:hidden
+													-mt-[var(--input-border-width)]
 													w-full
 													overflow-hidden
 													bg-white
@@ -527,7 +528,6 @@
 													rounded-t-none
 													shadow-high-beneath
 													border
-													-mt-[var(--input-border-width)]
 												"
 												x-cloak
 												x-show="suggestions.length"
@@ -535,6 +535,8 @@
 												<template x-for="(suggestion, index) in suggestions">
 													<li
 														class="
+															px-(--input-padding-y)
+															py-(--input-padding-y)
 															w-full
 															text-dark
 															text-lg
@@ -542,8 +544,6 @@
 															whitespace-nowrap
 															hover:bg-brand-blue
 															cursor-default
-															px-(--input-padding-y)
-															py-(--input-padding-y)
 														"
 														:class="{'bg-gray-field': focusIndex === index}"
 														x-data="{selectionIndex: index}"
@@ -785,6 +785,7 @@
 												absolute
 												after:absolute
 												bottom-full
+												-right-2
 												after:right-1/2
 												after:top-full
 												after:content-['']
@@ -799,10 +800,9 @@
 												rounded-super-sm
 												scale-90
 												group-hover:scale-100
+												-translate-y-2
 												after:translate-x-1/2
 												transition-transform
-												-right-2
-												-translate-y-2
 												antialiased
 												invisible
 												group-hover:visible
@@ -880,8 +880,8 @@
 												[&[data-image-slug=mastercard]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/mastercard.svg)]
 												[&[data-image-slug=other]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/other.svg)]
 												[&[data-image-slug=visa]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/visa.svg)]
-												truncate
 												[&[data-image-slug]]:bg-position-[right_calc(2_*_var(--spacing))_center,left_calc(2_*_var(--spacing))_center]
+												truncate
 											"
 											name="payment_method"
 											{% if selected_payment_method %}
@@ -917,8 +917,8 @@
 												class="
 													w-full
 													{% if form.security_code.errors %}
-														border-error
 														text-error
+														border-error
 													{% endif %}
 													mask--securityCode
 													adaptiveLabel
@@ -941,7 +941,8 @@
 													justify-center
 													pr-3
 													h-6
-													-translate-y-1/2 group
+													-translate-y-1/2
+													group
 												"
 											>
 												<span
@@ -963,6 +964,7 @@
 														absolute
 														after:absolute
 														bottom-full
+														-right-2
 														after:right-[22px]
 														after:top-full
 														after:content-['']
@@ -977,9 +979,8 @@
 														rounded-super-sm
 														scale-90
 														group-hover:scale-100
-														transition-transform
-														-right-2
 														-translate-y-2
+														transition-transform
 														antialiased
 														invisible
 														group-hover:visible
@@ -1136,8 +1137,8 @@
 											id="securityCode2"
 											class="
 												{% if form.security_code.errors %}
-													border-error
 													text-error
+													border-error
 												{% endif %}
 												mask--securityCode
 												adaptiveLabel
@@ -1158,7 +1159,8 @@
 												justify-center
 												pr-3
 												h-6
-												-translate-y-1/2 group
+												-translate-y-1/2
+												group
 											"
 										>
 											<span
@@ -1178,6 +1180,7 @@
 													absolute
 													after:absolute
 													bottom-full
+													-right-2
 													after:right-[22px]
 													after:top-full
 													after:content-['']
@@ -1190,10 +1193,10 @@
 													after:border-t-6
 													after:border-t-dark
 													rounded-super-sm
-													scale-90 group-hover:scale-100
-													transition-transform
-													-right-2
+													scale-90
+													group-hover:scale-100
 													-translate-y-2
+													transition-transform
 													antialiased
 													invisible
 													group-hover:visible
@@ -1614,12 +1617,13 @@
 					<aside
 						class="
 							sticky
+							lg:top-[var(--header-height)]
+							top-[var(--header-height-sm)]
 							md:flex flex-col hidden
 							gap-s1
 							p-8 pt-4
 							bg-gray-field
 							rounded-super-sm rounded-t-none
-							top-[var(--header-height-sm)] lg:top-[var(--header-height)]
 						"
 					>
 						<div class="flex flex-col gap-s-1">
@@ -1633,8 +1637,8 @@
 										<summary
 											class="
 												relative
-												w-[calc(100%_+_calc(var(--spacing)_*_4))]
 												-ml-4
+												w-[calc(100%_+_calc(var(--spacing)_*_4))]
 											"
 										>
 											<span
@@ -1908,13 +1912,17 @@
 		<div class="absolute inset-0 -z-1" tabindex="0" role="button" @click="close"></div>
 		<div
 			class="
-				h-full md:h-auto max-h-full md:max-w-100 w-full
+				h-full
+				md:h-auto
+				max-h-full
+				md:max-w-100
+				md:max-h-[calc(100%_-_calc(var(--spacing)_*_2))]
+				w-full
 				overflow-y-auto
 				bg-white
 				md:rounded-super-sm
 				md:shadow-high
 				overscroll-contain
-				md:max-h-[calc(100%_-_calc(var(--spacing)_*_2))]
 			"
 		>
 			<div

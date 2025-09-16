@@ -1,16 +1,21 @@
 """Expose Cutesy via CLI."""
 
-# Standard Library
+import configparser
 import sys
 from pathlib import Path
 
-# Third Party
-import click
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    import tomli as tomllib  # type: ignore[no-redef]
 
-# Current App
+import click
+from click.core import ParameterSource
+
 from . import HTMLLinter
-from .attribute_processors import reindent, tailwind, whitespace
-from .preprocessors import django
+from .attribute_processors import BaseAttributeProcessor, reindent, whitespace
+from .attribute_processors.class_ordering import tailwind
+from .preprocessors import BasePreprocessor, django
 from .types import DoctypeError, PreprocessingError
 
 
@@ -49,13 +54,15 @@ from .types import DoctypeError, PreprocessingError
 )
 @click.version_option()
 @click.argument("pattern")
+@click.pass_context
 def main(
+    context: click.Context,
     code: bool,  # noqa: FBT001 (argument pattern)
-    fix: bool,  # noqa: FBT001 (argument pattern)
-    return_zero: bool,  # noqa: FBT001 (argument pattern)
-    quiet: bool,  # noqa: FBT001 (argument pattern)
-    check_doctype: bool,  # noqa: FBT001 (argument pattern)
-    preprocessor: str,
+    fix: bool,  # noqa: FBT001
+    return_zero: bool,  # noqa: FBT001
+    quiet: bool,  # noqa: FBT001
+    check_doctype: bool,  # noqa: FBT001
+    preprocessor: str | None,
     attribute_processor: list[str],
     pattern: str,
 ) -> None:
@@ -63,19 +70,55 @@ def main(
 
     Lint (and optionally, fix & format) all files matching PATTERN.
     """  # noqa: D209, D400, D415
-    preprocessor_instance = {
-        None: None,
-        "django": django.Preprocessor(),
-    }[preprocessor]
+    config = _load_config(Path.cwd())
 
-    attribute_processor_instances = []
-    for attr_processor in attribute_processor:
-        attribute_processor_instance = {
-            "tailwind": tailwind.AttributeProcessor(),
-            "reindent": reindent.AttributeProcessor(),
-            "whitespace": whitespace.AttributeProcessor(),
-        }[attr_processor]
-        attribute_processor_instances.append(attribute_processor_instance)
+    if not _from_cli(context, "fix"):
+        value = _parse_bool(config.get("fix"))
+        if value is not None:
+            fix = value
+
+    if not _from_cli(context, "return_zero"):
+        value = _parse_bool(config.get("return_zero"))
+        if value is not None:
+            return_zero = value
+
+    if not _from_cli(context, "quiet"):
+        value = _parse_bool(config.get("quiet"))
+        if value is not None:
+            quiet = value
+
+    if not _from_cli(context, "check_doctype"):
+        value = _parse_bool(config.get("check_doctype"))
+        if value is not None:
+            check_doctype = value
+
+    if not _from_cli(context, "code"):
+        value = _parse_bool(config.get("code"))
+        if value is not None:
+            code = value
+
+    if not _from_cli(context, "preprocessor"):
+        value = config.get("preprocessor")
+        if isinstance(value, str):
+            preprocessor = value
+
+    if not _from_cli(context, "attribute_processor"):
+        value_list = _parse_list(config.get("attribute_processor"))
+        if value_list is not None:
+            attribute_processor = value_list
+
+    preprocessors: dict[str, type[BasePreprocessor]] = {
+        "django": django.Preprocessor,
+    }
+    preprocessor_instance = preprocessors[preprocessor]() if preprocessor else None
+
+    attribute_processors: dict[str, type[BaseAttributeProcessor]] = {
+        "tailwind": tailwind.AttributeProcessor,
+        "reindent": reindent.AttributeProcessor,
+        "whitespace": whitespace.AttributeProcessor,
+    }
+
+    attribute_processor_instances = [attribute_processors[name]() for name in attribute_processor]
 
     linter = HTMLLinter(
         fix=fix,
@@ -233,3 +276,78 @@ def main(
         click.echo("\033[1mNo problems found\033[0m 🥰")
 
     sys.exit(0)
+
+
+def _from_cli(context: click.Context, name: str) -> bool:
+    try:
+        return context.get_parameter_source(name) == ParameterSource.COMMANDLINE
+    except Exception:
+        return True  # be conservative
+
+
+def _find_in_parents(start: Path, names: list[str]) -> Path | None:
+    current = start.resolve()
+    while True:
+        for name in names:
+            part = current / name
+            if part.is_file():
+                return part
+        if current.parent == current:
+            return None
+        current = current.parent
+
+
+def _parse_bool(item: object) -> bool | None:
+    if isinstance(item, bool):
+        return item
+    if isinstance(item, str):
+        value = item.strip().lower()
+        if value in {"1", "true", "yes", "on"}:
+            return True
+        if value in {"0", "false", "no", "off"}:
+            return False
+    return None
+
+
+def _parse_list(item: object) -> list[str] | None:
+    if item is None:
+        return None
+    if isinstance(item, (list, tuple)):
+        return [str(entry) for entry in item]
+    if isinstance(item, str):
+        parts = [part.strip() for part in item.replace(",", " ").split()]
+        return [part for part in parts if part]
+    return None
+
+
+def _load_config(start_dir: Path) -> dict:
+    """Load config from cutesy.toml, pyproject.toml, or setup.cfg."""
+    # 1) cutesy.toml
+    path = _find_in_parents(start_dir, ["cutesy.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            return tomllib.load(toml_file)
+
+    # 2) pyproject.toml
+    path = _find_in_parents(start_dir, ["pyproject.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            toml_data = tomllib.load(toml_file) or {}
+        if "cutesy" in toml_data and isinstance(toml_data["cutesy"], dict):
+            return toml_data["cutesy"]
+        if (
+            "tool" in toml_data
+            and isinstance(toml_data["tool"], dict)
+            and isinstance(toml_data["tool"].get("cutesy"), dict)
+        ):
+            return toml_data["tool"]["cutesy"]
+
+    # 3) setup.cfg
+    path = _find_in_parents(start_dir, ["setup.cfg"])
+    if path:
+        config = configparser.ConfigParser()
+        config.read(path)
+        if config.has_section("cutesy"):
+            return {key: value for key, value in config.items("cutesy")}
+
+    return {}

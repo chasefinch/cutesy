@@ -2,7 +2,7 @@
 
 import pytest
 
-from cutesy.attribute_processors.tailwind import TailwindClass, parse_tailwind_class
+from cutesy.attribute_processors.class_ordering.tailwind import TailwindClass, parse_tailwind_class
 
 
 class TestTailwind:

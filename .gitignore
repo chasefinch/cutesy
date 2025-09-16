@@ -15,6 +15,7 @@ dist/*
 
 # Other
 .cache
+__pycache__
 *.sw[po]
 *.py[co]
 *.bak
