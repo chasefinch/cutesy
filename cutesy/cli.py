@@ -1,6 +1,62 @@
-"""Expose Cutesy via CLI."""
+"""Expose Cutesy via CLI.
+
+Cutesy 🥰 — Lint (and optionally fix & format) HTML files.
+
+USAGE
+-----
+  cutesy [OPTIONS] PATTERN
+  cutesy --code [OPTIONS] "<html>…</html>"
+
+CONFIGURATION
+-------------
+  You can configure Cutesy via (in priority order):
+    1) cutesy.toml
+    2) [tool.cutesy] in pyproject.toml (or top-level "cutesy")
+    3) setup.cfg  (section [cutesy])
+
+  Supported keys (overridable by CLI):
+    fix = true|false
+    return_zero = true|false
+    quiet = true|false
+    check_doctype = true|false
+    code = true|false
+    preprocessor = "django" | null
+    attribute_processors = ["tailwind", "alpine", ...]  # OPTIONAL, ORDERED
+      - NOTE: The internal processors "whitespace" and "reindent" are always
+        enabled by default (in that order) and do not need to be listed here.
+        Disable both with the CLI flag --preserve-attr-whitespace.
+
+CLI HIGHLIGHTS
+--------------
+  --attribute-processors "<list>"
+      Provide an ordered list of attribute processors (besides the defaults).
+      Accepts space/comma separated values or a JSON array:
+        --attribute-processors "tailwind"
+        --attribute-processors "tailwind alpine"
+        --attribute-processors "tailwind,alpine"
+        --attribute-processors '["tailwind","alpine"]'
+      To override config to an empty list (i.e., only the defaults), pass:
+        --attribute-processors "[]"
+
+  --preserve-attr-whitespace
+      Disables the built-in 'whitespace' and 'reindent' processors.
+
+Examples
+--------
+  # Lint all HTML files using defaults + tailwind attribute processor
+  cutesy --fix --attribute-processors tailwind "**/*.html"
+
+  # Run on a string of HTML passed on the command line
+  cutesy --code --fix --attribute-processors "tailwind alpine" "<div class='...'>…</div>"
+
+  # Disable built-ins that touch attribute whitespace/reindent
+  cutesy --preserve-attr-whitespace --attribute-processors tailwind "**/*.html"
+
+"""  # noqa: D205, D400, D415
 
 import configparser
+import contextlib
+import json
 import sys
 from pathlib import Path
 
@@ -19,7 +75,95 @@ from .preprocessors import BasePreprocessor, django
 from .types import DoctypeError, PreprocessingError
 
 
-@click.command()
+def _from_cli(context: click.Context, name: str) -> bool:
+    try:
+        return context.get_parameter_source(name) == ParameterSource.COMMANDLINE
+    except Exception:
+        return True  # be conservative
+
+
+def _find_in_parents(start: Path, names: list[str]) -> Path | None:
+    current = start.resolve()
+    while True:
+        for name in names:
+            part = current / name
+            if part.is_file():
+                return part
+        if current.parent == current:
+            return None
+        current = current.parent
+
+
+def _parse_bool(item: object) -> bool | None:
+    if isinstance(item, bool):
+        return item
+    if isinstance(item, str):
+        value = item.strip().lower()
+        if value in {"1", "true", "yes", "on"}:
+            return True
+        if value in {"0", "false", "no", "off"}:
+            return False
+    return None
+
+
+def _parse_list(item: object) -> list[str] | None:
+    """Parse config/CLI lists.
+
+    Accepts JSON arrays, comma/space separated strings, or sequences.
+    """
+    if item is None:
+        return None
+    if isinstance(item, (list, tuple)):
+        return [str(entry).strip() for entry in item if str(entry).strip()]
+    if isinstance(item, str):
+        string = item.strip()
+        if string == "":
+            return []
+        # Try JSON first (to allow explicit [] override)
+        with contextlib.suppress(Exception):
+            parsed = json.loads(string)
+            if isinstance(parsed, list):
+                return [str(entry).strip() for entry in parsed if str(entry).strip()]
+        # Fallback: comma/space separated tokens
+        parts = [part.strip() for part in string.replace(",", " ").split()]
+        return [part for part in parts if part]
+    return None
+
+
+def _load_config(start_dir: Path) -> dict:
+    """Load config from cutesy.toml, pyproject.toml, or setup.cfg."""
+    # 1) cutesy.toml
+    path = _find_in_parents(start_dir, ["cutesy.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            return tomllib.load(toml_file)
+
+    # 2) pyproject.toml
+    path = _find_in_parents(start_dir, ["pyproject.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            toml_data = tomllib.load(toml_file) or {}
+        if "cutesy" in toml_data and isinstance(toml_data["cutesy"], dict):
+            return toml_data["cutesy"]
+        if (
+            "tool" in toml_data
+            and isinstance(toml_data["tool"], dict)
+            and isinstance(toml_data["tool"].get("cutesy"), dict)
+        ):
+            return toml_data["tool"]["cutesy"]
+
+    # 3) setup.cfg
+    path = _find_in_parents(start_dir, ["setup.cfg"])
+    if path:
+        config = configparser.ConfigParser()
+        config.read(path)
+        if config.has_section("cutesy"):
+            return {key: value for key, value in config.items("cutesy")}
+
+    return {}
+
+
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
     "--code",
     is_flag=True,
@@ -47,29 +191,38 @@ from .types import DoctypeError, PreprocessingError
     help="Use a preprocessor for dynamic HTML files. Try 'django'.",
 )
 @click.option(
-    "--attribute-processor",
-    metavar="<str>",
-    multiple=True,
-    help="Use an attribute processor for dynamic HTML files. Try 'tailwind'.",
+    "--attribute-processors",
+    metavar="<list>",
+    help=(
+        "Ordered list of attribute processors (besides the defaults). "
+        "Accepts comma/space-separated values or a JSON array. "
+        'Examples: "tailwind", "tailwind alpine", "tailwind,alpine", \'["tailwind"]\', "[]".'
+    ),
+)
+@click.option(
+    "--preserve-attr-whitespace",
+    is_flag=True,
+    help="Disable the default 'whitespace' and 'reindent' attribute processors.",
 )
 @click.version_option()
 @click.argument("pattern")
 @click.pass_context
 def main(
     context: click.Context,
-    code: bool,  # noqa: FBT001 (argument pattern)
+    code: bool,  # noqa: FBT001
     fix: bool,  # noqa: FBT001
     return_zero: bool,  # noqa: FBT001
     quiet: bool,  # noqa: FBT001
     check_doctype: bool,  # noqa: FBT001
     preprocessor: str | None,
-    attribute_processor: list[str],
+    attribute_processors: str | None,
+    preserve_attr_whitespace: bool,  # noqa: FBT001
     pattern: str,
 ) -> None:
-    """Cutesy 🥰
+    """Cutesy 🥰.
 
     Lint (and optionally, fix & format) all files matching PATTERN.
-    """  # noqa: D209, D400, D415
+    """
     config = _load_config(Path.cwd())
 
     if not _from_cli(context, "fix"):
@@ -102,29 +255,59 @@ def main(
         if isinstance(value, str):
             preprocessor = value
 
-    if not _from_cli(context, "attribute_processor"):
-        value_list = _parse_list(config.get("attribute_processor"))
-        if value_list is not None:
-            attribute_processor = value_list
+    # NEW: read plural `attribute_processors` from config unless CLI provided
+    cli_attr_list = _parse_list(attribute_processors)
+    cfg_attr_list = (
+        None
+        if _from_cli(context, "attribute_processors")
+        else _parse_list(
+            config.get("attribute_processors"),
+        )
+    )
+    specified_attr_processors = cli_attr_list
+    if specified_attr_processors is None:
+        specified_attr_processors = cfg_attr_list or []
 
     preprocessors: dict[str, type[BasePreprocessor]] = {
         "django": django.Preprocessor,
     }
     preprocessor_instance = preprocessors[preprocessor]() if preprocessor else None
 
-    attribute_processors: dict[str, type[BaseAttributeProcessor]] = {
+    # Known attribute processors (built-ins). We don't advertise 'whitespace'/'reindent'.
+    attr_processor_map: dict[str, type[BaseAttributeProcessor]] = {
         "tailwind": tailwind.AttributeProcessor,
         "reindent": reindent.AttributeProcessor,
         "whitespace": whitespace.AttributeProcessor,
     }
 
-    attribute_processor_instances = [attribute_processors[name]() for name in attribute_processor]
+    # Validate names up-front (excluding hidden defaults which we add ourselves)
+    reserved_attr_processors = {"whitespace", "reindent"}
+    unknown = [
+        attr_processor
+        for attr_processor in specified_attr_processors
+        if attr_processor not in attr_processor_map or attr_processor in reserved_attr_processors
+    ]
+    if unknown:
+        error_message = f"Unknown attribute processor(s): {', '.join(unknown)}. Try: tailwind"
+        raise click.BadParameter(error_message, param_hint="--attribute-processors")
+
+    # Compose final processor order:
+    final_attr_names: list[str] = []
+    if not preserve_attr_whitespace:
+        # Always run these first, in this order
+        final_attr_names.extend(["whitespace", "reindent"])
+
+    # Then user-specified (order preserved)
+    final_attr_names.extend(specified_attr_processors)
+
+    # Instantiate
+    attr_processor_instances = [attr_processor_map[name]() for name in final_attr_names]
 
     linter = HTMLLinter(
         fix=fix,
         check_doctype=check_doctype,
         preprocessor=preprocessor_instance,
-        attribute_processors=attribute_processor_instances,
+        attribute_processors=attr_processor_instances,
     )
     errors_by_file = {}
     num_errors = 0
@@ -149,8 +332,7 @@ def main(
         try:
             result, errors = linter.lint(html)
         except DoctypeError:
-            # Ignore this file due to non-HTML5 doctype, when this feature has
-            # been enabled
+            # Ignore this file due to non-HTML5 doctype, when this feature has been enabled
             continue
         except PreprocessingError as preprocessing_error:
             is_preprocessing_error = True
@@ -276,78 +458,3 @@ def main(
         click.echo("\033[1mNo problems found\033[0m 🥰")
 
     sys.exit(0)
-
-
-def _from_cli(context: click.Context, name: str) -> bool:
-    try:
-        return context.get_parameter_source(name) == ParameterSource.COMMANDLINE
-    except Exception:
-        return True  # be conservative
-
-
-def _find_in_parents(start: Path, names: list[str]) -> Path | None:
-    current = start.resolve()
-    while True:
-        for name in names:
-            part = current / name
-            if part.is_file():
-                return part
-        if current.parent == current:
-            return None
-        current = current.parent
-
-
-def _parse_bool(item: object) -> bool | None:
-    if isinstance(item, bool):
-        return item
-    if isinstance(item, str):
-        value = item.strip().lower()
-        if value in {"1", "true", "yes", "on"}:
-            return True
-        if value in {"0", "false", "no", "off"}:
-            return False
-    return None
-
-
-def _parse_list(item: object) -> list[str] | None:
-    if item is None:
-        return None
-    if isinstance(item, (list, tuple)):
-        return [str(entry) for entry in item]
-    if isinstance(item, str):
-        parts = [part.strip() for part in item.replace(",", " ").split()]
-        return [part for part in parts if part]
-    return None
-
-
-def _load_config(start_dir: Path) -> dict:
-    """Load config from cutesy.toml, pyproject.toml, or setup.cfg."""
-    # 1) cutesy.toml
-    path = _find_in_parents(start_dir, ["cutesy.toml"])
-    if path:
-        with path.open("rb") as toml_file:
-            return tomllib.load(toml_file)
-
-    # 2) pyproject.toml
-    path = _find_in_parents(start_dir, ["pyproject.toml"])
-    if path:
-        with path.open("rb") as toml_file:
-            toml_data = tomllib.load(toml_file) or {}
-        if "cutesy" in toml_data and isinstance(toml_data["cutesy"], dict):
-            return toml_data["cutesy"]
-        if (
-            "tool" in toml_data
-            and isinstance(toml_data["tool"], dict)
-            and isinstance(toml_data["tool"].get("cutesy"), dict)
-        ):
-            return toml_data["tool"]["cutesy"]
-
-    # 3) setup.cfg
-    path = _find_in_parents(start_dir, ["setup.cfg"])
-    if path:
-        config = configparser.ConfigParser()
-        config.read(path)
-        if config.has_section("cutesy"):
-            return {key: value for key, value in config.items("cutesy")}
-
-    return {}
