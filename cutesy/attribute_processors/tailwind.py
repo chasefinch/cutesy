@@ -148,7 +148,7 @@ class AttributeProcessor(BaseAttributeProcessor):
 
             for index, index_range in enumerate(reversed(preprocessed_index_ranges)):
                 sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"
-                class_names, stash = extract_with_sentinel(class_names, index_range, sentinel)
+                class_names, stash = self.extract_with_sentinel(class_names, index_range, sentinel)
                 self.stashed_class_names.append(stash)
 
         classes = []
@@ -206,54 +206,133 @@ class AttributeProcessor(BaseAttributeProcessor):
         attribute_lines.append(current_indentation_level * indentation)
         return "\n".join(attribute_lines)
 
-    def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[StashItem]:
-        """Recursively flatten `stash`.
+    def extract_with_sentinel(
+        self,
+        class_names: list[str],
+        index_tree: IndexRangeNode,
+        sentinel: str,
+    ) -> tuple[list[str], StashItem]:
+        """Extract a span of class names and replace it with a sentinel.
 
-        - Nested lists are flattened
-        - Any list that becomes a single string returns that string directly
-        - If a list can be compacted within limits, it joins into a single
-          string with special spacing rules:
-            * No space between first & second items
-            * No space between second-to-last & last items
-            * Single space between everything else
-        - Otherwise return a list[str].
+        Returns (new_class_names, stash), where new_class_names has
+        class_names[start:end] replaced by the sentinel, and stash is a nested
+        structure of the removed items.
+
+        In the stash, plain strings are class names, and lists represent nested
+        blocks.
         """
-        if isinstance(stash, str):
-            return stash
+        start = index_tree[0]
+        end = index_tree[-1]
 
-        flat_parts: list[StashItem] = []
+        assert isinstance(start, int)
+        assert isinstance(end, int)
 
-        for item in stash:
-            if isinstance(item, str):
-                flat_parts.append(item)
-            else:
-                collapsed = self._flatten_stash(item)
-                if isinstance(collapsed, str):
-                    flat_parts.append(collapsed)
-                else:
-                    flat_parts.extend(collapsed)  # collapsed is list[StashItem]
+        stash = self._build_stash(class_names, index_tree)
+        new_class_names = [*class_names[:start], sentinel, *class_names[end:]]
+        return new_class_names, stash
 
-        # If it collapsed to a single string, return that directly
-        if len(flat_parts) == 1:
-            return flat_parts[0]
+    def _build_stash(self, class_names: list[str], tree: list) -> list[StashItem]:
+        """Build a nested stash.
 
-        # If it fits on one line, compact it
-        if len(flat_parts) <= self.max_items_per_line:
-            # Strip leading & trailing spaces from this one-liner
-            flat_strings = collapse(flat_parts, base_type=str)
-            candidate = " ".join(flat_strings)
+        Sort each contiguous run of non-control items between control items.
+        Controls:
+        - nested block (a list like [start, ..., end])
+        - scalar index representing a block continuation character
 
-            assert self.preprocessor
-            left, right = self.preprocessor.delimiters
-            left = re.escape(left)
-            right = re.escape(right)
-            candidate = re.sub(rf" {left}", rf"{left}", candidate)
-            candidate = re.sub(rf"{right} ", rf"{right}", candidate)
-            if len(candidate) <= self.max_length:
-                return candidate
+        First and last items at this level must never be sorted.
+        """
+        start = tree[0]
+        end = tree[-1]
+        interior = tree[1:-1]
 
-        # Otherwise, return the list of strings
-        return flat_parts
+        stash: list[StashItem] = []
+        buffer: list[str] = []
+        cursor = start
+
+        for child in interior:
+            if isinstance(child, int):
+                name = class_names[child]
+                if self.preprocessor and name.startswith(self.preprocessor.delimiters[0]):
+                    min_instruction_string_length = 4
+                    assert len(name) >= min_instruction_string_length
+                    instruction_type = InstructionType(name[1])
+
+                    # FIX #2: call the predicate
+                    if instruction_type.continues_block:
+                        # FIX #1: capture the segment BEFORE this scalar control
+                        buffer.extend(class_names[cursor:child])
+
+                        # Flush preceding run, protecting head if nothing has been emitted yet
+                        self._emit_sorted_run(buffer, stash, protect_head=(len(stash) == 0))
+
+                        # Emit the control itself
+                        stash.append(name)
+                        cursor = child + 1
+
+                # Non-control scalar: keep accumulating; will be flushed later.
+                continue
+
+            # Child is a nested block (control)
+            child_start = child[0]
+            child_end = child[-1]
+
+            # Capture & flush the segment before the child block
+            buffer.extend(class_names[cursor:child_start])
+            self._emit_sorted_run(buffer, stash, protect_head=(len(stash) == 0))
+
+            # Recurse; child sorts internally but remains atomic here
+            stash.append(self._build_stash(class_names, child))
+            cursor = child_end
+
+        # Tail (after last interior up to end). Always protect the tail item.
+        buffer.extend(class_names[cursor:end])
+        self._emit_sorted_run(
+            buffer,
+            stash,
+            protect_head=(len(stash) == 0),  # no controls at all -> protect both ends
+            protect_tail=True,
+        )
+
+        return stash
+
+    def _emit_sorted_run(
+        self,
+        buffer: list[str],
+        stash: list[StashItem],
+        *,
+        protect_head: bool = False,
+        protect_tail: bool = False,
+    ) -> None:
+        """Emit a buffered run into `stash`.
+
+        Keeping optional head/tail items unsorted.
+        - If protect_head: keep buffer[0] unsorted as the first emitted item.
+        - If protect_tail: keep the last remaining element unsorted as the last
+          emitted item.
+        - The middle (whatever remains) is sorted via _sort_run.
+        """
+        if not buffer:
+            return
+
+        head_item: str | None = None
+        tail_item: str | None = None
+
+        if protect_head and buffer:
+            head_item = buffer.pop(0)
+
+        if protect_tail and buffer:
+            tail_item = buffer.pop()  # from what remains after head pop
+
+        middle_sorted = _sort_run(buffer)
+
+        if head_item is not None:
+            stash.append(head_item)
+        if middle_sorted:
+            stash.extend(middle_sorted)
+        if tail_item is not None:
+            stash.append(tail_item)
+
+        buffer.clear()  # explicit; caller reuses the same list
 
     def _hydrate_class_groups(self, class_groups: list[list[str]]) -> list[list[StashItem]]:
         """Hydrate a stash into a list of class groups."""
@@ -273,6 +352,56 @@ class AttributeProcessor(BaseAttributeProcessor):
                 hydrated_class_entries.append(user_defined_item)
         hydrated_class_groups.append(hydrated_class_entries)
         return hydrated_class_groups
+
+    def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[StashItem]:
+        """Normalize `stash` without crossing control boundaries.
+
+        Child lists are atomic at their parent level (controls). We may flatten
+        *inside* a child, but we never splice its contents into the parent.
+
+        If (and only if) every item at the current level is a string, we may
+        compact to a one-liner with special spacing rules:
+        - No space between first & second items
+        - No space between second-to-last & last items
+        - Single space between everything else
+        - Otherwise return a list[StashItem] preserving child lists in place.
+        """
+        if isinstance(stash, str):
+            return stash
+
+        # Recurse into children but keep each child atomic at this level.
+        normalized: list[StashItem] = []
+        for item in stash:
+            if isinstance(item, str):
+                normalized.append(item)
+            else:
+                child = self._flatten_stash(item)
+                normalized.append(child)  # keep child as a single token
+
+        # If everything at this level is a string, consider one-line compaction
+        all_strings = all(isinstance(normalized_item, str) for normalized_item in normalized)
+        if all_strings:
+            if len(normalized) == 1:
+                return normalized[0]  # single string
+
+            if len(normalized) <= self.max_items_per_line:
+                # Join and fix spaces around delimiters
+                pieces = [str(normalized_item) for normalized_item in normalized]
+                candidate = " ".join(pieces)
+
+                assert self.preprocessor  # required for delimiters
+                left_raw, right_raw = self.preprocessor.delimiters
+                left, right = re.escape(left_raw), re.escape(right_raw)
+
+                # Remove space immediately after left delimiter and before right delimiter
+                candidate = re.sub(rf" {left}", left, candidate)
+                candidate = re.sub(rf"{right} ", right, candidate)
+
+                if len(candidate) <= self.max_length:
+                    return candidate
+
+        # Could not compact; return the sequence with children preserved in place.
+        return normalized
 
     def _extract_columns_and_lines(
         self,
@@ -350,31 +479,6 @@ def expand_class_names(
     return out
 
 
-def extract_with_sentinel(
-    class_names: list[str],
-    index_tree: IndexRangeNode,
-    sentinel: str,
-) -> tuple[list[str], StashItem]:
-    """Extract a span of class names and replace it with a sentinel.
-
-    Returns (new_class_names, stash), where new_class_names has
-    class_names[start:end] replaced by the sentinel, and stash is a nested
-    structure of the removed items.
-
-    In the stash, plain strings are class names, and lists represent nested
-    blocks.
-    """
-    start = index_tree[0]
-    end = index_tree[-1]
-
-    assert isinstance(start, int)
-    assert isinstance(end, int)
-
-    stash = _build_stash(class_names, index_tree)
-    new_class_names = [*class_names[:start], sentinel, *class_names[end:]]
-    return new_class_names, stash
-
-
 def parse_tailwind_class(full: str) -> TailwindClass:
     """Parse a Tailwind class string into a TailwindClass object."""
     parts = []
@@ -405,7 +509,7 @@ def parse_tailwind_class(full: str) -> TailwindClass:
 
     parts.append("".join(buffer))
 
-    modifiers, base = parts[:-1], parts[-1]
+    modifiers, base = parts[:-1], parts[-1].removeprefix("-")
 
     return TailwindClass(
         class_name=base,
@@ -618,33 +722,36 @@ def group_and_sort_tailwind(
 # Loop, sort, and parse helpers -----------------------------------------------
 
 
-def _build_stash(class_names: list[str], tree: list) -> list[StashItem]:
-    start = tree[0]
-    end = tree[-1]
-    interior = tree[1:-1]
+def _sort_run(items: list[str]) -> list[str]:
+    """Sort a flat run of class strings as if they were grouped.
 
-    stash: list = []
-    cursor = start
+    - Real Tailwind groups in REAL_GROUPS_ORDER order
+      (using _intragroup_sort_key)
+    - Then "other (tailwind)"
+    - Then user-defined classes (group=None) at the very end, original order
+    """
+    packed_items: list[tuple[tuple, str]] = []
 
-    for child in interior:
-        if isinstance(child, int):
-            # Copy items before the scalar, then include the scalar item itself
-            stash.extend(class_names[cursor:child])
-            stash.append(class_names[child])
-            cursor = child + 1
+    # Make the user-defined rank strictly after "other (tailwind)"
+    user_defined_rank = _GROUP_RANK[_OTHER_GROUP] + 1
+
+    for original_index, full_string in enumerate(items):
+        tailwind_class = parse_tailwind_class(full_string)
+        base_group = _find_group(tailwind_class.class_name)
+
+        if base_group is None:
+            # User-defined: keep relative order; put after all Tailwind buckets
+            key = (user_defined_rank, (original_index,))
         else:
-            # Nested block: child is a list like [start, ..., end]
-            child_start = child[0]
-            child_end = child[-1]
-            # Copy items before the child block
-            stash.extend(class_names[cursor:child_start])
-            # Recurse for the nested block
-            stash.append(_build_stash(class_names, child))
-            cursor = child_end
+            # Tailwind: order by group rank, then intragroup rules (stable by original_index)
+            group_rank = _GROUP_RANK.get(base_group, _GROUP_RANK[_OTHER_GROUP])
+            intragroup_key = _intragroup_sort_key(base_group, tailwind_class, original_index)
+            key = (group_rank, intragroup_key)
 
-    # Tail after last interior element up to (but not including) end
-    stash.extend(class_names[cursor:end])
-    return stash
+        packed_items.append((key, full_string))
+
+    packed_items.sort(key=lambda key_value: key_value[0])
+    return [item[1] for item in packed_items]
 
 
 RESPONSIVE_ORDER_INDEX: Final = MappingProxyType(
@@ -737,9 +844,11 @@ def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: i
 
 
 def _find_group(class_name: str) -> str | None:
-    unwanted_keys = ("--", "__")
-    if any(key in class_name for key in unwanted_keys):
-        return None
+    # BEM heuristic, but ignore arbitrary payloads inside [...] or (...)
+    # e.g., mt-[var(--x)] should NOT be rejected because of "--" inside brackets.
+    outside = re.sub(r"\[[^\]]*\]|\([^)]*\)", "", class_name)
+    if "--" in outside or "__" in outside:
+        return None  # user-defined
     for group_name, compiled_list in _COMPILED:
         if any(pat.match(class_name) for pat in compiled_list):
             return group_name
