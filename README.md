@@ -1,20 +1,20 @@
 # Cutesy 🥰
 
-![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue) [![Build Status](https://travis-ci.com/chasefinch/cutesy.svg?branch=main)](https://travis-ci.com/chasefinch/cutesy)
+![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-Cutesy reformats & lints HTML documents, including HTML templates. Most code issues can be fixed automatically.
+Cutesy reformats & lints HTML documents, including HTML templates. Most code issues that it finds can be fixed automatically.
 
 - Works with Django templates 🐍🧩
-- Sorts classes for TailwindCSS ✨🎨
+- Sorts classes for TailwindCSS 🎨✨
 - Plays nice with code-in-attribute Javascript frameworks like AlpineJS and HTMX ⚡🧑‍💻
 
 ## Templating languages
 
-Templating languages like Django Template Language or Ruby's ERB are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
+Templating languages are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
-Currently supports preprocessing for Django templates. Support for additional templating languages is planned.
+Cutesy currently supports preprocessing for Django templates.
 
 ## Attribute-based CSS & JavaScript frameworks
 
@@ -22,7 +22,7 @@ Works with CSS and JavaScript frameworks that rely heavily on HTML attributes, s
 
 ### CSS
 
-Can automatically sort Tailwind classes into a consistent order, and indent multi-line class statements properly.
+Automatically sorts Tailwind classes into a consistent order, and indents multi-line class statements properly.
 
 ### JavaScript
 
@@ -35,20 +35,20 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
         <!doctype html>
     <html>
                         <head>
-        <title>Test Page</title>
+            <title>Cutesy 🥰 demo</title>
        </head>
     <body>
-                <h1>Hello     world! </h1>
+                <h1>Hi     there!</h1>
 
 
-                {% if condition1 %}
-                                <p>I love           cookies.</p>
+                {% if cookies_enabled %}
+                        <p>Cutesy is so happy      when your code is neat.</p>
                               {% endif %}
 
 
 
-                    <div     class='someDiv'
-                           id="theDiv"   ></div    >
+                    <div     class='danger-zone'
+                           id="lintTrap"   ></div    >
                         </body>
     </html>
 
@@ -57,16 +57,16 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
     <!doctype html>
     <html>
     <head>
-        <title>Test Page</title>
+        <title>Cutesy 🥰 demo</title>
     </head>
     <body>
-        <h1>Hello world! </h1>
+        <h1>Hi there!</h1>
 
-        {% if condition1 %}
-            <p>I love cookies.</p>
+        {% if cookies_enabled %}
+            <p>Cutesy is so happy when your code is neat.</p>
         {% endif %}
 
-        <div id="theDiv" class="someDiv"></div>
+        <div id="lintTrap" class="danger-zone"></div>
     </body>
     </html>
 
@@ -79,8 +79,8 @@ See the [full list of rules](docs/rules.md) for more information.
 - Code without worrying about formatting. Cutesy formats automatically.
 - Improve code readability.
 - Small diffs for easier code review.
-- Supports plain HTML5 and Django templates
-- Sorts TailwindCSS classes
+- Format & lint Django templates or plain HTML5 documents
+- Sort & format TailwindCSS classes
 
 ## Installation
 
