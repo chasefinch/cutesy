@@ -277,7 +277,6 @@ class HTMLLinter(HTMLParser):
         self._handle_encountered_data()
 
         is_new_line = self._expected_indentation is not None
-        self._reconcile_indentation()
 
         if not self.fix and tag != tag.lower():
             # Tag isn't lowercase
@@ -312,7 +311,14 @@ class HTMLLinter(HTMLParser):
         )
 
         if wrap and not is_new_line:
-            self._log_error("F12", tag=f"<{tag}>")
+            if self.fix and self._break_for_inline_tag():
+                self._process("\n")
+                self._expected_indentation = True
+                is_new_line = True
+            else:
+                self._log_error("F12", tag=f"<{tag}>")
+
+        self._reconcile_indentation()
 
         wrap = wrap and is_new_line
 
@@ -818,6 +824,15 @@ class HTMLLinter(HTMLParser):
             self._column = len_chunk - html_chunk.rfind("\n") - 1
         else:
             self._column += len_chunk
+
+    def _break_for_inline_tag(self) -> bool:
+        """Remove the most recent space in preparation for a line break."""
+        if not self._result[-1].endswith((" ", ">")):
+            return False
+
+        self._result[-1] = self._result[-1][:-1]
+        self._column -= 1
+        return True
 
     def _handle_encountered_data(self) -> None:
         """Handle encountered data."""
