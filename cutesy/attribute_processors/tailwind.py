@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import re
+
+# add at top with your other imports
+from collections import OrderedDict
+from functools import partial
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, NamedTuple, TypeAlias
 
@@ -12,7 +16,7 @@ from ..types import InstructionType, Rule
 from . import BaseAttributeProcessor
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from ..preprocessors import BasePreprocessor
 
@@ -61,6 +65,7 @@ class AttributeProcessor(BaseAttributeProcessor):
             return attr_body
 
         self.indentation = indentation
+        self.preprocessor = preprocessor
 
         self.max_length = max_chars_per_line - ((current_indentation_level + 1) * tab_width)
         self.max_items_per_line = max_items_per_line
@@ -77,20 +82,21 @@ class AttributeProcessor(BaseAttributeProcessor):
 
             # Ensure that there aren't mid-class instructions
             esc = re.escape
-            block_starts = InstructionType.block_starts | InstructionType.block_continuations
+            block_starts = InstructionType.block_starts
             block_ends = InstructionType.block_ends
             start_set = "".join(esc(type_.value) for type_ in block_starts)
             end_set = "".join(esc(type_.value) for type_ in block_ends)
 
-            # "Bad left": a LEFT that is not at start and not immediately after RIGHT,
-            # *and* whose next char is in starting_chars.
-            bad_left = rf"(?<!{esc(right)}){esc(left)}(?=[{start_set}])"
+            # "Bad left": a LEFT that is not at start and not immediately after
+            # RIGHT or space, *and* whose next char is in starting_chars.
+            bad_left = rf"(?<!{esc(right)}| ){esc(left)}(?=[{start_set}])"
 
             # Bad RIGHT: in a segment that started with LEFT+ending_char,
-            # and this RIGHT is not followed by LEFT and not at end of string
+            # and this RIGHT is not followed by LEFT or a space, and not at end
+            # of string
             bad_right = (
                 rf"{esc(left)}[{end_set}][^{esc(right)}]*?"
-                rf"{esc(right)}(?!{esc(left)}|$)"
+                rf"{esc(right)}(?!{esc(left)}|$| )"
             )
 
             raise_tw1 = any(
@@ -152,8 +158,8 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         # Single-line mode
         sorted_class_groups = group_and_sort_tailwind(classes)
-        sorted_class_groups = self._hydrate_class_groups(sorted_class_groups)
-        all_class_names = list(collapse(sorted_class_groups, base_type=str))
+        sorted_class_group_tree = self._hydrate_class_groups(sorted_class_groups)
+        all_class_names = list(collapse(sorted_class_group_tree, base_type=str))
         all_class_names_on_one_line = " ".join(all_class_names)
 
         max_attr_chars_per_line = self.max_length - len('class=""')
@@ -170,18 +176,20 @@ class AttributeProcessor(BaseAttributeProcessor):
         line_indentation = (current_indentation_level + 1) * indentation
 
         # ...#1: One group, but long enough to merit multiple lines.
-        if len(sorted_class_groups) == 1:
+        if len(sorted_class_group_tree) == 1:
             # Only one group, but long enough to merit multiple lines.
-            for group_entry in sorted_class_groups[0]:
+            for group_entry in sorted_class_group_tree[0]:
                 lines = self._extract_columns_and_lines(group_entry)
                 for column_index, line_value in lines:
-                    extra_indentation: str = indentation * column_index
+                    extra_indentation = indentation * column_index
                     attribute_lines.append(f"{line_indentation}{extra_indentation}{line_value}")
 
         else:
-            for group in sorted_class_groups:
-                multiple_lines = any(isinstance(item, list) for item in group)
-                if multiple_lines:
+            for group in sorted_class_group_tree:
+                if all(isinstance(item, str) for item in group):
+                    group_line = " ".join([str(item) for item in group])
+                    attribute_lines.append(f"{line_indentation}{group_line}")
+                else:
                     for multi_group_entry in group:
                         lines = self._extract_columns_and_lines(multi_group_entry)
                         for column_index, line_value in lines:
@@ -189,14 +197,11 @@ class AttributeProcessor(BaseAttributeProcessor):
                             attribute_lines.append(
                                 f"{line_indentation}{extra_indentation}{line_value}",
                             )
-                else:
-                    attribute_lines.append(" ".join(group))
-
         # Add the final line
         attribute_lines.append(current_indentation_level * indentation)
         return "\n".join(attribute_lines)
 
-    def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[str]:
+    def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[StashItem]:
         """Recursively flatten `stash`.
 
         - Nested lists are flattened
@@ -211,7 +216,7 @@ class AttributeProcessor(BaseAttributeProcessor):
         if isinstance(stash, str):
             return stash
 
-        flat_parts: list[str] = []
+        flat_parts: list[StashItem] = []
 
         for item in stash:
             if isinstance(item, str):
@@ -221,7 +226,7 @@ class AttributeProcessor(BaseAttributeProcessor):
                 if isinstance(collapsed, str):
                     flat_parts.append(collapsed)
                 else:
-                    flat_parts.extend(collapsed)  # collapsed is list[str]
+                    flat_parts.extend(collapsed)  # collapsed is list[StashItem]
 
         # If it collapsed to a single string, return that directly
         if len(flat_parts) == 1:
@@ -230,39 +235,38 @@ class AttributeProcessor(BaseAttributeProcessor):
         # If it fits on one line, compact it
         if len(flat_parts) <= self.max_items_per_line:
             # Strip leading & trailing spaces from this one-liner
-            pieces: list[str] = []
-            for index, part in enumerate(flat_parts):
-                if index == 0:
-                    pieces.append(part)
-                elif index == 1 or index == len(flat_parts) - 1:
-                    pieces[-1] += part
-                else:
-                    pieces.append(part)
-            candidate = " ".join(pieces)
+            flat_strings = collapse(flat_parts, base_type=str)
+            candidate = " ".join(flat_strings)
+
+            assert self.preprocessor
+            left, right = self.preprocessor.delimiters
+            left = re.escape(left)
+            right = re.escape(right)
+            candidate = re.sub(rf" {left}", rf"{left}", candidate)
+            candidate = re.sub(rf"{right} ", rf"{right}", candidate)
             if len(candidate) <= self.max_length:
                 return candidate
 
         # Otherwise, return the list of strings
         return flat_parts
 
-    def _hydrate_class_groups(self, class_groups: list[list[str]]) -> list[list[str]]:
+    def _hydrate_class_groups(self, class_groups: list[list[str]]) -> list[list[StashItem]]:
         """Hydrate a stash into a list of class groups."""
         if not class_groups:
             return []
 
-        hydrated_class_groups = class_groups[:-1]
-        flat_class_entries: list[str] = []
+        hydrated_class_groups: list[list[StashItem]] = [
+            [item for item in group] for group in class_groups[:-1]
+        ]
+        hydrated_class_entries: list[StashItem] = []
         for user_defined_item in class_groups[-1]:
             if user_defined_item.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
                 index = int(user_defined_item.split("_")[-1])
                 flattened = self._flatten_stash(self.stashed_class_names.pop(index))
-                if isinstance(flattened, str):
-                    flat_class_entries.append(flattened)
-                else:
-                    flat_class_entries.extend(flattened)  # list[str]
+                hydrated_class_entries.append(flattened)
             else:
-                flat_class_entries.append(user_defined_item)
-        hydrated_class_groups.append(flat_class_entries)
+                hydrated_class_entries.append(user_defined_item)
+        hydrated_class_groups.append(hydrated_class_entries)
         return hydrated_class_groups
 
     def _extract_columns_and_lines(
@@ -285,7 +289,17 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         # Base case: item must be a string here
         assert isinstance(item, str)
-        return [(column, item)]
+
+        # Reduce effective column by one for "continuation" items
+        effective_column = column
+        if self.preprocessor and item.startswith(self.preprocessor.delimiters[0]):
+            min_instruction_string_length = 4
+            assert len(item) >= min_instruction_string_length
+            instruction_type = InstructionType(item[1])
+            if instruction_type.continues_block:
+                effective_column -= 1
+
+        return [(effective_column, item)]
 
 
 def expand_class_names(
@@ -397,9 +411,8 @@ def parse_tailwind_class(full: str) -> TailwindClass:
 
 GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     (
-        "display/position",
+        "position/float",
         (
-            r"(?:container|block|inline|inline-block|inline-flex|flex|grid|contents|hidden)",
             r"(?:static|fixed|absolute|relative|sticky)",
             r"(?:float-|clear-)",
             r"(?:z-|isolation|inset-|top-|right-|bottom-|left-)",
@@ -408,6 +421,7 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     (
         "flex/grid core",
         (
+            r"(?:container|block|inline|inline-block|inline-flex|flex|grid|contents|hidden)",
             r"(?:order-)",
             r"(?:flex-|grow|shrink|basis-)",
             r"(?:grid-cols-|grid-rows-|col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",
@@ -419,11 +433,6 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
             r"(?:place-content-|place-items-|place-self-)",
             r"(?:justify-|content-)",
             r"(?:items-|self-)",
-        ),
-    ),
-    (
-        "columns/gap",
-        (
             r"(?:columns-)",
             r"(?:gap-|space-[xy]-)",
         ),
@@ -431,8 +440,8 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     (
         "spacing (margin/padding)",
         (
-            r"(?:m[trblxy]?-\S+)",
-            r"(?:p[trblxy]?-\S+)",
+            r"(?:m[trblxyse]?-\S+)",
+            r"(?:p[trblxyse]?-\S+)",
         ),
     ),
     ("sizing", (r"(?:w-|min-w-|max-w-|h-|min-h-|max-h-|aspect-)",)),
@@ -445,6 +454,13 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
         ),
     ),
     (
+        "object/overflow",
+        (
+            r"(?:object-)",
+            r"(?:overflow-)",
+        ),
+    ),
+    (
         "backgrounds/gradients",
         (
             r"(?:bg-)",
@@ -453,20 +469,13 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     ),
     ("borders/outline/radius/divide", (r"(?:border-|rounded-|divide-|outline-)",)),
     ("effects", (r"(?:shadow-|opacity-|mix-blend-|backdrop-)",)),
+    ("svg", (r"(?:fill-|stroke-)",)),
     ("transforms", (r"(?:transform|scale-|rotate-|translate-|skew-)",)),
     ("transitions/animation", (r"(?:transition|duration-|ease-|delay-|animate-)",)),
     (
         "interactivity/behavior",
         (r"(?:cursor-|select-|pointer-events-|touch-|scroll-|overscroll-|snap-)",),
     ),
-    (
-        "object/overflow",
-        (
-            r"(?:object-)",
-            r"(?:overflow-)",
-        ),
-    ),
-    ("svg", (r"(?:fill-|stroke-)",)),
     ("accessibility", (r"(?:sr-only|not-sr-only)",)),
 )
 
@@ -475,8 +484,15 @@ _COMPILED: Final[tuple[tuple[str, list[re.Pattern[str]]], ...]] = tuple(
     for name, patterns in GROUPS_IN_ORDER
 )
 
+# Helper to find arbitrary descendant/sibling selectors
+_ARBITRARY_SELECTOR_RE = re.compile(r"^\[(?P<inner>[^]]+)\]$", re.VERBOSE)
+
 # Full group order we will emit
 REAL_GROUPS_ORDER: Final[tuple[str, ...]] = tuple(name for name, _ in GROUPS_IN_ORDER)
+
+_group_rank_dict: dict[str, int] = {name: rank for rank, name in enumerate(REAL_GROUPS_ORDER)}
+_group_rank_dict["other (tailwind)"] = len(REAL_GROUPS_ORDER)
+_GROUP_RANK: Final[Mapping[str, int]] = MappingProxyType(_group_rank_dict)
 
 # Modifier ordering (relative lists) ------------------------------------------
 
@@ -519,11 +535,17 @@ def group_and_sort_tailwind(
 ) -> list[list[str]]:
     """Return groups of tailwind class strings in fixed order.
 
-    All user- defined classes will be collected into one final bucket at the
+    All user-defined classes will be collected into one final bucket at the
     bottom (preserving original order).
 
     Real Tailwind groups appear in REAL_GROUPS_ORDER, then "other (tailwind)",
     sorted by _intragroup_sort_key.
+
+    Arbitrary selector variants (e.g., "[&>*]") each get their own bucket,
+    keyed by the exact modifier string, and are emitted after the above groups.
+
+    Arbitrary selectors that still target the same element (e.g., "[&]" with
+    any underscores) are treated normally (not split out).
 
     User-defined classes (not recognized as Tailwind) are not mixed into
     groups; they are emitted as one final list at the end, in original order.
@@ -534,11 +556,30 @@ def group_and_sort_tailwind(
     }
     group_items["other (tailwind)"] = []
 
+    # One bucket per arbitrary selector modifier; preserve first-seen order
+    arbitrary_selector_groups: OrderedDict[str, list[tuple[int, TailwindClass]]] = OrderedDict()
+
     # Single bucket for all user-defined classes (preserve original order)
     user_defined: list[str] = []
 
-    # Partition into Tailwind groups vs user-defined
+    # Partition into Tailwind groups vs arbitrary-selector groups vs user-defined
     for index, tailwind_class in enumerate(classes):
+        # If the class has an arbitrary selector variant modifier, siphon it out
+        arbitrary_modifier = next(
+            (
+                modifier
+                for modifier in tailwind_class.modifiers
+                if _is_arbitrary_selector_variant(modifier)
+            ),
+            None,
+        )
+
+        if arbitrary_modifier is not None:
+            arbitrary_selector_groups.setdefault(arbitrary_modifier, []).append(
+                (index, tailwind_class),
+            )
+            continue
+
         group = _find_group(tailwind_class.class_name)  # returns a group name or None
         if group is None:
             user_defined.append(tailwind_class.full_string)
@@ -549,14 +590,18 @@ def group_and_sort_tailwind(
     out: list[list[str]] = []
 
     # Real groups in fixed order, then "other (tailwind)"
-    for group_name in (*REAL_GROUPS_ORDER, "other (tailwind)"):  # noqa: WPS426
+    for group_name in (*REAL_GROUPS_ORDER, "other (tailwind)"):
         if not group_items[group_name]:
             continue
-        sorted_group = sorted(
-            group_items[group_name],
-            key=lambda pair: _intragroup_sort_key(group_name, pair[1], pair[0]),
-        )
-        out.append([item.full_string for _, item in sorted_group])
+        key_function = partial(_group_sort_key, group_name=group_name)
+        sorted_group = sorted(group_items[group_name], key=key_function)
+        out.append([item[1].full_string for item in sorted_group])
+
+    # Then each arbitrary selector group (in first-seen order)
+    # Within each bucket, sort as if placing into normal groups.
+    for items in arbitrary_selector_groups.values():
+        sorted_group = sorted(items, key=_arbitrary_selector_key)
+        out.append([item[1].full_string for item in sorted_group])
 
     # Finally, all user-defined classes at the bottom (original order)
     if user_defined:
@@ -660,8 +705,13 @@ def _family_key(group_name: str, class_name: str) -> tuple:
         return (head, _spacing_specificity(class_name))
     if group_name == "borders/outline/radius/divide":
         return (head, _border_specificity(class_name))
-    # generic: more segments → consider more specific
+    # Generic: More segments → consider more specific
     return (head, class_name.count("-"))
+
+
+def _group_sort_key(pair: tuple[int, TailwindClass], group_name: str) -> tuple:
+    original_index, item = pair
+    return _intragroup_sort_key(group_name, item, original_index)
 
 
 def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: int) -> tuple:
@@ -670,11 +720,11 @@ def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: i
     Unmodified first, then modifiers in consistent order, then name, then
     stable index.
     """
-    has_mods = 1 if item.modifiers else 0
+    has_modifiers = bool(item.modifiers)
     base = item.class_name
     return (
         _family_key(group_name, base),
-        has_mods,  # 0 (no mods) before 1 (has mods)
+        has_modifiers,  # False (no modifiers) before True (has modifiers)
         _modifier_key(item.modifiers),
         base,
         original_index,
@@ -692,3 +742,33 @@ def _find_group(class_name: str) -> str | None:
     if class_name in {"container", "flex", "grid", "contents", "hidden"}:
         return "other (tailwind)"
     return None  # None means: user-defined
+
+
+def _is_arbitrary_selector_variant(modifier: str) -> bool:
+    """Return whether a modifier is a descendant selector.
+
+    True if modifier is like "[&...]" (underscores allowed around '&')
+    and is NOT the self-selector "[&]" (with any underscore placement).
+    """
+    match = _ARBITRARY_SELECTOR_RE.match(modifier)
+    if not match:
+        return False
+
+    inner = match.group("inner")
+    stripped = inner.replace("_", "")
+    if not stripped.startswith("&"):
+        return False
+
+    # exclude the self selector
+    return stripped != "&"
+
+
+_OTHER_GROUP: Final[str] = "other (tailwind)"
+
+
+def _arbitrary_selector_key(pair: tuple[int, TailwindClass]) -> tuple:
+    original_index, tailwind_class = pair
+    base_group = _find_group(tailwind_class.class_name) or _OTHER_GROUP
+    rank = _GROUP_RANK.get(base_group, _GROUP_RANK[_OTHER_GROUP])
+    # Use the base group's name so spacing/border heuristics match normal grouping.
+    return (rank, _intragroup_sort_key(base_group, tailwind_class, original_index))
