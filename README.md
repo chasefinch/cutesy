@@ -32,43 +32,47 @@ For in-attribute JavaScript, Cutesy applies consistent indentation and normalize
 
 Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In `--fix` mode, Cutesy turns this:
 
-        <!doctype html>
-    <html>
-                        <head>
-            <title>Cutesy 🥰 demo</title>
-       </head>
-    <body>
-                <h1>Hi     there!</h1>
+```html
+    <!doctype html>
+<html>
+                    <head>
+        <title>Cutesy 🥰 demo</title>
+    </head>
+<body>
+            <h1>Hi     there!</h1>
 
 
-                {% if cookies_enabled %}
-                        <p>Cutesy is so happy      when your code is neat.</p>
-                              {% endif %}
+            {% if cookies_enabled %}
+                    <p>Cutesy is so happy      when your code is neat.</p>
+                            {% endif %}
 
 
 
-                    <div     class='danger-zone'
-                           id="lintTrap"   ></div    >
-                        </body>
-    </html>
+                <div     class='danger-zone'
+                        id="lintTrap"   ></div    >
+                    </body>
+</html>
+```
 
 …into this:
 
-    <!doctype html>
-    <html>
-    <head>
-        <title>Cutesy 🥰 demo</title>
-    </head>
-    <body>
-        <h1>Hi there!</h1>
+```html
+<!doctype html>
+<html>
+<head>
+    <title>Cutesy 🥰 demo</title>
+</head>
+<body>
+    <h1>Hi there!</h1>
 
-        {% if cookies_enabled %}
-            <p>Cutesy is so happy when your code is neat.</p>
-        {% endif %}
+    {% if cookies_enabled %}
+        <p>Cutesy is so happy when your code is neat.</p>
+    {% endif %}
 
-        <div id="lintTrap" class="danger-zone"></div>
-    </body>
-    </html>
+    <div id="lintTrap" class="danger-zone"></div>
+</body>
+</html>
+```
 
 See the [full list of rules](docs/rules.md) for more information.
 
