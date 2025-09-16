@@ -4,11 +4,11 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-Cutesy reformats & lints HTML documents, including HTML templates. It includes a set of rules, and most violations can be fixed automatically.
+Cutesy reformats & lints HTML documents, including HTML templates. Most code issues can be fixed automatically.
 
-- Works with Django templates
-- Sorts classes for TailwindCSS
-- Plays nice with code-in-attribute Javascript frameworks like AlpineJS and HTMX
+- Works with Django templates 🐍🧩
+- Sorts classes for TailwindCSS ✨🎨
+- Plays nice with code-in-attribute Javascript frameworks like AlpineJS and HTMX ⚡🧑‍💻
 
 ## Templating languages
 
