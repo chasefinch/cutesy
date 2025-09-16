@@ -6,7 +6,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 Cutesy reformats & lints HTML documents, including HTML templates. It includes a set of rules, most of which can be fixed automatically.
 
-Cutesy expects HTML5 files, with UTF-8 encoding. It works with Django templates, sorts classes for TailwindCSS, and plays nice with code-in-attribute Javascript frameworks like AlpineJS.
+Cutesy works with Django templates, sorts classes for TailwindCSS, and plays nice with code-in-attribute Javascript frameworks like AlpineJS.
 
 ## Benefits
 
