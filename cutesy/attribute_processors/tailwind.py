@@ -188,7 +188,12 @@ class AttributeProcessor(BaseAttributeProcessor):
             for group in sorted_class_group_tree:
                 if all(isinstance(item, str) for item in group):
                     group_line = " ".join([str(item) for item in group])
-                    attribute_lines.append(f"{line_indentation}{group_line}")
+                    group_line = f"{line_indentation}{group_line}"
+                    if len(group_line) <= self.max_length:
+                        attribute_lines.append(group_line)
+                    else:
+                        group_lines = [f"{line_indentation}{item!s}" for item in group]
+                        attribute_lines.extend(group_lines)
                 else:
                     for multi_group_entry in group:
                         lines = self._extract_columns_and_lines(multi_group_entry)
