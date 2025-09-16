@@ -8,32 +8,23 @@ Cutesy reformats & lints HTML documents, including HTML templates. It includes a
 
 Cutesy works with Django templates, sorts classes for TailwindCSS, and plays nice with code-in-attribute Javascript frameworks like AlpineJS.
 
-## Benefits
-
-- Catch accidental errors.
-- Enforce best practices.
-- Code without worrying about formatting. Cutesy formats automatically.
-- Improve code readability.
-- Small diffs for easier code review.
-- Supports template languages
-
 ## Templating languages
 
-Cutesy is made for with templating languages, like Django Template Language or Ruby's ERB. These are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
+Templating languages like Django Template Language or Ruby's ERB are handled during the "preprocessing" step. Because of this, Cutesy takes dynamic template tags into account for certain types of formatting (such as indentation) & some rules (such as balancing HTML tags).
 
-Cutesy currently supports preprocessing for Django templates; support for additional templating languages is planned.
+Currently supports preprocessing for Django templates. Support for additional templating languages is planned.
 
 ## Attribute-based CSS & JavaScript frameworks
 
-Cutesy works with CSS and JavaScript frameworks that rely heavily on HTML attributes, such as TailwindCSS and AlpineJS.
+Works with CSS and JavaScript frameworks that rely heavily on HTML attributes, such as TailwindCSS, AlpineJS, and HTMX.
 
 ### CSS
 
-Cutesy sorts Tailwind classes into a consistent order and indents multi-line class statements properly.
+Can automatically sort Tailwind classes into a consistent order, and indent multi-line class statements properly.
 
 ### JavaScript
 
-For in-attribute JavaScript, Cutesy applies consistent indentation and normalizes whitespace. It also provides hooks for inspecting and rewriting HTML attributes, so future Cutesy plugins can can apply alternative formatters and linters (such as Prettier and ESLint), type-check code, and run tests, bringing modern development safeguards to code that normally lives inside your HTML.
+For in-attribute JavaScript, Cutesy applies consistent indentation and normalizes whitespace. It also provides hooks for inspecting and rewriting HTML attributes, so future Cutesy plugins can can apply alternative formatters and linters (such as Prettier and ESLint), type-check code, and run tests, bringing modern development safeguards to logic that lives inside your HTML.
 
 ## Examples
 
@@ -79,11 +70,21 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
 
 See the [full list of rules](docs/rules.md) for more information.
 
+## Benefits
+
+- Catch accidental errors.
+- Enforce best practices.
+- Code without worrying about formatting. Cutesy formats automatically.
+- Improve code readability.
+- Small diffs for easier code review.
+- Supports plain HTML5 and Django templates
+- Sorts TailwindCSS classes
+
 ## Installation
 
 Cutesy is written in Python. Install via PyPI:
 
-    uv pip install cutesy
+    pip install cutesy
 
 ## Usage
 

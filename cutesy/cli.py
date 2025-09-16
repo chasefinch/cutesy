@@ -20,23 +20,19 @@ CONFIGURATION
     quiet = true|false
     check_doctype = true|false
     code = true|false
-    preprocessor = "django" | null
-    attribute_processors = ["tailwind", "alpine", ...]  # OPTIONAL, ORDERED
+    extra = ["django", "tailwind", ...]  # OPTIONAL
       - NOTE: The internal processors "whitespace" and "reindent" are always
-        enabled by default (in that order) and do not need to be listed here.
-        Disable both with the CLI flag --preserve-attr-whitespace.
+        enabled by default (in that order). Disable both with --preserve-attr-whitespace.
 
 CLI HIGHLIGHTS
 --------------
-  --attribute-processors "<list>"
-      Provide an ordered list of attribute processors (besides the defaults).
-      Accepts space/comma separated values or a JSON array:
-        --attribute-processors "tailwind"
-        --attribute-processors "tailwind alpine"
-        --attribute-processors "tailwind,alpine"
-        --attribute-processors '["tailwind","alpine"]'
-      To override config to an empty list (i.e., only the defaults), pass:
-        --attribute-processors "[]"
+    --extra "<list>"
+        Provide one or more extras to enable.
+        --extra=django
+        --extra=django,tailwind
+        --extra="[django, tailwind]"
+        To override config with an empty list, pass:
+        --extra []
 
   --preserve-attr-whitespace
       Disables the built-in 'whitespace' and 'reindent' processors.
@@ -186,17 +182,10 @@ def _load_config(start_dir: Path) -> dict:
     help="Process files with non-HTML5 doctypes. Without this flag, non-HTML5 files are skipped.",
 )
 @click.option(
-    "--preprocessor",
-    metavar="<str>",
-    help="Use a preprocessor for dynamic HTML files. Try 'django'.",
-)
-@click.option(
-    "--attribute-processors",
+    "--extra",
     metavar="<list>",
     help=(
-        "Ordered list of attribute processors (besides the defaults). "
-        "Accepts comma/space-separated values or a JSON array. "
-        'Examples: "tailwind", "tailwind alpine", "tailwind,alpine", \'["tailwind"]\', "[]".'
+        "Extra processors to enable. Accepts a JSON array.Examples: [django], [django, tailwind]."
     ),
 )
 @click.option(
@@ -214,8 +203,7 @@ def main(
     return_zero: bool,  # noqa: FBT001
     quiet: bool,  # noqa: FBT001
     check_doctype: bool,  # noqa: FBT001
-    preprocessor: str | None,
-    attribute_processors: str | None,
+    extra: str | None,
     preserve_attr_whitespace: bool,  # noqa: FBT001
     pattern: str,
 ) -> None:
@@ -225,83 +213,55 @@ def main(
     """
     config = _load_config(Path.cwd())
 
-    if not _from_cli(context, "fix"):
-        value = _parse_bool(config.get("fix"))
-        if value is not None:
-            fix = value
+    # Boolean flags
+    for attr_name in ("fix", "return_zero", "quiet", "check_doctype", "code"):
+        if not _from_cli(context, attr_name):
+            value = _parse_bool(config.get(attr_name))
+            if value is not None:
+                locals()[attr_name] = value  # type: ignore[misc]  # noqa: WPS421
 
-    if not _from_cli(context, "return_zero"):
-        value = _parse_bool(config.get("return_zero"))
-        if value is not None:
-            return_zero = value
-
-    if not _from_cli(context, "quiet"):
-        value = _parse_bool(config.get("quiet"))
-        if value is not None:
-            quiet = value
-
-    if not _from_cli(context, "check_doctype"):
-        value = _parse_bool(config.get("check_doctype"))
-        if value is not None:
-            check_doctype = value
-
-    if not _from_cli(context, "code"):
-        value = _parse_bool(config.get("code"))
-        if value is not None:
-            code = value
-
-    if not _from_cli(context, "preprocessor"):
-        value = config.get("preprocessor")
-        if isinstance(value, str):
-            preprocessor = value
-
-    # NEW: read plural `attribute_processors` from config unless CLI provided
-    cli_attr_list = _parse_list(attribute_processors)
-    cfg_attr_list = (
-        None
-        if _from_cli(context, "attribute_processors")
-        else _parse_list(
-            config.get("attribute_processors"),
-        )
-    )
-    specified_attr_processors = cli_attr_list
-    if specified_attr_processors is None:
-        specified_attr_processors = cfg_attr_list or []
+    # Parse extras (from CLI or config)
+    extras = _parse_list(extra)
+    if extras is None:
+        extras = None if _from_cli(context, "extra") else _parse_list(config.get("extra"))
 
     preprocessors: dict[str, type[BasePreprocessor]] = {
         "django": django.Preprocessor,
     }
-    preprocessor_instance = preprocessors[preprocessor]() if preprocessor else None
-
-    # Known attribute processors (built-ins). We don't advertise 'whitespace'/'reindent'.
     attr_processor_map: dict[str, type[BaseAttributeProcessor]] = {
         "tailwind": tailwind.AttributeProcessor,
         "reindent": reindent.AttributeProcessor,
         "whitespace": whitespace.AttributeProcessor,
     }
 
-    # Validate names up-front (excluding hidden defaults which we add ourselves)
-    reserved_attr_processors = {"whitespace", "reindent"}
+    # Build preprocessor instance (only one supported for now)
+    preprocessor_instance = None
+    extras = extras or []
+    if "django" in extras:
+        preprocessor_instance = preprocessors["django"]()
+
+    # Compose attribute processor order
+    final_attr_processor_names: list[str] = []
+    default_attr_processors = ["whitespace", "reindent"]
+    if not preserve_attr_whitespace:
+        final_attr_processor_names.extend(default_attr_processors)
+    final_attr_processor_names.extend(
+        [
+            attr_processor_name
+            for attr_processor_name in extras
+            if attr_processor_name in attr_processor_map
+            and attr_processor_name not in default_attr_processors
+        ],
+    )
+
     unknown = [
-        attr_processor
-        for attr_processor in specified_attr_processors
-        if attr_processor not in attr_processor_map or attr_processor in reserved_attr_processors
+        name for name in extras if name not in preprocessors and name not in attr_processor_map
     ]
     if unknown:
-        error_message = f"Unknown attribute processor(s): {', '.join(unknown)}. Try: tailwind"
-        raise click.BadParameter(error_message, param_hint="--attribute-processors")
+        error_message = f"Unknown extra(s): {', '.join(unknown)}"
+        raise click.BadParameter(error_message, param_hint="--extra")
 
-    # Compose final processor order:
-    final_attr_names: list[str] = []
-    if not preserve_attr_whitespace:
-        # Always run these first, in this order
-        final_attr_names.extend(["whitespace", "reindent"])
-
-    # Then user-specified (order preserved)
-    final_attr_names.extend(specified_attr_processors)
-
-    # Instantiate
-    attr_processor_instances = [attr_processor_map[name]() for name in final_attr_names]
+    attr_processor_instances = [attr_processor_map[name]() for name in final_attr_processor_names]
 
     linter = HTMLLinter(
         fix=fix,
