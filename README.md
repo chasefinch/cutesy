@@ -97,7 +97,6 @@ Minimal usage:
 cutesy some_file.html
 ```
 
-
 Lint multiple files using a glob pattern:
 ```bash
 cutesy "*.html"
@@ -105,12 +104,10 @@ cutesy "path/to/templates/**/*.html"
 # etc…
 ```
 
-
 Fix files automatically (recommended):
 ```bash
 cutesy "*.html" --fix
 ```
-
 
 Cutesy can check HTML fragments, or whole HTML documents. By default, Cutesy ignores files specifying a non-HTML5 doctype (anything other than `<!doctype html>`).
 
@@ -119,18 +116,15 @@ To assume (and enforce) that all matching files are HTML5, use the `--check-doct
 cutesy "*.html" --fix --check-doctype
 ```
 
-
 To lint files written in a template language, such as the Django Template Language:
 ```bash
 cutesy "*.html" --fix --extra=django
 ```
 
-
 To group & sort TailwindCSS classes automatically:
 ```bash
 cutesy "*.html" --fix --extra=tailwind
 ```
-
 
 To use multiple extras:
 ```bash
@@ -156,24 +150,27 @@ Show off how Cutesy keeps you in line.
 [![code style: cutesy](https://img.shields.io/badge/markup_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
 ```
 
-
 ## Testing, etc.
 
 Install development requirements (Requires Python >= 3.13):
-
-    cd /path/to/cutesy/
-    make setup
-    source bin/activate
+```bash
+cd /path/to/cutesy/
+make setup
+source bin/activate
+```
 
 Sort imports:
-
-    make format
+```bash
+make format
+```
 
 Lint:
-
-    make configure
-    make lint
+```bash
+make configure
+make lint
+```
 
 Test:
-
-    make test
+```bash
+make test
+```
