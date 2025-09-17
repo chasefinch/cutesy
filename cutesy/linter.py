@@ -670,7 +670,8 @@ class HTMLLinter(HTMLParser):
 
                 # can't be confused with some other construct
                 ref_data = "&amp;"
-                if self.fix:
+                fix_e2 = self.fix and not self.is_rule_ignored("E2")
+                if fix_e2:
                     ref_data = "&amp;"
                 else:
                     ref_data = "&"
@@ -974,9 +975,10 @@ class HTMLLinter(HTMLParser):
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
                         )
+                        fix_f17 = self.fix and not self.is_rule_ignored("F17")
                         if processing_errors:
                             self._errors.extend(processing_errors)
-                        elif self.fix and value != processed_value:
+                        elif not fix_f17 and value != processed_value:
                             self._log_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))

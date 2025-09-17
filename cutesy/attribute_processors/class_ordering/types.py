@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 DYNAMIC_LIST_ITEM_SENTINEL = "__LIST_ITEM_SENTINEL_A3VJ3FL__"
 
 
-Rule("TW1", "Control instruction overlaps class names")
+Rule("TW1", "Control instruction overlaps class names", fixable=False, structural=True)
 
 
 StashItem: TypeAlias = "str | list[StashItem]"

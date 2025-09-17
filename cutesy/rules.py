@@ -23,7 +23,12 @@ Rule("P6", "Expected padding in {tag}", fixable=False, structural=False)
 
 # Document structure rules
 Rule("D1", "Expected doctype before other HTML elements", fixable=False, structural=False)
-Rule("D2", "Second declaration found; “doctype” should be the only declaration", fixable=False, structural=False)
+Rule(
+    "D2",
+    "Second declaration found; “doctype” should be the only declaration",
+    fixable=False,
+    structural=False,
+)
 Rule("D3", "Expected {tag}", fixable=False, structural=False)  # Expected closing tag
 Rule("D4", "{tag} doesn’t have a matching opening tag", fixable=False, structural=False)
 Rule("D5", "Unnecessary self-closing of {tag}", fixable=True, structural=True)
