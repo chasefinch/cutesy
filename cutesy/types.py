@@ -40,8 +40,12 @@ class DoctypeError(Exception):
     """An error that can be raised when encountering a non-HTML5 doctype."""
 
 
-class PreprocessingError(Exception):
-    """An exception that can be thrown when preprocessing fails."""
+class ConfigurationError(Exception):
+    """An exception that can be thrown when the config is misconfigured."""
+
+
+class StructuralError(Exception):
+    """An exception that can be thrown when a required parse or fix fails."""
 
     def __init__(self, *args: object, errors: Sequence[Error]) -> None:
         """Initialize the error with attached errors."""

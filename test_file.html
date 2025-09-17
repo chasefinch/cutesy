@@ -294,637 +294,900 @@
 								border-1 border-gray-line rounded-super-base
 							"
 						>
-							<div
-								id="pageSummary__text"
-								class="
-									basis-full flex-shrink
-									text-ellipsis whitespace-nowrap
-									overflow-hidden
-								"
-							><strong>Guest Details:</strong> {{ form.first_name.value }} {{ form.last_name.value }}, {{ form.address_1.value }}</div>
+							<39vas
+							id="pageSummary__text"
+							class="
+							basis-full flex-shrink
+							text-ellipsis whitespace-nowrap
+							overflow-hidden
+							"
+							><strong>Guest Details:</strong> {{ form.first_name.value }} {{ form.last_name.value }}, {{ form.address_1.value }}</>
 							<button type="button" id="pageSummary__changeBtn" class="link">
 								{% trans 'Change' %}
 							</button>
+							</93v9div>
+
+							<hr>
 						</div>
 
-						<hr>
-					</div>
-
-					<div
-						id="page1"
-						class="flex flex-col gap-s0"
-						{% if page == 2 %}hidden{% endif %}
-					>
-						<section class="flex flex-col lg:hidden gap-s-1">
-							<div class="flex gap-3 items-center justify-between w-full">
-								<h2 class="shrink leading-tight text-xl">{{ hotel.name }}</h2>
-								{% usekwacro stars %}
-							</div>
-
-							<p>
-								{{ room_display_html|safe }}
-							</p>
-
-							<div class="flex gap-6 justify-between">
-								<div class="basis-1/3 shrink-0">
-									<img
-										class="rounded-super-base"
-										src="{{ room_type.thumbnail.url_full }}"
-										alt="{{ room_type.beds_display }}"
-										decoding="async"
-									>
+						<div
+							id="page1"
+							class="flex flex-col gap-s0"
+							{% if page == 2 %}hidden{% endif %}
+						>
+							<section class="flex flex-col lg:hidden gap-s-1">
+								<div class="flex gap-3 items-center justify-between w-full">
+									<h2 class="shrink leading-tight text-xl">{{ hotel.name }}</h2>
+									{% usekwacro stars %}
 								</div>
-								<div class="basis-full flex flex-col gap-s-1 max-w-data">
-									<div>
-										<div class="flex gap-3 justify-between">
-											<span class="font-bold font-brand text-dark">
-												{% trans 'Guests' %}
-											</span>
-											<span>
-												{% blocktrans count c=num_adults %}{{ c }} adult{% plural %}{{ c }} adults{% endblocktrans %}{% if num_children or num_pets %},{% endif %}
-												{% if num_children %}
-													{% blocktrans count c=num_children %}{{ c }} child{% plural %}{{ c }} children{% endblocktrans %}{% if num_pets %},{% endif %}
+
+								<p>
+									{{ room_display_html|safe }}
+								</p>
+
+								<div class="flex gap-6 justify-between">
+									<div class="basis-1/3 shrink-0">
+										<img
+											class="rounded-super-base"
+											src="{{ room_type.thumbnail.url_full }}"
+											alt="{{ room_type.beds_display }}"
+											decoding="async"
+										>
+									</div>
+									<div class="basis-full flex flex-col gap-s-1 max-w-data">
+										<div>
+											<div class="flex gap-3 justify-between">
+												<span class="font-bold font-brand text-dark">
+													{% trans 'Guests' %}
+												</span>
+												<span>
+													{% blocktrans count c=num_adults %}{{ c }} adult{% plural %}{{ c }} adults{% endblocktrans %}{% if num_children or num_pets %},{% endif %}
+													{% if num_children %}
+														{% blocktrans count c=num_children %}{{ c }} child{% plural %}{{ c }} children{% endblocktrans %}{% if num_pets %},{% endif %}
+													{% endif %}
+													{% blocktrans count c=num_pets %}{{ c }} pet{% plural %}{{ c }} pets{% endblocktrans %}
+												</span>
+											</div>
+											<div class="flex gap-3 justify-between">
+												<span class="font-bold font-brand text-dark">
+													{% trans 'Length of Stay' %}
+												</span>
+												<span>
+													{{ num_nights }} {% trans 'night' %}{{ num_nights|pluralize }}
+												</span>
+											</div>
+											<div class="flex gap-3 justify-between">
+												<span class="font-bold font-brand text-dark">
+													{% trans 'Arrival' %}
+												</span>
+												<span>
+													{{ arrival|date:date_format_string }}
+												</span>
+											</div>
+											<div class="flex gap-3 justify-between">
+												<span class="font-bold font-brand text-dark">
+													{% trans 'Departure' %}
+												</span>
+												<span>
+													{{ departure|date:date_format_string }}
+												</span>
+											</div>
+										</div>
+
+										<div class="text-right">
+											<p x-data>
+												<button
+													type="button"
+													class="link"
+													@click.prevent="$dispatch('modal', {key: 'tripDetails'});"
+												>
+													{% trans 'Change details' %}
+												</button>
+											</p>
+										</div>
+									</div>
+								</div>
+							</section>
+
+							<hr class="lg:hidden">
+
+							<div class="flex flex-col gap-s4">
+								<section class="flex flex-col gap-s4">
+									<div class="flex flex-col gap-s-1">
+										<div class="flex items-center justify-between w-full">
+											<h1>{% trans 'Guest Details' %}</h1>
+
+											{% if user.is_authenticated %}
+												{% if is_guest_known %}
+													<button
+														type="button"
+														class="guestFieldsBtn link"
+													>
+														{% trans 'Modify guest info' %}
+													</button>
 												{% endif %}
-												{% blocktrans count c=num_pets %}{{ c }} pet{% plural %}{{ c }} pets{% endblocktrans %}
-											</span>
-										</div>
-										<div class="flex gap-3 justify-between">
-											<span class="font-bold font-brand text-dark">
-												{% trans 'Length of Stay' %}
-											</span>
-											<span>
-												{{ num_nights }} {% trans 'night' %}{{ num_nights|pluralize }}
-											</span>
-										</div>
-										<div class="flex gap-3 justify-between">
-											<span class="font-bold font-brand text-dark">
-												{% trans 'Arrival' %}
-											</span>
-											<span>
-												{{ arrival|date:date_format_string }}
-											</span>
-										</div>
-										<div class="flex gap-3 justify-between">
-											<span class="font-bold font-brand text-dark">
-												{% trans 'Departure' %}
-											</span>
-											<span>
-												{{ departure|date:date_format_string }}
-											</span>
-										</div>
-									</div>
-
-									<div class="text-right">
-										<p x-data>
-											<button
-												type="button"
-												class="link"
-												@click.prevent="$dispatch('modal', {key: 'tripDetails'});"
-											>
-												{% trans 'Change details' %}
-											</button>
-										</p>
-									</div>
-								</div>
-							</div>
-						</section>
-
-						<hr class="lg:hidden">
-
-						<div class="flex flex-col gap-s4">
-							<section class="flex flex-col gap-s4">
-								<div class="flex flex-col gap-s-1">
-									<div class="flex items-center justify-between w-full">
-										<h1>{% trans 'Guest Details' %}</h1>
-
-										{% if user.is_authenticated %}
-											{% if is_guest_known %}
-												<button type="button" class="guestFieldsBtn link">
-													{% trans 'Modify guest info' %}
+											{% else %}
+												<button
+													type="button"
+													class="link"
+													x-data
+													@click="$store.popout.set('registration', 'login')"
+												>
+													{% trans 'Sign in to book faster' %}
 												</button>
 											{% endif %}
-										{% else %}
-											<button
-												type="button"
-												class="link"
-												x-data
-												@click="$store.popout.set('registration', 'login')"
-											>
-												{% trans 'Sign in to book faster' %}
-											</button>
+										</div>
+
+										{% if is_guest_known %}
+											<p class="guestSummary">
+												{{ form.first_name.value }} {{ form.last_name.value }}
+												{% if is_address_known %}
+													<br>
+													{{ form.address_1.value }}
+													{% if form.address_2.value %}
+														{{ form.address_2.value }}
+													{% endif %}
+													<br>
+													{{ form.city.value }}{% if form.state.value %},{% endif %}
+													{% if form.state.value %}
+														{{ form.state.value }}
+													{% endif %}
+													{{ form.postal_code.value }}
+												{% endif %}
+												<br>
+												{{ form.phone.value }}
+											</p>
 										{% endif %}
+
+										<div
+											class="flex flex-col gap-3 guestFields"
+											{% if is_guest_known %}hidden{% endif %}
+										>
+											<div class="flex gap-3 justify-between">
+												<div class="relative basis-1/2">
+													{{ form.first_name }}
+													<label for="id_first_name">{% trans 'First name' %}</label>
+													{{ form.first_name.errors }}
+												</div>
+												<div class="relative basis-1/2">
+													{{ form.last_name }}
+													<label for="id_last_name">{% trans 'Last name' %}</label>
+													{{ form.last_name.errors }}
+												</div>
+											</div>
+
+											<div class="relative">
+												{{ form.phone }}
+												<label for="id_phone">{% trans 'Phone number' %}</label>
+												{{ form.phone.errors }}
+											</div>
+
+											<div class="relative">
+												{{ form.email }}
+												<label for="id_email">{% trans 'Email address' %}</label>
+												{{ form.email.errors }}
+											</div>
+										</div>
 									</div>
 
-									{% if is_guest_known %}
-										<p class="guestSummary">
-											{{ form.first_name.value }} {{ form.last_name.value }}
-											{% if is_address_known %}
-												<br>
-												{{ form.address_1.value }}
-												{% if form.address_2.value %}
-													{{ form.address_2.value }}
+									<div
+										class="flex flex-col gap-s-1 addressFields"
+										{% if is_guest_known and is_address_known %}
+											hidden
+										{% endif %}
+									>
+										{% if is_address_known and not is_guest_known %}
+											<div
+												class="
+													flex
+													items-center justify-between
+													w-full
+												"
+											>
+												<h2 class="text-xl">{% trans 'Address' %}</h2>
+												<button
+													type="button"
+													class="addressFieldsBtn guestSummary link"
+												>
+													{% trans 'Modify address' %}
+												</button>
+											</div>
+
+											<p class="guestSummary">
+												{{ user.mailing_address_1 }}
+												{% if user.mailing_address_2 %}
+													{{ user.mailing_address_2 }}
 												{% endif %}
 												<br>
-												{{ form.city.value }}{% if form.state.value %},{% endif %}
-												{% if form.state.value %}
-													{{ form.state.value }}
+												{{ user.mailing_city }}{% if user.mailing_state %},{% endif %}
+												{% if user.mailing_state %}
+													{{ user.mailing_state.code }}
 												{% endif %}
-												{{ form.postal_code.value }}
-											{% endif %}
-											<br>
-											{{ form.phone.value }}
-										</p>
+												{{ user.mailing_postal_code }}
+											</p>
+										{% else %}
+											<h2 class="text-xl">{% trans 'Address' %}</h2>
+										{% endif %}
+
+										<div
+											class="flex flex-col gap-3 addressFields"
+											{% if is_address_known %}hidden{% endif %}
+											x-data="addressAutocomplete({ address1: '{{ form.address_1.value|default_if_none:''|escapejs }}'})"
+										>
+											<div class="relative">
+												{{ form.country }}
+												<label for="id_country">{% trans 'Country' %}</label>
+												{{ form.country.errors }}
+											</div>
+
+											<div class="relative">
+												{{ form.address_1 }}
+												<label for="id_address_1">{% trans 'Street address' %}</label>
+												{{ form.address_1.errors }}
+												<ul
+													id="addressAutocompleteDropdown"
+													class="
+														absolute z-1
+														empty:hidden
+														peer-[&:not(:focus)]:hidden
+														-mt-[var(--input-border-width)]
+														w-full
+														overflow-hidden
+														bg-white
+														border-light
+														rounded-super-sm
+														rounded-t-none
+														shadow-high-beneath
+														border
+													"
+													x-cloak
+													x-show="suggestions.length"
+												>
+													<template x-for="(suggestion, index) in suggestions">
+														<li
+															class="
+																px-(--input-padding-y)
+																py-(--input-padding-y)
+																w-full
+																text-dark
+																text-lg
+																hover:text-white
+																whitespace-nowrap
+																hover:bg-brand-blue
+																cursor-default
+															"
+															:class="{'bg-gray-field': focusIndex === index}"
+															x-data="{selectionIndex: index}"
+															x-text="suggestion.text"
+															@mousedown="suggestionClick($data)"
+														>
+														</li>
+													</template>
+													<li hidden x-ref="placesAttribution"></li>
+												</ul>
+											</div>
+
+											<div class="relative">
+												{{ form.address_2 }}
+												<label for="id_address_2">{% trans 'Apartment (optional)' %}</label>
+												{{ form.address_2.errors }}
+											</div>
+
+											<div
+												class="
+													flex flex-col md:flex-row
+													gap-3 justify-between
+												"
+											>
+												<div class="relative basis-1/2">
+													{{ form.city }}
+													<label for="id_city">{% trans 'City' %}</label>
+													{{ form.city.errors }}
+												</div>
+												<div
+													id="stateContainer"
+													class="relative basis-1/2"
+													{% if not form.selected_country.uses_states %}
+														hidden
+													{% endif %}
+												>
+													{{ form.state }}
+													<label for="id_state">{{ form.selected_country.word_for_state }}</label>
+													{{ form.state.errors }}
+												</div>
+												<div class="relative basis-1/2">
+													{{ form.postal_code }}
+													<label for="id_postal_code">{% if form.selected_country.code == 'US' %}{% trans 'Zip code' %}{% else %}{% trans 'Postal code' %}{% endif %}</label>
+													{{ form.postal_code.errors }}
+												</div>
+											</div>
+										</div>
+									</div>
+
+									{% if not user.is_authenticated %}
+										<div class="flex flex-col gap-s-1">
+											<p>
+												{% blocktrans trimmed %}
+													Want to save your info for future bookings? Enter a password to create a BringFido account.
+												{% endblocktrans %}
+											</p>
+											<div class="relative">
+												{{ form.password }}
+												<label for="id_password">{% trans 'Create a password (optional)' %}</label>
+												{{ form.password.errors }}
+											</div>
+
+											<div class="relative">
+												<div id="passwordStrength" hidden>
+													<div
+														class="
+															h-1
+															bg-gray-field
+															rounded-full
+															passwordStrength__meter
+														"
+													></div>
+													<div class="passwordStrength__description">
+														{% trans 'Password Strength' %}:
+														<span
+															class="
+																font-bold
+																font-brand
+																passwordStrength__description__value
+															"
+														></span>
+													</div>
+												</div>
+											</div>
+										</div>
 									{% endif %}
+								</section>
+
+								{% if user and user.pets_list %}
+									<section class="flex flex-col gap-s4">
+										<div class="flex flex-col gap-s-1">
+											<h1>{% trans 'Pet Information' %}</h1>
+											<p>{% trans 'Who’s traveling with you?' %}</p>
+
+											<div class="flex flex-wrap gap-3">
+												{% for pet in user.pets_list %}
+													<label
+														for="pet{{ pet.id }}"
+														class="
+															flex
+															gap-1ch items-center
+															px-3 py-2
+															for-checked:bg-gray-field
+															border-gray-line
+															rounded-super-base
+															select-none
+															checkedLabel
+															{% if pet.id in selected_pet_ids %}
+																for-checked
+															{% endif %}
+															border
+														"
+													>
+														<input
+															type="checkbox"
+															id="pet{{ pet.id }}"
+															name="pet"
+															value="{{ pet.id }}"
+															{% if pet.id in selected_pet_ids %}
+																checked
+															{% endif %}
+														>
+														<span class="font-brand">{{ pet.name }}</span>
+														<span>
+															{% if pet.avatar %}
+																<img
+																	class="rounded-full"
+																	src="{{ pet.get_avatar_url }}"
+																	width="40"
+																	height="40"
+																	alt="{{ pet.type.name }}"
+																>
+															{% endif %}
+														</span>
+													</label>
+												{% endfor %}
+											</div>
+										</div>
+									</section>
+								{% endif %}
+
+								<section class="flex flex-col gap-s4">
+									<div class="flex flex-col gap-s-1">
+										<h1>{% trans 'Special Requests' %}</h1>
+										<p>{% trans 'Our Canine Concierge ensures that all BringFido members are assigned to a pet-friendly room. If you have any other requests, please note them here.' %}</p>
+										<div class="relative">
+											{{ form.special_request }}
+											{{ form.special_request.errors }}
+										</div>
+										<div class="relative">
+											<details
+												class="flex flex-col gap-4"
+												{% if form.gift_code.value %}open{% endif %}
+											>
+												<summary class="link">{% trans 'Add promo code' %}</summary>
+
+												<div class="flex w-full">
+													<span class="relative flex-grow max-w-60">
+														{{ form.gift_code }}
+														<label for="giftCodeInput">{% trans 'Promo code (optional)' %}</label>
+														<div id="giftCodeStatusCtr"></div>
+													</span>
+													<button
+														type="button"
+														id="giftCodeApplyBtn"
+														class="
+															flex-none
+															px-3 py-2
+															text-lg
+															rounded-s-none
+															button
+														"
+														disabled
+													>
+														{% trans 'Apply' %}
+													</button>
+												</div>
+											</details>
+										</div>
+									</div>
+								</section>
+
+								<hr>
+
+								<div class="text-center">
+									<button
+										type="button"
+										id="continueBtn"
+										class="w-full md:w-1/3 text-xl button"
+									>Continue</button>
+								</div>
+							</div>
+						</div>
+
+						<div
+							id="page2"
+							class="flex flex-col gap-s4"
+							{% if page == 1 %}hidden{% endif %}
+						>
+							<section class="flex flex-col gap-s0">
+								<div class="flex items-stretch justify-between">
+									<h1>{% trans 'Payment Method' %}</h1>
 
 									<div
-										class="flex flex-col gap-3 guestFields"
-										{% if is_guest_known %}hidden{% endif %}
+										class="
+											flex flex-col
+											justify-center
+											cursor-default
+											group
+										"
 									>
-										<div class="flex gap-3 justify-between">
-											<div class="relative basis-1/2">
-												{{ form.first_name }}
-												<label for="id_first_name">{% trans 'First name' %}</label>
-												{{ form.first_name.errors }}
-											</div>
-											<div class="relative basis-1/2">
-												{{ form.last_name }}
-												<label for="id_last_name">{% trans 'Last name' %}</label>
-												{{ form.last_name.errors }}
-											</div>
-										</div>
-
 										<div class="relative">
-											{{ form.phone }}
-											<label for="id_phone">{% trans 'Phone number' %}</label>
-											{{ form.phone.errors }}
-										</div>
+											<span
+												class="
+													flex
+													gap-1 items-center
+													font-bold
+													font-brand
+													text-sm
+													text-touch
+												"
+											>
+												<svg
+													class="icon"
+													width="10px"
+													height="12px"
+													viewbox="0 0 10 12"
+												>
+													<title>{% trans 'Lock' %}</title>
+													<g
+														fill="none"
+														fill-rule="evenodd"
+														stroke="none"
+														stroke-width="1"
+													>
+														<g transform="translate(-2, -1)">
+															<rect
+																width="14"
+																height="14"
+																x="0"
+																y="0"
+															></rect>
+															<path
+																d="M10.6145051,6.37285507 C10.8106509,6.37285507 10.9780624,6.44225853 11.1168045,6.58100058 C11.2555465,6.71974263 11.32495,6.88721902 11.32495,7.0833 L11.32495,12.0561551 C11.32495,12.2523009 11.2555465,12.4197124 11.1168045,12.5584545 C10.9780624,12.6971965 10.8106509,12.7666 10.6145051,12.7666 L3.51038007,12.7666 C3.31429909,12.7666 3.14688756,12.6971965 3.00814551,12.5584545 C2.86940346,12.4197124 2.8,12.2523009 2.8,12.0561551 L2.8,7.0833 C2.8,6.88721902 2.86940346,6.71974263 3.00814551,6.58100058 C3.14688756,6.44225853 3.31429909,6.37285507 3.51038007,6.37285507 L4.220825,6.37285507 L4.220825,4.24165 C4.220825,3.85681755 4.29574181,3.48962786 4.44557545,3.13995118 C4.59547395,2.79027451 4.79804123,2.48781813 5.05334218,2.23251718 C5.30864313,1.97721623 5.61109951,1.77464895 5.96077618,1.62475045 C6.31045286,1.47491681 6.67764255,1.4 7.062475,1.4 C7.44730742,1.4 7.81449711,1.47491681 8.16417385,1.62475045 C8.51385052,1.77464895 8.81630687,1.97721623 9.07160779,2.23251718 C9.32690878,2.48781813 9.52947604,2.79027451 9.67930971,3.13995118 C9.8292082,3.48962786 9.904125,3.85681755 9.904125,4.24165 L9.904125,6.37285507 L10.6145051,6.37285507 Z M5.64165,4.24165 L5.64165,6.37285507 L8.4833,6.37285507 L8.4833,4.24165 C8.4833,3.84942317 8.34455797,3.51460013 8.06700895,3.23711602 C7.78952489,2.95956705 7.4547018,2.820825 7.062475,2.820825 C6.67024817,2.820825 6.33542513,2.95956705 6.05787616,3.23711602 C5.78039205,3.51460013 5.64165,3.84942317 5.64165,4.24165 Z"
+																fill="#888888"
+															></path>
+														</g>
+													</g>
+												</svg>
+												{% trans 'This booking is secure.' %}
+											</span>
 
-										<div class="relative">
-											{{ form.email }}
-											<label for="id_email">{% trans 'Email address' %}</label>
-											{{ form.email.errors }}
+											<div
+												class="
+													absolute
+													after:absolute
+													bottom-full
+													-right-2
+													after:right-1/2
+													after:top-full
+													after:content-['']
+													p-3
+													min-w-40
+													text-sm text-white
+													bg-dark
+													after:border-x-6
+													after:border-x-transparent
+													after:border-t-6
+													after:border-t-dark
+													rounded-super-sm
+													scale-90
+													group-hover:scale-100
+													-translate-y-2
+													after:translate-x-1/2
+													transition-transform
+													antialiased
+													invisible
+													group-hover:visible
+												"
+											>
+												{% blocktrans trimmed %}
+													All transactions are secure and encrypted.
+												{% endblocktrans %}
+											</div>
 										</div>
 									</div>
 								</div>
 
 								<div
-									class="flex flex-col gap-s-1 addressFields"
-									{% if is_guest_known and is_address_known %}hidden{% endif %}
+									id="paymentTypeChooser"
+									class="flex flex-col gap-2 text-lg"
+									{% if not is_apple_pay_eligible %}hidden{% endif %}
 								>
-									{% if is_address_known and not is_guest_known %}
-										<div class="flex items-center justify-between w-full">
-											<h2 class="text-xl">{% trans 'Address' %}</h2>
-											<button
-												type="button"
-												class="addressFieldsBtn guestSummary link"
-											>
-												{% trans 'Modify address' %}
-											</button>
-										</div>
-
-										<p class="guestSummary">
-											{{ user.mailing_address_1 }}
-											{% if user.mailing_address_2 %}
-												{{ user.mailing_address_2 }}
-											{% endif %}
-											<br>
-											{{ user.mailing_city }}{% if user.mailing_state %},{% endif %}
-											{% if user.mailing_state %}
-												{{ user.mailing_state.code }}
-											{% endif %}
-											{{ user.mailing_postal_code }}
-										</p>
-									{% else %}
-										<h2 class="text-xl">{% trans 'Address' %}</h2>
-									{% endif %}
-
-									<div
-										class="flex flex-col gap-3 addressFields"
-										{% if is_address_known %}hidden{% endif %}
-										x-data="addressAutocomplete({ address1: '{{ form.address_1.value|default_if_none:''|escapejs }}'})"
-									>
-										<div class="relative">
-											{{ form.country }}
-											<label for="id_country">{% trans 'Country' %}</label>
-											{{ form.country.errors }}
-										</div>
-
-										<div class="relative">
-											{{ form.address_1 }}
-											<label for="id_address_1">{% trans 'Street address' %}</label>
-											{{ form.address_1.errors }}
-											<ul
-												id="addressAutocompleteDropdown"
-												class="
-													absolute z-1
-													empty:hidden
-													peer-[&:not(:focus)]:hidden
-													-mt-[var(--input-border-width)]
-													w-full
-													overflow-hidden
-													bg-white
-													border-light
-													rounded-super-sm
-													rounded-t-none
-													shadow-high-beneath
-													border
-												"
-												x-cloak
-												x-show="suggestions.length"
-											>
-												<template x-for="(suggestion, index) in suggestions">
-													<li
-														class="
-															px-(--input-padding-y)
-															py-(--input-padding-y)
-															w-full
-															text-dark
-															text-lg
-															hover:text-white
-															whitespace-nowrap
-															hover:bg-brand-blue
-															cursor-default
-														"
-														:class="{'bg-gray-field': focusIndex === index}"
-														x-data="{selectionIndex: index}"
-														x-text="suggestion.text"
-														@mousedown="suggestionClick($data)"
-													>
-													</li>
-												</template>
-												<li hidden x-ref="placesAttribution"></li>
-											</ul>
-										</div>
-
-										<div class="relative">
-											{{ form.address_2 }}
-											<label for="id_address_2">{% trans 'Apartment (optional)' %}</label>
-											{{ form.address_2.errors }}
-										</div>
-
-										<div
-											class="
-												flex flex-col md:flex-row
-												gap-3 justify-between
-											"
-										>
-											<div class="relative basis-1/2">
-												{{ form.city }}
-												<label for="id_city">{% trans 'City' %}</label>
-												{{ form.city.errors }}
-											</div>
-											<div
-												id="stateContainer"
-												class="relative basis-1/2"
-												{% if not form.selected_country.uses_states %}
-													hidden
+									<div reference="credit_card">
+										<label class="flex flex-row gap-1ch items-center">
+											<input
+												type="radio"
+												id="creditCardOption"
+												name="paymentTypeOptionSelect"
+												value="creditCard"
+												{% if selected_payment_method_type != "apple_pay" %}
+													checked
 												{% endif %}
 											>
-												{{ form.state }}
-												<label for="id_state">{{ form.selected_country.word_for_state }}</label>
-												{{ form.state.errors }}
+											<div
+												class="
+													flex flex-row-reverse
+													gap-1ch items-center
+												"
+											>
+												<span>{% trans 'Credit Card' %}</span>
+
+												<img
+													class="h-auto w-10"
+													src="{% static 'images/icons/cards/card_generic.svg' %}"
+													alt="{% trans 'Credit Card' %}"
+												>
 											</div>
-											<div class="relative basis-1/2">
-												{{ form.postal_code }}
-												<label for="id_postal_code">{% if form.selected_country.code == 'US' %}{% trans 'Zip code' %}{% else %}{% trans 'Postal code' %}{% endif %}</label>
-												{{ form.postal_code.errors }}
+										</label>
+									</div>
+									<div reference="apple_pay">
+										<label class="flex flex-row gap-1ch items-center">
+											<input
+												type="radio"
+												id="applePayOption"
+												name="paymentTypeOptionSelect"
+												value="applePay"
+												{% if selected_payment_method_type == "apple_pay" %}
+													checked
+												{% endif %}
+											>
+											<div
+												class="
+													flex flex-row-reverse
+													gap-1ch items-center
+												"
+											>
+												<span>{% trans 'Apple Pay' %}</span>
+
+												<img
+													class="h-auto w-10"
+													src="{% static 'images/icons/cards/apple_pay_mark.svg' %}"
+													alt="{% trans 'Apple Pay' %}"
+												>
 											</div>
-										</div>
+										</label>
 									</div>
 								</div>
 
-								{% if not user.is_authenticated %}
-									<div class="flex flex-col gap-s-1">
-										<p>
-											{% blocktrans trimmed %}
-												Want to save your info for future bookings? Enter a password to create a BringFido account.
-											{% endblocktrans %}
-										</p>
-										<div class="relative">
-											{{ form.password }}
-											<label for="id_password">{% trans 'Create a password (optional)' %}</label>
-											{{ form.password.errors }}
+								{% if user and user.payment_methods_list %}
+									<div id="existingPaymentMethods" class="flex flex-wrap gap-3">
+										<div class="basis-100 grow shrink">
+											<select
+												id="paymentMethodSelect"
+												class="
+													[&[data-image-slug]]:ps-11
+													[&[data-image-slug=amex]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/amex.svg)]
+													[&[data-image-slug=discover]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/discover.svg)]
+													[&[data-image-slug=jcb]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/jcb.svg)]
+													[&[data-image-slug=mastercard]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/mastercard.svg)]
+													[&[data-image-slug=other]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/other.svg)]
+													[&[data-image-slug=visa]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/visa.svg)]
+													[&[data-image-slug]]:bg-position-[right_calc(2_*_var(--spacing))_center,left_calc(2_*_var(--spacing))_center]
+													truncate
+												"
+												name="payment_method"
+												{% if selected_payment_method %}
+													data-image-slug="{{ selected_payment_method.image_slug }}"
+												{% endif %}
+											>
+												{% for payment_method in user.payment_methods_list %}
+													<option
+														value="{{ payment_method.id }}"
+														{% if payment_method.selected %}
+															selected
+														{% endif %}
+														data-image-slug="{{ payment_method.image_slug }}"
+													>{{ payment_method.selection_text }}</option>
+												{% endfor %}
+												<option
+													value=""
+													{% if not selected_payment_method %}
+														selected
+													{% endif %}
+												>{% trans 'New credit card' %}</option>
+											</select>
 										</div>
+										<div
+											id="savedCardSecurityCodeContainer"
+											class="basis-44 grow"
+											{% if not selected_payment_method %}hidden{% endif %}
+										>
+											<div class="relative" reference="security_code_1">
+												<input
+													type="text"
+													id="securityCode1"
+													class="
+														w-full
+														{% if form.security_code.errors %}
+															text-error
+															border-error
+														{% endif %}
+														mask--securityCode
+														adaptiveLabel
+														existingPaymentMethodField
+													"
+													name="security_code_1"
+													value=""
+													pattern="\d*"
+													maxlength="4"
+													required
+													autocomplete="cc-csc"
+													validate="security_code"
+												>
+												<label for="securityCode1">{% trans 'Security code' %}</label>
 
-										<div class="relative">
-											<div id="passwordStrength" hidden>
 												<div
 													class="
-														h-1
-														bg-gray-field
-														rounded-full
-														passwordStrength__meter
+														absolute right-0 top-1/2
+														flex flex-col
+														justify-center
+														pr-3
+														h-6
+														-translate-y-1/2
+														group
 													"
-												></div>
-												<div class="passwordStrength__description">
-													{% trans 'Password Strength' %}:
+												>
 													<span
 														class="
-															font-bold font-brand
-															passwordStrength__description__value
+															inline-flex
+															items-center
+															justify-center
+															h-4 w-4
+															font-bold
+															font-brand
+															text-white
+															bg-touch
+															rounded-full
+															cursor-pointer
+															antialiased
 														"
-													></span>
+													>?</span>
+													<div
+														class="
+															absolute
+															after:absolute
+															bottom-full
+															-right-2
+															after:right-[22px]
+															after:top-full
+															after:content-['']
+															p-3
+															min-w-38
+															text-sm text-white
+															bg-dark
+															after:border-x-6
+															after:border-x-transparent
+															after:border-t-6
+															after:border-t-dark
+															rounded-super-sm
+															scale-90
+															group-hover:scale-100
+															-translate-y-2
+															transition-transform
+															antialiased
+															invisible
+															group-hover:visible
+														"
+													>
+														<div
+															class="
+																securityCodeText
+																securityCodeText--default
+															"
+														>
+															{% blocktrans trimmed %}
+																3-digit security code usually found on the back of your card. American Express cards have a 4-digit code located on the front.
+															{% endblocktrans %}
+														</div>
+														<div
+															class="
+																securityCodeText
+																securityCodeText--3
+															"
+															hidden
+														>
+															{% blocktrans trimmed %}
+																3-digit security code on the back of your card.
+															{% endblocktrans %}
+														</div>
+														<div
+															class="
+																securityCodeText
+																securityCodeText--4
+															"
+															hidden
+														>
+															{% blocktrans trimmed %}
+																4-digit security code on the front of your card.
+															{% endblocktrans %}
+														</div>
+													</div>
 												</div>
 											</div>
+
+											{{ form.security_code.errors }}
 										</div>
 									</div>
 								{% endif %}
-							</section>
 
-							{% if user and user.pets_list %}
-								<section class="flex flex-col gap-s4">
-									<div class="flex flex-col gap-s-1">
-										<h1>{% trans 'Pet Information' %}</h1>
-										<p>{% trans 'Who’s traveling with you?' %}</p>
-
-										<div class="flex flex-wrap gap-3">
-											{% for pet in user.pets_list %}
-												<label
-													for="pet{{ pet.id }}"
-													class="
-														flex
-														gap-1ch items-center
-														px-3 py-2
-														for-checked:bg-gray-field
-														border-gray-line
-														rounded-super-base
-														select-none
-														checkedLabel
-														{% if pet.id in selected_pet_ids %}
-															for-checked
-														{% endif %}
-														border
-													"
-												>
-													<input
-														type="checkbox"
-														id="pet{{ pet.id }}"
-														name="pet"
-														value="{{ pet.id }}"
-														{% if pet.id in selected_pet_ids %}
-															checked
-														{% endif %}
-													>
-													<span class="font-brand">{{ pet.name }}</span>
-													<span>
-														{% if pet.avatar %}
-															<img
-																class="rounded-full"
-																src="{{ pet.get_avatar_url }}"
-																width="40"
-																height="40"
-																alt="{{ pet.type.name }}"
-															>
-														{% endif %}
-													</span>
-												</label>
-											{% endfor %}
-										</div>
-									</div>
-								</section>
-							{% endif %}
-
-							<section class="flex flex-col gap-s4">
-								<div class="flex flex-col gap-s-1">
-									<h1>{% trans 'Special Requests' %}</h1>
-									<p>{% trans 'Our Canine Concierge ensures that all BringFido members are assigned to a pet-friendly room. If you have any other requests, please note them here.' %}</p>
-									<div class="relative">
-										{{ form.special_request }}
-										{{ form.special_request.errors }}
-									</div>
-									<div class="relative">
-										<details
-											class="flex flex-col gap-4"
-											{% if form.gift_code.value %}open{% endif %}
-										>
-											<summary class="link">{% trans 'Add promo code' %}</summary>
-
-											<div class="flex w-full">
-												<span class="relative flex-grow max-w-60">
-													{{ form.gift_code }}
-													<label for="giftCodeInput">{% trans 'Promo code (optional)' %}</label>
-													<div id="giftCodeStatusCtr"></div>
-												</span>
-												<button
-													type="button"
-													id="giftCodeApplyBtn"
-													class="
-														flex-none
-														px-3 py-2
-														text-lg
-														rounded-s-none
-														button
-													"
-													disabled
-												>
-													{% trans 'Apply' %}
-												</button>
-											</div>
-										</details>
-									</div>
-								</div>
-							</section>
-
-							<hr>
-
-							<div class="text-center">
-								<button
-									type="button"
-									id="continueBtn"
-									class="w-full md:w-1/3 text-xl button"
-								>Continue</button>
-							</div>
-						</div>
-					</div>
-
-					<div
-						id="page2"
-						class="flex flex-col gap-s4"
-						{% if page == 1 %}hidden{% endif %}
-					>
-						<section class="flex flex-col gap-s0">
-							<div class="flex items-stretch justify-between">
-								<h1>{% trans 'Payment Method' %}</h1>
-
-								<div class="flex flex-col justify-center cursor-default group">
-									<div class="relative">
-										<span
+								<div
+									id="newPaymentMethod"
+									class="flex flex-col gap-3"
+									{% if selected_payment_method %}hidden{% endif %}
+								>
+									<div class="flex gap-1 justify-end">
+										<img
 											class="
-												flex
-												gap-1 items-center
-												font-bold font-brand text-sm text-touch
+												transition-all
+												cardTypeIndicator
+												cardTypeIndicator-visa
 											"
+											src="{% static 'images/icons/cards/visa.svg' %}"
+											alt="{% trans 'Visa' %}"
 										>
-											<svg
-												class="icon"
-												width="10px"
-												height="12px"
-												viewbox="0 0 10 12"
-											>
-												<title>{% trans 'Lock' %}</title>
-												<g
-													fill="none"
-													fill-rule="evenodd"
-													stroke="none"
-													stroke-width="1"
-												>
-													<g transform="translate(-2, -1)">
-														<rect width="14" height="14" x="0" y="0"></rect>
-														<path
-															d="M10.6145051,6.37285507 C10.8106509,6.37285507 10.9780624,6.44225853 11.1168045,6.58100058 C11.2555465,6.71974263 11.32495,6.88721902 11.32495,7.0833 L11.32495,12.0561551 C11.32495,12.2523009 11.2555465,12.4197124 11.1168045,12.5584545 C10.9780624,12.6971965 10.8106509,12.7666 10.6145051,12.7666 L3.51038007,12.7666 C3.31429909,12.7666 3.14688756,12.6971965 3.00814551,12.5584545 C2.86940346,12.4197124 2.8,12.2523009 2.8,12.0561551 L2.8,7.0833 C2.8,6.88721902 2.86940346,6.71974263 3.00814551,6.58100058 C3.14688756,6.44225853 3.31429909,6.37285507 3.51038007,6.37285507 L4.220825,6.37285507 L4.220825,4.24165 C4.220825,3.85681755 4.29574181,3.48962786 4.44557545,3.13995118 C4.59547395,2.79027451 4.79804123,2.48781813 5.05334218,2.23251718 C5.30864313,1.97721623 5.61109951,1.77464895 5.96077618,1.62475045 C6.31045286,1.47491681 6.67764255,1.4 7.062475,1.4 C7.44730742,1.4 7.81449711,1.47491681 8.16417385,1.62475045 C8.51385052,1.77464895 8.81630687,1.97721623 9.07160779,2.23251718 C9.32690878,2.48781813 9.52947604,2.79027451 9.67930971,3.13995118 C9.8292082,3.48962786 9.904125,3.85681755 9.904125,4.24165 L9.904125,6.37285507 L10.6145051,6.37285507 Z M5.64165,4.24165 L5.64165,6.37285507 L8.4833,6.37285507 L8.4833,4.24165 C8.4833,3.84942317 8.34455797,3.51460013 8.06700895,3.23711602 C7.78952489,2.95956705 7.4547018,2.820825 7.062475,2.820825 C6.67024817,2.820825 6.33542513,2.95956705 6.05787616,3.23711602 C5.78039205,3.51460013 5.64165,3.84942317 5.64165,4.24165 Z"
-															fill="#888888"
-														></path>
-													</g>
-												</g>
-											</svg>
-											{% trans 'This booking is secure.' %}
-										</span>
-
-										<div
+										<img
 											class="
-												absolute
-												after:absolute
-												bottom-full
-												-right-2
-												after:right-1/2
-												after:top-full
-												after:content-['']
-												p-3
-												min-w-40
-												text-sm text-white
-												bg-dark
-												after:border-x-6
-												after:border-x-transparent
-												after:border-t-6
-												after:border-t-dark
-												rounded-super-sm
-												scale-90
-												group-hover:scale-100
-												-translate-y-2
-												after:translate-x-1/2
-												transition-transform
-												antialiased
-												invisible
-												group-hover:visible
+												transition-all
+												cardTypeIndicator
+												cardTypeIndicator-mastercard
 											"
+											src="{% static 'images/icons/cards/mastercard.svg' %}"
+											alt="{% trans 'MasterCard' %}"
 										>
-											{% blocktrans trimmed %}
-												All transactions are secure and encrypted.
-											{% endblocktrans %}
-										</div>
-									</div>
-								</div>
-							</div>
-
-							<div
-								id="paymentTypeChooser"
-								class="flex flex-col gap-2 text-lg"
-								{% if not is_apple_pay_eligible %}hidden{% endif %}
-							>
-								<div reference="credit_card">
-									<label class="flex flex-row gap-1ch items-center">
-										<input
-											type="radio"
-											id="creditCardOption"
-											name="paymentTypeOptionSelect"
-											value="creditCard"
-											{% if selected_payment_method_type != "apple_pay" %}
-												checked
-											{% endif %}
-										>
-										<div class="flex flex-row-reverse gap-1ch items-center">
-											<span>{% trans 'Credit Card' %}</span>
-
+										{% if rate.accepts_amex %}
 											<img
-												class="h-auto w-10"
-												src="{% static 'images/icons/cards/card_generic.svg' %}"
-												alt="{% trans 'Credit Card' %}"
+												class="
+													transition-all
+													cardTypeIndicator
+													cardTypeIndicator-amex
+												"
+												src="{% static 'images/icons/cards/amex.svg' %}"
+												alt="{% trans 'American Express' %}"
 											>
-										</div>
-									</label>
-								</div>
-								<div reference="apple_pay">
-									<label class="flex flex-row gap-1ch items-center">
-										<input
-											type="radio"
-											id="applePayOption"
-											name="paymentTypeOptionSelect"
-											value="applePay"
-											{% if selected_payment_method_type == "apple_pay" %}
-												checked
-											{% endif %}
-										>
-										<div class="flex flex-row-reverse gap-1ch items-center">
-											<span>{% trans 'Apple Pay' %}</span>
-
+										{% endif %}
+										{% if rate.accepts_discover %}
 											<img
-												class="h-auto w-10"
-												src="{% static 'images/icons/cards/apple_pay_mark.svg' %}"
-												alt="{% trans 'Apple Pay' %}"
+												class="
+													transition-all
+													cardTypeIndicator
+													cardTypeIndicator-discover
+												"
+												src="{% static 'images/icons/cards/discover.svg' %}"
+												alt="{% trans 'Discover' %}"
 											>
-										</div>
-									</label>
-								</div>
-							</div>
-
-							{% if user and user.payment_methods_list %}
-								<div id="existingPaymentMethods" class="flex flex-wrap gap-3">
-									<div class="basis-100 grow shrink">
-										<select
-											id="paymentMethodSelect"
-											class="
-												[&[data-image-slug]]:ps-11
-												[&[data-image-slug=amex]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/amex.svg)]
-												[&[data-image-slug=discover]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/discover.svg)]
-												[&[data-image-slug=jcb]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/jcb.svg)]
-												[&[data-image-slug=mastercard]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/mastercard.svg)]
-												[&[data-image-slug=other]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/other.svg)]
-												[&[data-image-slug=visa]]:bg-[url(/assets/images/icons/dropdown.svg),url(/assets/images/icons/cards/visa.svg)]
-												[&[data-image-slug]]:bg-position-[right_calc(2_*_var(--spacing))_center,left_calc(2_*_var(--spacing))_center]
-												truncate
-											"
-											name="payment_method"
-											{% if selected_payment_method %}
-												data-image-slug="{{ selected_payment_method.image_slug }}"
-											{% endif %}
-										>
-											{% for payment_method in user.payment_methods_list %}
-												<option
-													value="{{ payment_method.id }}"
-													{% if payment_method.selected %}
-														selected
-													{% endif %}
-													data-image-slug="{{ payment_method.image_slug }}"
-												>{{ payment_method.selection_text }}</option>
-											{% endfor %}
-											<option
-												value=""
-												{% if not selected_payment_method %}
-													selected
-												{% endif %}
-											>{% trans 'New credit card' %}</option>
-										</select>
+										{% endif %}
+										{% if rate.accepts_jcb %}
+											<img
+												class="
+													transition-all
+													cardTypeIndicator
+													cardTypeIndicator-jcb
+												"
+												src="{% static 'images/icons/cards/jcb.svg' %}"
+												alt="{% trans 'JCB' %}"
+											>
+										{% endif %}
+										{% if rate.accepts_other %}
+											<img
+												class="
+													transition-all
+													cardTypeIndicator
+													cardTypeIndicator-other
+												"
+												src="{% static 'images/icons/cards/other.svg' %}"
+												alt="{% trans 'Other' %}"
+											>
+										{% endif %}
 									</div>
-									<div
-										id="savedCardSecurityCodeContainer"
-										class="basis-44 grow"
-										{% if not selected_payment_method %}hidden{% endif %}
-									>
-										<div class="relative" reference="security_code_1">
+
+									<div class="relative">
+										{{ card_form.number }}
+										<label for="creditCardNumberInput">{% trans 'Card number' %}</label>
+										{{ card_form.number.errors }}
+									</div>
+
+									<div class="flex gap-3">
+										<div class="relative basis-1/2">
 											<input
 												type="text"
-												id="securityCode1"
+												id="expiry"
 												class="
-													w-full
+													adaptiveLabel
+													{% if formatted_expiry %}
+														adaptiveLabel--withContent
+													{% endif %}
+													mask--monthAndYear
+													{% if card_form.expiry_month.errors %}
+														error
+													{% endif %}
+													newPaymentMethodField
+												"
+												name="expiry"
+												value="{{ formatted_expiry }}"
+												pattern="\d*"
+												maxlength="10"
+												required
+												autocomplete="cc-exp"
+												validate
+											>
+											<label for="expiry">
+												{% trans 'Expires' %}
+												(MM/YY{% if formatted_expiry|length > 7 %}YY{% endif %})
+											</label>
+											{{ card_form.expiry_month.errors }}
+										</div>
+										<div
+											class="relative basis-1/2"
+											reference="security_code_2"
+										>
+											<input
+												type="text"
+												id="securityCode2"
+												class="
 													{% if form.security_code.errors %}
 														text-error
 														border-error
 													{% endif %}
 													mask--securityCode
 													adaptiveLabel
-													existingPaymentMethodField
+													newPaymentMethodField
 												"
-												name="security_code_1"
+												name="security_code_2"
 												value=""
 												pattern="\d*"
 												maxlength="4"
@@ -932,8 +1195,6 @@
 												autocomplete="cc-csc"
 												validate="security_code"
 											>
-											<label for="securityCode1">{% trans 'Security code' %}</label>
-
 											<div
 												class="
 													absolute right-0 top-1/2
@@ -969,7 +1230,7 @@
 														after:top-full
 														after:content-['']
 														p-3
-														min-w-38
+														min-w-48
 														text-sm text-white
 														bg-dark
 														after:border-x-6
@@ -1020,875 +1281,666 @@
 													</div>
 												</div>
 											</div>
+											<label for="securityCode2">{% trans 'Security code' %}</label>
+											{{ form.security_code.errors }}
 										</div>
-
-										{{ form.security_code.errors }}
 									</div>
-								</div>
-							{% endif %}
 
-							<div
-								id="newPaymentMethod"
-								class="flex flex-col gap-3"
-								{% if selected_payment_method %}hidden{% endif %}
-							>
-								<div class="flex gap-1 justify-end">
-									<img
-										class="
-											transition-all
-											cardTypeIndicator cardTypeIndicator-visa
-										"
-										src="{% static 'images/icons/cards/visa.svg' %}"
-										alt="{% trans 'Visa' %}"
-									>
-									<img
-										class="
-											transition-all
-											cardTypeIndicator
-											cardTypeIndicator-mastercard
-										"
-										src="{% static 'images/icons/cards/mastercard.svg' %}"
-										alt="{% trans 'MasterCard' %}"
-									>
-									{% if rate.accepts_amex %}
-										<img
-											class="
-												transition-all
-												cardTypeIndicator
-												cardTypeIndicator-amex
-											"
-											src="{% static 'images/icons/cards/amex.svg' %}"
-											alt="{% trans 'American Express' %}"
-										>
-									{% endif %}
-									{% if rate.accepts_discover %}
-										<img
-											class="
-												transition-all
-												cardTypeIndicator
-												cardTypeIndicator-discover
-											"
-											src="{% static 'images/icons/cards/discover.svg' %}"
-											alt="{% trans 'Discover' %}"
-										>
-									{% endif %}
-									{% if rate.accepts_jcb %}
-										<img
-											class="
-												transition-all
-												cardTypeIndicator cardTypeIndicator-jcb
-											"
-											src="{% static 'images/icons/cards/jcb.svg' %}"
-											alt="{% trans 'JCB' %}"
-										>
-									{% endif %}
-									{% if rate.accepts_other %}
-										<img
-											class="
-												transition-all
-												cardTypeIndicator
-												cardTypeIndicator-other
-											"
-											src="{% static 'images/icons/cards/other.svg' %}"
-											alt="{% trans 'Other' %}"
-										>
-									{% endif %}
-								</div>
-
-								<div class="relative">
-									{{ card_form.number }}
-									<label for="creditCardNumberInput">{% trans 'Card number' %}</label>
-									{{ card_form.number.errors }}
-								</div>
-
-								<div class="flex gap-3">
-									<div class="relative basis-1/2">
-										<input
-											type="text"
-											id="expiry"
-											class="
-												adaptiveLabel
-												{% if formatted_expiry %}
-													adaptiveLabel--withContent
-												{% endif %}
-												mask--monthAndYear
-												{% if card_form.expiry_month.errors %}
-													error
-												{% endif %}
-												newPaymentMethodField
-											"
-											name="expiry"
-											value="{{ formatted_expiry }}"
-											pattern="\d*"
-											maxlength="10"
-											required
-											autocomplete="cc-exp"
-											validate
-										>
-										<label for="expiry">
-											{% trans 'Expires' %}
-											(MM/YY{% if formatted_expiry|length > 7 %}YY{% endif %})
-										</label>
-										{{ card_form.expiry_month.errors }}
+									<div class="relative">
+										{{ card_form.name }}
+										<label for="id_name">{% trans 'Name on card' %}</label>
+										{{ card_form.name.errors }}
 									</div>
-									<div class="relative basis-1/2" reference="security_code_2">
-										<input
-											type="text"
-											id="securityCode2"
-											class="
-												{% if form.security_code.errors %}
-													text-error
-													border-error
-												{% endif %}
-												mask--securityCode
-												adaptiveLabel
-												newPaymentMethodField
-											"
-											name="security_code_2"
-											value=""
-											pattern="\d*"
-											maxlength="4"
-											required
-											autocomplete="cc-csc"
-											validate="security_code"
-										>
+
+									{% if not user.is_staff %}
 										<div
-											class="
-												absolute right-0 top-1/2
-												flex flex-col
-												justify-center
-												pr-3
-												h-6
-												-translate-y-1/2
-												group
-											"
+											id="saveForLaterRow"
+											{% if page == 2 and not form.password.value and not user.is_authenticated %}
+												hidden
+											{% endif %}
 										>
-											<span
-												class="
-													inline-flex
-													items-center justify-center
-													h-4 w-4
-													font-bold font-brand text-white
-													bg-touch
-													rounded-full
-													cursor-pointer
-													antialiased
-												"
-											>?</span>
-											<div
-												class="
-													absolute
-													after:absolute
-													bottom-full
-													-right-2
-													after:right-[22px]
-													after:top-full
-													after:content-['']
-													p-3
-													min-w-48
-													text-sm text-white
-													bg-dark
-													after:border-x-6
-													after:border-x-transparent
-													after:border-t-6
-													after:border-t-dark
-													rounded-super-sm
-													scale-90
-													group-hover:scale-100
-													-translate-y-2
-													transition-transform
-													antialiased
-													invisible
-													group-hover:visible
-												"
+											<label
+												for="saveForLater"
+												class="flex gap-1ch items-center"
 											>
-												<div
-													class="
-														securityCodeText
-														securityCodeText--default
-													"
+												<input
+													type="checkbox"
+													id="saveForLater"
+													class="newPaymentMethodField"
+													name="save_for_later"
+													{% if is_save_checked %}checked{% endif %}
 												>
-													{% blocktrans trimmed %}
-														3-digit security code usually found on the back of your card. American Express cards have a 4-digit code located on the front.
-													{% endblocktrans %}
-												</div>
-												<div
-													class="
-														securityCodeText
-														securityCodeText--3
-													"
-													hidden
-												>
-													{% blocktrans trimmed %}
-														3-digit security code on the back of your card.
-													{% endblocktrans %}
-												</div>
-												<div
-													class="
-														securityCodeText
-														securityCodeText--4
-													"
-													hidden
-												>
-													{% blocktrans trimmed %}
-														4-digit security code on the front of your card.
-													{% endblocktrans %}
-												</div>
-											</div>
+												{% trans 'Save this credit card for future bookings' %}
+											</label>
 										</div>
-										<label for="securityCode2">{% trans 'Security code' %}</label>
-										{{ form.security_code.errors }}
-									</div>
+									{% endif %}
 								</div>
+							</section>
 
-								<div class="relative">
-									{{ card_form.name }}
-									<label for="id_name">{% trans 'Name on card' %}</label>
-									{{ card_form.name.errors }}
-								</div>
+							<section class="flex flex-col gap-s-1">
+								<h1>
+									{% trans 'Hotel Policies &amp; Information' %}
+								</h1>
 
-								{% if not user.is_staff %}
-									<div
-										id="saveForLaterRow"
-										{% if page == 2 and not form.password.value and not user.is_authenticated %}
-											hidden
-										{% endif %}
-									>
-										<label
-											for="saveForLater"
-											class="flex gap-1ch items-center"
-										>
-											<input
-												type="checkbox"
-												id="saveForLater"
-												class="newPaymentMethodField"
-												name="save_for_later"
-												{% if is_save_checked %}checked{% endif %}
-											>
-											{% trans 'Save this credit card for future bookings' %}
-										</label>
-									</div>
-								{% endif %}
-							</div>
-						</section>
+								<div id="moreInfo" class="flex flex-col gap-s0">
+									{% if has_additional_information %}
+										<p>
+											{% if hotel.is_rental %}
+												{% blocktrans trimmed %}
+													Stay out of the “dog house” by following these
+													<button
+														type="button"
+														class="link"
+														subpage="additionalRules"
+													>additional rules</button>
+													provided by the host. You will be responsible for any damage caused by you or your pets during your stay.
+												{% endblocktrans %}
+											{% else %}
+												{% blocktrans trimmed with property_type=hotel.type.singular_name|lower %}
+													Stay out of the “dog house” by following these
+													<button
+														type="button"
+														class="link"
+														subpage="additionalRules"
+													>additional rules</button>
+													provided by the {{ property_type }}.
+												{% endblocktrans %}
+											{% endif %}
+										</p>
+									{% endif %}
 
-						<section class="flex flex-col gap-s-1">
-							<h1>
-								{% trans 'Hotel Policies &amp; Information' %}
-							</h1>
+									{% if hotel_details.house_rules_display %}
+										<h3 class="text-base">
+											{% trans 'House Rules' %}
+										</h3>
+										{{ hotel_details.house_rules_display }}
+									{% endif %}
 
-							<div id="moreInfo" class="flex flex-col gap-s0">
-								{% if has_additional_information %}
-									<p>
-										{% if hotel.is_rental %}
-											{% blocktrans trimmed %}
-												Stay out of the “dog house” by following these
-												<button
-													type="button"
-													class="link"
-													subpage="additionalRules"
-												>additional rules</button>
-												provided by the host. You will be responsible for any damage caused by you or your pets during your stay.
-											{% endblocktrans %}
-										{% else %}
-											{% blocktrans trimmed with property_type=hotel.type.singular_name|lower %}
-												Stay out of the “dog house” by following these
-												<button
-													type="button"
-													class="link"
-													subpage="additionalRules"
-												>additional rules</button>
-												provided by the {{ property_type }}.
-											{% endblocktrans %}
-										{% endif %}
-									</p>
-								{% endif %}
-
-								{% if hotel_details.house_rules_display %}
-									<h3 class="text-base">
-										{% trans 'House Rules' %}
-									</h3>
-									{{ hotel_details.house_rules_display }}
-								{% endif %}
-
-								{% if hotel_details.check_in_time %}
-									<div class="flex flex-row gap-3">
-										<div class="basis-1/2 flex flex-col gap-1">
-											<h3 class="text-lg">
-												{% trans 'Check-in' %}
-											</h3>
-											{{ hotel_details.check_in_time }}
-										</div>
-										{% if hotel_details.check_out_time %}
+									{% if hotel_details.check_in_time %}
+										<div class="flex flex-row gap-3">
 											<div class="basis-1/2 flex flex-col gap-1">
 												<h3 class="text-lg">
-													{% trans 'Check-out' %}
+													{% trans 'Check-in' %}
 												</h3>
-												{{ hotel_details.check_out_time }}
+												{{ hotel_details.check_in_time }}
 											</div>
-										{% endif %}
-									</div>
-								{% endif %}
-
-								<div class="flex flex-col gap-1 max-w-content">
-									<h3 class="text-lg">
-										{% trans 'Cancellation Policy' %}
-									</h3>
-									<div
-										class="
-											flex flex-col
-											gap-3
-											[&_ul]:ms-3
-											[&_ul]:list-disc
-											[&_ul]:list-inside
-										"
-									>
-										{% make_cancellation_policy_html_safe request hotel rate arrival %}
-
-										{% if not is_same_day_arrival %}
-											<div
-												class="
-													flex flex-col
-													gap-1
-													ps-2
-													insuranceOptions
-												"
-												{% if not insurance_quote %}hidden{% endif %}
-											>
-												<div reference="pet_travel_insurance">
-													<label
-														for="travelInsurance--yes"
-														class="flex gap-1ch items-center"
-													>
-														<span>
-															<input
-																type="radio"
-																id="travelInsurance--yes"
-																name="pet_travel_insurance"
-																value="yes"
-																{% if is_travel_insurance_selected %}
-																	checked
-																{% endif %}
-																required
-																validate
-															>
-														</span>
-														<span>
-															<strong>{% trans 'Add travel insurance:' %}</strong>
-															{% format_currency insurance_quote.travel_insurance_price request value_span_class='travelInsurance__price' %}
-															{% trans ' per stay' %}
-														</span>
-														<button
-															type="button"
-															class="
-																inline-flex
-																items-center
-																justify-center
-																h-4 w-4
-																font-bold
-																font-brand
-																text-white
-																bg-brand-blue
-																rounded-full
-																cursor-pointer
-															"
-															subpage="travelInsuranceInfo"
-														>i</button>
-													</label>
+											{% if hotel_details.check_out_time %}
+												<div class="basis-1/2 flex flex-col gap-1">
+													<h3 class="text-lg">
+														{% trans 'Check-out' %}
+													</h3>
+													{{ hotel_details.check_out_time }}
 												</div>
-												<div>
-													<label
-														for="travelInsurance--no"
-														class="flex gap-1ch items-center"
-													>
-														<span>
-															<input
-																type="radio"
-																id="travelInsurance--no"
-																name="pet_travel_insurance"
-																value="no"
-																{% if is_travel_insurance_selected == False %}
-																	checked
-																{% endif %}
-																required
-																validate
-															>
-														</span>
-														<span>
-															<strong>{% trans 'No thanks' %}</strong>
-															({% trans 'Don’t protect my trip' %})
-														</span>
-													</label>
-												</div>
-											</div>
-										{% endif %}
-									</div>
-								</div>
-
-								<div class="flex flex-col gap-1">
-									<h3 class="text-lg">
-										{% trans 'Pet Policy' %}
-									</h3>
-									<p>
-										{% call hotel 'make_pet_policy_html' request.locale as pet_policy_html %}
-										{{ pet_policy_html|safe }}
-										{% blocktrans trimmed %}
-											Guests are responsible for any damage caused by their pets.
-										{% endblocktrans %}
-									</p>
-								</div>
-
-								{% if hotel.pets_allowed %}
-									<div
-										class="flex flex-col gap-1 insuranceOptions"
-										{% if not insurance_quote %}hidden{% endif %}
-									>
-										<div reference="pet_damage_protection">
-											<label
-												for="damageProtection--yes"
-												class="flex gap-1ch items-center"
-											>
-												<span>
-													<input
-														type="radio"
-														id="damageProtection--yes"
-														name="pet_damage_protection"
-														value="yes"
-														{% if is_damage_protection_selected %}
-															checked
-														{% endif %}
-														required
-														validate
-													>
-												</span>
-												<span>
-													<strong>{% trans 'Add pet damage protection:' %}</strong>
-													<span>
-														{% format_currency insurance_quote.damage_protection_price request value_span_class='damageProtection__price' %}
-														{% trans ' per stay' %}
-													</span>
-												</span>
-												<button
-													type="button"
-													class="
-														inline-flex
-														items-center justify-center
-														font-bold
-														font-brand
-														text-white
-														bg-brand-blue
-														rounded-full
-														cursor-pointer
-														{% if s %}wo maa{% elif y %}{% endif %}
-													"
-													subpage="damageProtectionInfo"
-												>i</button>
-											</label>
+											{% endif %}
 										</div>
-										<div>
-											<label
-												for="damageProtection--no"
-												class="flex gap-1ch items-center"
-											>
-												<span>
-													<input
-														type="radio"
-														id="damageProtection--no"
-														name="pet_damage_protection"
-														value="no"
-														{% if is_damage_protection_selected == False %}
-															checked
-														{% endif %}
-														required
-														validate
-													>
-												</span>
-												<span>
-													<strong>{% trans 'No thanks' %}</strong>
-													(I will be responsible for any damages)
-												</span>
-											</label>
-										</div>
-									</div>
-								{% else %}
-									<div
-										class="insuranceOptions insuranceOptions--inPolicy"
-										{% if not insurance_quote %}hidden{% endif %}
-									>
-										<div reference="not_pet_friendly">
-											<label
-												for="notPetFriendly"
-												class="radio__lbl insuranceOptions__option"
-											>
-												<span>
-													<input
-														type="checkbox"
-														id="notPetFriendly"
-														class="checkbox"
-														name="not_pet_friendly"
-														required
-														validate
-													>
-												</span>
-												<span>
-													I understand that this accommodation is NOT pet friendly.
-												</span>
-											</label>
-										</div>
-									</div>
-								{% endif %}
-							</div>
-						</section>
-					</div>
-				</div>
-				<div>
-					<aside
-						class="
-							md:flex flex-col hidden
-							gap-s1
-							p-8 pb-0
-							bg-gray-field
-							rounded-b-none rounded-super-sm
-						"
-					>
-						<img
-							class="rounded-super-base roomImg"
-							src="{{ room_type.thumbnail.url_full }}"
-							width="300"
-							height="200"
-							alt="{{ room_type.beds_display }}"
-							decoding="async"
-						>
-						<div class="flex flex-col gap-s-1 font-brand">
-							<div class="flex gap-3 items-start justify-between w-full">
-								<h2 class="shrink leading-tight text-lg">{{ hotel.name }}</h2>
-								{% usekwacro stars %}
-							</div>
+									{% endif %}
 
-							<p class="font-brand">
-								{{ room_display_html|safe }}
-							</p>
-
-							<div class="flex flex-col gap-1">
-								<div class="flex gap-3 justify-between">
-									<span class="font-bold text-dark">
-										{% trans 'Guests' %}
-									</span>
-									<span>
-										{% blocktrans count c=num_adults %}{{ c }} adult{% plural %}{{ c }} adults{% endblocktrans %}{% if num_children or num_pets %},{% endif %}
-										{% if num_children %}
-											{% blocktrans count c=num_children %}{{ c }} child{% plural %}{{ c }} children{% endblocktrans %}{% if num_pets %},{% endif %}
-										{% endif %}
-										{% blocktrans count c=num_pets %}{{ c }} pet{% plural %}{{ c }} pets{% endblocktrans %}
-									</span>
-								</div>
-								<div class="flex gap-3 justify-between">
-									<span class="font-bold text-dark">
-										{% trans 'Arrival' %}
-									</span>
-									<span>
-										{{ arrival|date:date_format_string }}
-									</span>
-								</div>
-								<div class="flex gap-3 justify-between">
-									<span class="font-bold text-dark">
-										{% trans 'Departure' %}
-									</span>
-									<span>
-										{{ departure|date:date_format_string }}
-									</span>
-								</div>
-							</div>
-
-							<p class="text-right" x-data>
-								<button
-									type="button"
-									class="link"
-									@click.prevent="$dispatch('modal', {key: 'tripDetails'});"
-								>
-									{% trans 'Change details' %}
-								</button>
-							</p>
-						</div>
-
-						<hr class="border-2 opacity-50">
-					</aside>
-					<!-- Another div so it can be sticky -->
-					<aside
-						class="
-							sticky
-							lg:top-[var(--header-height)]
-							top-[var(--header-height-sm)]
-							md:flex flex-col hidden
-							gap-s1
-							p-8 pt-4
-							bg-gray-field
-							rounded-super-sm rounded-t-none
-						"
-					>
-						<div class="flex flex-col gap-s-1">
-							<h1 class="font-bold text-lg">{% trans 'Summary of Charges' %}</h1>
-							<div class="flex flex-col gap-1">
-								{% if rate.deal %}
-									<span class="font-brand">{{ rate.deal.label }}</span>
-								{% endif %}
-								{% if rate.nightly_rates %}
-									<details class="flex flex-col gap-1">
-										<summary
+									<div class="flex flex-col gap-1 max-w-content">
+										<h3 class="text-lg">
+											{% trans 'Cancellation Policy' %}
+										</h3>
+										<div
 											class="
-												relative
-												-ml-4
-												w-[calc(100%_+_calc(var(--spacing)_*_4))]
+												flex flex-col
+												gap-3
+												[&_ul]:ms-3
+												[&_ul]:list-disc
+												[&_ul]:list-inside
 											"
 										>
-											<span
-												class="
-													absolute left-4
-													w-[calc(100%_-_calc(var(--spacing)_*_4))]
-												"
-											>
-												<span class="flex gap-1ch justify-between">
-													<span class="font-bold font-brand text-dark">
-														{{ num_nights }} {% blocktrans count c=num_nights %}night{% plural %}nights{% endblocktrans %} ×
-														{% if rate.deal %}
-															<span
-																class="
-																	font-normal
-																	text-plain
-																	line-through
-																"
-															>{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
-														{% endif %}
-														{% format_currency rate.average_nightly_rate request is_long=False skip_currency=True %}{% if num_rooms > 1 %}/{% elif num_nights > 1 %}/avg{% endif %}
-													</span>
-													<span>
-														{% format_currency rate.subtotal request skip_currency=True %}
-													</span>
-												</span>
-											</span>
-										</summary>
+											{% make_cancellation_policy_html_safe request hotel rate arrival %}
 
-										{% for nightly_rate in rate.nightly_rates %}
-											<div class="flex gap-1ch justify-between ps-2">
-												<span class="font-brand">
-													{{ nightly_rate.date|date:date_format_string }}
-												</span>
-												<span>
-													{% format_currency nightly_rate.amount request skip_currency=True %}
-												</span>
-											</div>
-										{% endfor %}
-									</details>
-								{% else %}
-									<div class="flex gap-1ch justify-between">
-										<span class="font-bold font-brand text-dark">
-											{{ num_nights }} {% blocktrans count c=num_nights %}night{% plural %}nights{% endblocktrans %} ×
-											{% if rate.deal %}<span class="dataSheet__lbl--strikethrough">
-													{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
-											{% endif %}
-											{% format_currency rate.average_nightly_rate request is_long=False skip_currency=True %}{% if num_rooms > 1 %}/{% trans 'room' %}{% elif num_nights > 1 %}/avg{% endif %}
-										</span>
-										<span>
-											{% format_currency rate.subtotal request skip_currency=True %}
-										</span>
-									</div>
-								{% endif %}
-							</div>
-
-							<div class="flex flex-col gap-1">
-								{% for included_fee in rate.included_fees %}
-									<div class="flex gap-1ch justify-between">
-										<span class="font-bold font-brand text-dark">
-											{{ included_fee.description }}
-										</span>
-										<span>
-											{% format_currency included_fee.amount request skip_currency=True %}
-										</span>
-									</div>
-								{% endfor %}
-								<div
-									class="insuranceSummary"
-									{% if not is_travel_insurance_selected and not is_damage_protection_selected %}
-										hidden
-									{% endif %}
-								>
-									<div
-										class="
-											flex
-											gap-1ch justify-between
-											travelInsuranceSummary
-										"
-										<div
-									>
-										{% if not is_travel_insurance_selected %}hidden{% endif %}
-										>
-										<span class="font-bold font-brand text-dark">
-											{% trans 'Travel Insurance' %}
-										</span>
-										<span>
-											{% format_currency insurance_quote.travel_insurance_price request value_span_class='travelInsurance__price' %}
-										</span>
-									</div>
-									<div
-										class="
-											flex
-											gap-1ch justify-between
-											damageProtectionSummary
-										"
-										{% if not is_damage_protection_selected %}
-											hidden
-										{% endif %}
-									>
-										<span class="font-bold font-brand text-dark">
-											{% trans 'Pet Damage Protection' %}
-										</span>
-										<span>
-											{% format_currency insurance_quote.damage_protection_price request value_span_class='damageProtection__price' %}
-										</span>
-									</div>
-								</div>
-								{% for fee in rate.additional_fees %}
-									<div class="flex gap-1ch justify-between">
-										<span class="font-bold font-brand text-dark">
-											{{ fee.description }}
-											{% if rate.is_prepay %}
-												<span class="font-normal font-plain">(due at check-in)</span>
-											{% endif %}
-										</span>
-										<span>
-											{% format_currency fee.amount request skip_currency=True %}
-										</span>
-									</div>
-								{% endfor %}
-								{% if rate.host_fee %}
-									<div class="flex gap-1ch justify-between">
-										<span class="font-bold font-brand text-dark">
-											{% trans 'Host fees' %}
-											<span class="feeHelp">
-												<span class="feeHelp__icon">?</span>
+											{% if not is_same_day_arrival %}
 												<div
 													class="
-														feeHelp__text
-														feeHelp__text--scootRight
+														flex flex-col
+														gap-1
+														ps-2
+														insuranceOptions
 													"
+													{% if not insurance_quote %}hidden{% endif %}
 												>
-													{% blocktrans trimmed %}
-														Includes cleaning fee, management fee, and other fees specified by the&nbsp;host.
-													{% endblocktrans %}
+													<div reference="pet_travel_insurance">
+														<label
+															for="travelInsurance--yes"
+															class="flex gap-1ch items-center"
+														>
+															<span>
+																<input
+																	type="radio"
+																	id="travelInsurance--yes"
+																	name="pet_travel_insurance"
+																	value="yes"
+																	{% if is_travel_insurance_selected %}
+																		checked
+																	{% endif %}
+																	required
+																	validate
+																>
+															</span>
+															<span>
+																<strong>{% trans 'Add travel insurance:' %}</strong>
+																{% format_currency insurance_quote.travel_insurance_price request value_span_class='travelInsurance__price' %}
+																{% trans ' per stay' %}
+															</span>
+															<button
+																type="button"
+																class="
+																	inline-flex
+																	items-center
+																	justify-center
+																	h-4 w-4
+																	font-bold
+																	font-brand
+																	text-white
+																	bg-brand-blue
+																	rounded-full
+																	cursor-pointer
+																"
+																subpage="travelInsuranceInfo"
+															>i</button>
+														</label>
+													</div>
+													<div>
+														<label
+															for="travelInsurance--no"
+															class="flex gap-1ch items-center"
+														>
+															<span>
+																<input
+																	type="radio"
+																	id="travelInsurance--no"
+																	name="pet_travel_insurance"
+																	value="no"
+																	{% if is_travel_insurance_selected == False %}
+																		checked
+																	{% endif %}
+																	required
+																	validate
+																>
+															</span>
+															<span>
+																<strong>{% trans 'No thanks' %}</strong>
+																({% trans 'Don’t protect my trip' %})
+															</span>
+														</label>
+													</div>
 												</div>
-											</span>
+											{% endif %}
+										</div>
+									</div>
+
+									<div class="flex flex-col gap-1">
+										<h3 class="text-lg">
+											{% trans 'Pet Policy' %}
+										</h3>
+										<p>
+											{% call hotel 'make_pet_policy_html' request.locale as pet_policy_html %}
+											{{ pet_policy_html|safe }}
+											{% blocktrans trimmed %}
+												Guests are responsible for any damage caused by their pets.
+											{% endblocktrans %}
+										</p>
+									</div>
+
+									{% if hotel.pets_allowed %}
+										<div
+											class="flex flex-col gap-1 insuranceOptions"
+											{% if not insurance_quote %}hidden{% endif %}
+										>
+											<div reference="pet_damage_protection">
+												<label
+													for="damageProtection--yes"
+													class="flex gap-1ch items-center"
+												>
+													<span>
+														<input
+															type="radio"
+															id="damageProtection--yes"
+															name="pet_damage_protection"
+															value="yes"
+															{% if is_damage_protection_selected %}
+																checked
+															{% endif %}
+															required
+															validate
+														>
+													</span>
+													<span>
+														<strong>{% trans 'Add pet damage protection:' %}</strong>
+														<span>
+															{% format_currency insurance_quote.damage_protection_price request value_span_class='damageProtection__price' %}
+															{% trans ' per stay' %}
+														</span>
+													</span>
+													<button
+														type="button"
+														class="
+															inline-flex
+															items-center
+															justify-center
+															font-bold
+															font-brand
+															text-white
+															bg-brand-blue
+															rounded-full
+															cursor-pointer
+															{% if s %}wo maa{% elif y %}{% endif %}
+														"
+														subpage="damageProtectionInfo"
+													>i</button>
+												</label>
+											</div>
+											<div>
+												<label
+													for="damageProtection--no"
+													class="flex gap-1ch items-center"
+												>
+													<span>
+														<input
+															type="radio"
+															id="damageProtection--no"
+															name="pet_damage_protection"
+															value="no"
+															{% if is_damage_protection_selected == False %}
+																checked
+															{% endif %}
+															required
+															validate
+														>
+													</span>
+													<span>
+														<strong>{% trans 'No thanks' %}</strong>
+														(I will be responsible for any damages)
+													</span>
+												</label>
+											</div>
+										</div>
+									{% else %}
+										<div
+											class="insuranceOptions insuranceOptions--inPolicy"
+											{% if not insurance_quote %}hidden{% endif %}
+										>
+											<div reference="not_pet_friendly">
+												<label
+													for="notPetFriendly"
+													class="radio__lbl insuranceOptions__option"
+												>
+													<span>
+														<input
+															type="checkbox"
+															id="notPetFriendly"
+															class="checkbox"
+															name="not_pet_friendly"
+															required
+															validate
+														>
+													</span>
+													<span>
+														I understand that this accommodation is NOT pet friendly.
+													</span>
+												</label>
+											</div>
+										</div>
+									{% endif %}
+								</div>
+							</section>
+						</div>
+					</div>
+					<div>
+						<aside
+							class="
+								md:flex flex-col hidden
+								gap-s1
+								p-8 pb-0
+								bg-gray-field
+								rounded-b-none rounded-super-sm
+							"
+						>
+							<img
+								class="rounded-super-base roomImg"
+								src="{{ room_type.thumbnail.url_full }}"
+								width="300"
+								height="200"
+								alt="{{ room_type.beds_display }}"
+								decoding="async"
+							>
+							<div class="flex flex-col gap-s-1 font-brand">
+								<div class="flex gap-3 items-start justify-between w-full">
+									<h2 class="shrink leading-tight text-lg">{{ hotel.name }}</h2>
+									{% usekwacro stars %}
+								</div>
+
+								<p class="font-brand">
+									{{ room_display_html|safe }}
+								</p>
+
+								<div class="flex flex-col gap-1">
+									<div class="flex gap-3 justify-between">
+										<span class="font-bold text-dark">
+											{% trans 'Guests' %}
 										</span>
 										<span>
-											{% format_currency rate.host_fee request skip_currency=True %}
+											{% blocktrans count c=num_adults %}{{ c }} adult{% plural %}{{ c }} adults{% endblocktrans %}{% if num_children or num_pets %},{% endif %}
+											{% if num_children %}
+												{% blocktrans count c=num_children %}{{ c }} child{% plural %}{{ c }} children{% endblocktrans %}{% if num_pets %},{% endif %}
+											{% endif %}
+											{% blocktrans count c=num_pets %}{{ c }} pet{% plural %}{{ c }} pets{% endblocktrans %}
 										</span>
 									</div>
-								{% endif %}
-								{% if hotel_details.is_vrbo and rate.platform_fee %}
-									<div class="flex gap-1ch justify-between">
-										<span class="font-bold font-brand text-dark">
-											{% trans 'Partner service fee' %}
-											<span class="feeHelp">
-												<span class="feeHelp__icon">?</span>
-												<div class="feeHelp__text">
-													{% blocktrans trimmed %}
-														This booking is facilitated by Vrbo. They charge a service fee for a secure booking experience and 24/7 support throughout the duration of your&nbsp;trip.
-													{% endblocktrans %}
-												</div>
-											</span>
+									<div class="flex gap-3 justify-between">
+										<span class="font-bold text-dark">
+											{% trans 'Arrival' %}
 										</span>
 										<span>
-											{% format_currency rate.platform_fee request skip_currency=True %}
+											{{ arrival|date:date_format_string }}
 										</span>
 									</div>
-								{% endif %}
-								<div class="flex gap-1ch justify-between">
-									<span class="font-bold font-brand text-dark">
-										{% if hotel_details.is_vrbo and rate.platform_fee %}
-											BringFido {% trans 'service fee' %}
-										{% else %}
-											{% trans 'Booking fee' %}
-										{% endif %}
-									</span>
-									<span>
-										{% format_currency 0.00 request skip_currency=True %}
-									</span>
+									<div class="flex gap-3 justify-between">
+										<span class="font-bold text-dark">
+											{% trans 'Departure' %}
+										</span>
+										<span>
+											{{ departure|date:date_format_string }}
+										</span>
+									</div>
 								</div>
-							</div>
 
-							<div class="flex gap-1ch justify-between">
-								<span class="font-bold font-brand text-dark text-lg">
-									{% trans 'Total' %}
-								</span>
-								<span class="font-bold font-brand text-dark text-lg">
-									{% format_currency rate.grand_total_with_extras request is_final=True is_in_usa=is_in_usa value_span_class='runningGrandTotal' %}
-								</span>
-							</div>
-
-							<div class="paymentInfo">
-								<div
-									class="insuranceText insuranceText--yes"
-									{% if not insurance_price %}hidden{% endif %}
-								>
-									{% make_payment_info_safe request hotel rate arrival departure insurance_amount=insurance_price %}
-								</div>
-								<div
-									class="insuranceText insuranceText--no"
-									{% if insurance_price %}hidden{% endif %}
-								>
-									{% make_payment_info_safe request hotel rate arrival departure %}
-								</div>
+								<p class="text-right" x-data>
+									<button
+										type="button"
+										class="link"
+										@click.prevent="$dispatch('modal', {key: 'tripDetails'});"
+									>
+										{% trans 'Change details' %}
+									</button>
+								</p>
 							</div>
 
 							<hr class="border-2 opacity-50">
+						</aside>
+						<!-- Another div so it can be sticky -->
+						<aside
+							class="
+								sticky
+								lg:top-[var(--header-height)]
+								top-[var(--header-height-sm)]
+								md:flex flex-col hidden
+								gap-s1
+								p-8 pt-4
+								bg-gray-field
+								rounded-super-sm rounded-t-none
+							"
+						>
+							<div class="flex flex-col gap-s-1">
+								<h1 class="font-bold text-lg">{% trans 'Summary of Charges' %}</h1>
+								<div class="flex flex-col gap-1">
+									{% if rate.deal %}
+										<span class="font-brand">{{ rate.deal.label }}</span>
+									{% endif %}
+									{% if rate.nightly_rates %}
+										<details class="flex flex-col gap-1">
+											<summary
+												class="
+													relative
+													-ml-4
+													w-[calc(100%_+_calc(var(--spacing)_*_4))]
+												"
+											>
+												<span
+													class="
+														absolute left-4
+														w-[calc(100%_-_calc(var(--spacing)_*_4))]
+													"
+												>
+													<span class="flex gap-1ch justify-between">
+														<span
+															class="
+																font-bold
+																font-brand
+																text-dark
+															"
+														>
+															{{ num_nights }} {% blocktrans count c=num_nights %}night{% plural %}nights{% endblocktrans %} ×
+															{% if rate.deal %}
+																<span
+																	class="
+																		font-normal
+																		text-plain
+																		line-through
+																	"
+																>{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
+															{% endif %}
+															{% format_currency rate.average_nightly_rate request is_long=False skip_currency=True %}{% if num_rooms > 1 %}/{% elif num_nights > 1 %}/avg{% endif %}
+														</span>
+														<span>
+															{% format_currency rate.subtotal request skip_currency=True %}
+														</span>
+													</span>
+												</span>
+											</summary>
 
-							<div>
-								<button
-									type="button"
-									class="inline link"
-									subpage="additionalRules"
-								>{% trans 'Additional Rules' %}</button>
+											{% for nightly_rate in rate.nightly_rates %}
+												<div class="flex gap-1ch justify-between ps-2">
+													<span class="font-brand">
+														{{ nightly_rate.date|date:date_format_string }}
+													</span>
+													<span>
+														{% format_currency nightly_rate.amount request skip_currency=True %}
+													</span>
+												</div>
+											{% endfor %}
+										</details>
+									{% else %}
+										<div class="flex gap-1ch justify-between">
+											<span class="font-bold font-brand text-dark">
+												{{ num_nights }} {% blocktrans count c=num_nights %}night{% plural %}nights{% endblocktrans %} ×
+												{% if rate.deal %}<span class="dataSheet__lbl--strikethrough">
+														{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
+												{% endif %}
+												{% format_currency rate.average_nightly_rate request is_long=False skip_currency=True %}{% if num_rooms > 1 %}/{% trans 'room' %}{% elif num_nights > 1 %}/avg{% endif %}
+											</span>
+											<span>
+												{% format_currency rate.subtotal request skip_currency=True %}
+											</span>
+										</div>
+									{% endif %}
+								</div>
+
+								<div class="flex flex-col gap-1">
+									{% for included_fee in rate.included_fees %}
+										<div class="flex gap-1ch justify-between">
+											<span class="font-bold font-brand text-dark">
+												{{ included_fee.description }}
+											</span>
+											<span>
+												{% format_currency included_fee.amount request skip_currency=True %}
+											</span>
+										</div>
+									{% endfor %}
+									<div
+										class="insuranceSummary"
+										{% if not is_travel_insurance_selected and not is_damage_protection_selected %}
+											hidden
+										{% endif %}
+									>
+										<div
+											class="
+												flex
+												gap-1ch justify-between
+												travelInsuranceSummary
+											"
+											<div
+										>
+											{% if not is_travel_insurance_selected %}hidden{% endif %}
+											>
+											<span class="font-bold font-brand text-dark">
+												{% trans 'Travel Insurance' %}
+											</span>
+											<span>
+												{% format_currency insurance_quote.travel_insurance_price request value_span_class='travelInsurance__price' %}
+											</span>
+										</div>
+										<div
+											class="
+												flex
+												gap-1ch justify-between
+												damageProtectionSummary
+											"
+											{% if not is_damage_protection_selected %}
+												hidden
+											{% endif %}
+										>
+											<span class="font-bold font-brand text-dark">
+												{% trans 'Pet Damage Protection' %}
+											</span>
+											<span>
+												{% format_currency insurance_quote.damage_protection_price request value_span_class='damageProtection__price' %}
+											</span>
+										</div>
+									</div>
+									{% for fee in rate.additional_fees %}
+										<div class="flex gap-1ch justify-between">
+											<span class="font-bold font-brand text-dark">
+												{{ fee.description }}
+												{% if rate.is_prepay %}
+													<span class="font-normal font-plain">(due at check-in)</span>
+												{% endif %}
+											</span>
+											<span>
+												{% format_currency fee.amount request skip_currency=True %}
+											</span>
+										</div>
+									{% endfor %}
+									{% if rate.host_fee %}
+										<div class="flex gap-1ch justify-between">
+											<span class="font-bold font-brand text-dark">
+												{% trans 'Host fees' %}
+												<span class="feeHelp">
+													<span class="feeHelp__icon">?</span>
+													<div
+														class="
+															feeHelp__text
+															feeHelp__text--scootRight
+														"
+													>
+														{% blocktrans trimmed %}
+															Includes cleaning fee, management fee, and other fees specified by the&nbsp;host.
+														{% endblocktrans %}
+													</div>
+												</span>
+											</span>
+											<span>
+												{% format_currency rate.host_fee request skip_currency=True %}
+											</span>
+										</div>
+									{% endif %}
+									{% if hotel_details.is_vrbo and rate.platform_fee %}
+										<div class="flex gap-1ch justify-between">
+											<span class="font-bold font-brand text-dark">
+												{% trans 'Partner service fee' %}
+												<span class="feeHelp">
+													<span class="feeHelp__icon">?</span>
+													<div class="feeHelp__text">
+														{% blocktrans trimmed %}
+															This booking is facilitated by Vrbo. They charge a service fee for a secure booking experience and 24/7 support throughout the duration of your&nbsp;trip.
+														{% endblocktrans %}
+													</div>
+												</span>
+											</span>
+											<span>
+												{% format_currency rate.platform_fee request skip_currency=True %}
+											</span>
+										</div>
+									{% endif %}
+									<div class="flex gap-1ch justify-between">
+										<span class="font-bold font-brand text-dark">
+											{% if hotel_details.is_vrbo and rate.platform_fee %}
+												BringFido {% trans 'service fee' %}
+											{% else %}
+												{% trans 'Booking fee' %}
+											{% endif %}
+										</span>
+										<span>
+											{% format_currency 0.00 request skip_currency=True %}
+										</span>
+									</div>
+								</div>
+
+								<div class="flex gap-1ch justify-between">
+									<span class="font-bold font-brand text-dark text-lg">
+										{% trans 'Total' %}
+									</span>
+									<span class="font-bold font-brand text-dark text-lg">
+										{% format_currency rate.grand_total_with_extras request is_final=True is_in_usa=is_in_usa value_span_class='runningGrandTotal' %}
+									</span>
+								</div>
+
+								<div class="paymentInfo">
+									<div
+										class="insuranceText insuranceText--yes"
+										{% if not insurance_price %}hidden{% endif %}
+									>
+										{% make_payment_info_safe request hotel rate arrival departure insurance_amount=insurance_price %}
+									</div>
+									<div
+										class="insuranceText insuranceText--no"
+										{% if insurance_price %}hidden{% endif %}
+									>
+										{% make_payment_info_safe request hotel rate arrival departure %}
+									</div>
+								</div>
+
+								<hr class="border-2 opacity-50">
+
+								<div>
+									<button
+										type="button"
+										class="inline link"
+										subpage="additionalRules"
+									>{% trans 'Additional Rules' %}</button>
+								</div>
 							</div>
-						</div>
-					</aside>
+						</aside>
+					</div>
 				</div>
-			</div>
 
-			<div
-				id="complete"
-				class="flex flex-col gap-s4 text-center"
-				{% if page == 1 %}hidden{% endif %}
-			>
-				<hr>
-
-				<input
-					type="submit"
-					id="submitBtn"
-					class="mx-auto w-full md:w-1/3 text-xl button"
-					value="{% trans 'Complete Booking' %}"
+				<div
+					id="complete"
+					class="flex flex-col gap-s4 text-center"
+					{% if page == 1 %}hidden{% endif %}
 				>
-				<button
-					type="button"
-					id="applePayButton"
-					class="
-						mx-auto
-						w-full md:w-1/3
-						text-xl
-						bg-black
-						button appearance-apple
-					"
-					hidden
-				>Book with &#63743; Pay</button>
-				<p class="mx-auto">
-					{% url 'terms' as terms_url %}
-					{% url 'privacy' as privacy_url %}
-					{% blocktrans trimmed %}
-						By completing this booking, you acknowledge that you have read and accepted our <a href="{{ privacy_url }}" target="_blank">Privacy&nbsp;Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms&nbsp;&amp;&nbsp;Conditions</a> as well as the other hotel policies listed above.
-					{% endblocktrans %}
-				</p>
-				{% if user.is_staff %}
-					<div class="text-brand-blue" hidden>{% trans 'Great job, ' %} {{ request.user.first_name }}!</div>
-				{% endif %}
-			</div>
+					<hr>
+
+					<input
+						type="submit"
+						id="submitBtn"
+						class="mx-auto w-full md:w-1/3 text-xl button"
+						value="{% trans 'Complete Booking' %}"
+					>
+					<button
+						type="button"
+						id="applePayButton"
+						class="
+							mx-auto
+							w-full md:w-1/3
+							text-xl
+							bg-black
+							button appearance-apple
+						"
+						hidden
+					>Book with &#63743; Pay</button>
+					<p class="mx-auto">
+						{% url 'terms' as terms_url %}
+						{% url 'privacy' as privacy_url %}
+						{% blocktrans trimmed %}
+							By completing this booking, you acknowledge that you have read and accepted our <a href="{{ privacy_url }}" target="_blank">Privacy&nbsp;Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms&nbsp;&amp;&nbsp;Conditions</a> as well as the other hotel policies listed above.
+						{% endblocktrans %}
+					</p>
+					{% if user.is_staff %}
+						<div class="text-brand-blue" hidden>{% trans 'Great job, ' %} {{ request.user.first_name }}!</div>
+					{% endif %}
+				</div>
 		</form>
 	</div>
 

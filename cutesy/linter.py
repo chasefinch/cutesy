@@ -10,12 +10,13 @@ from .attribute_processors import BaseAttributeProcessor
 from .preprocessors import BasePreprocessor
 from .rules import Rule
 from .types import (
+    ConfigurationError,
     DoctypeError,
     Error,
     IndentationType,
     InstructionType,
     Mode,
-    PreprocessingError,
+    StructuralError,
 )
 
 
@@ -176,10 +177,10 @@ class HTMLLinter(HTMLParser):
 
         try:
             self.feed(html_data)
-        except PreprocessingError as preprocessing_error:
+        except StructuralError as structural_error:
             # Update the line & column numbers for the errors.
             if preprocessor:
-                preprocessor.restore(html_data, preprocessing_error.errors)
+                preprocessor.restore(html_data, structural_error.errors)
             raise
 
         self.close()
@@ -193,7 +194,7 @@ class HTMLLinter(HTMLParser):
                 # Normalize to exactly one blank line at EOF.
                 result = "".join((result.rstrip("\n"), "\n"))
             else:
-                self._log_error("D9", column=0)
+                self._handle_error("D9", column=0)
 
         if preprocessor:
             # Restore the instructions into the placeholder slots
@@ -239,7 +240,7 @@ class HTMLLinter(HTMLParser):
                 Mode.DOCUMENT: "D2",
                 Mode.UNSTRUCTURED: "D1",
             }[self._mode]
-            self._log_error(mode_code)
+            self._handle_error(mode_code)
             if self.fix:
                 self._process(f"<!{decl}>")
             return
@@ -249,21 +250,21 @@ class HTMLLinter(HTMLParser):
         if fix_f1:
             decl = decl_lower
         elif decl_lower != decl:
-            self._log_error("F1")
+            self._handle_error("F1")
 
         decl_lower_joined = " ".join(decl_lower.split())
         fix_f13 = self.fix and not self.is_rule_ignored("F13")
         if fix_f13:
             decl = decl_lower_joined
         elif decl_lower != decl_lower_joined:
-            self._log_error("F13", tag=f"<!{decl_lower_joined}>")
+            self._handle_error("F13", tag=f"<!{decl_lower_joined}>")
 
         if decl_lower_joined != "doctype html":
             if not self.check_doctype:
                 # Punt; This is not an HTML5 document.
                 raise DoctypeError
 
-            self._log_error("E1")
+            self._handle_error("E1")
 
         self._mode = Mode.DOCUMENT
 
@@ -277,11 +278,11 @@ class HTMLLinter(HTMLParser):
         tag = tag.lower()
         if tag in VOID_ELEMENTS:
             if not self.fix:
-                self._log_error("D5", tag=f"<{tag}>")
+                self._handle_error("D5", tag=f"<{tag}>")
 
         else:
             if not self.fix:
-                self._log_error("D6", tag=f"<{tag}>")
+                self._handle_error("D6", tag=f"<{tag}>")
 
             self.handle_endtag(tag)
 
@@ -293,7 +294,7 @@ class HTMLLinter(HTMLParser):
 
         if not self.fix and tag != tag.lower():
             # Tag isn't lowercase
-            self._log_error("F7", tag=f"<{tag}>")
+            self._handle_error("F7", tag=f"<{tag}>")
 
         tag = tag.lower()
 
@@ -330,7 +331,7 @@ class HTMLLinter(HTMLParser):
                 self._expected_indentation = True
                 is_new_line = True
             else:
-                self._log_error("F12", tag=f"<{tag}>")
+                self._handle_error("F12", tag=f"<{tag}>")
 
         self._reconcile_indentation()
 
@@ -365,7 +366,7 @@ class HTMLLinter(HTMLParser):
                 else:
                     error_code = "F13"
 
-                self._log_error(error_code, tag=f"<{tag}>")
+                self._handle_error(error_code, tag=f"<{tag}>")
 
         if tag not in VOID_ELEMENTS:
             # Tag should be closed, add it to the stack.
@@ -382,7 +383,7 @@ class HTMLLinter(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         """Process a closing tag."""
         if not self.fix and tag != tag.lower():
-            self._log_error("F7", tag=f"</{tag}>")
+            self._handle_error("F7", tag=f"</{tag}>")
 
         tag = tag.lower()
 
@@ -393,9 +394,9 @@ class HTMLLinter(HTMLParser):
                 if expected_tag[0] == tag:
                     self._indentation_level = expected_tag[1]
                     break
-                self._log_error("D3", tag=f"</{expected_tag[0]}>")
+                self._handle_error("D3", tag=f"</{expected_tag[0]}>")
         else:
-            self._log_error("D4", tag=f"</{tag}>")
+            self._handle_error("D4", tag=f"</{tag}>")
 
         if tag != self.cdata_elem:
             self._reconcile_indentation()
@@ -425,7 +426,7 @@ class HTMLLinter(HTMLParser):
                 start = match.start()
                 line_offset = html_data.count("\n", 0, start)
                 column = html_data.rfind("\n", 0, start) - 1
-                self._log_error("F2", line_offset=line_offset, column=column)
+                self._handle_error("F2", line_offset=line_offset, column=column)
 
         # Check for & fix inappropriate indentation
         some_indentation = r"\n[ \t]*"
@@ -460,7 +461,7 @@ class HTMLLinter(HTMLParser):
                 # This isn't the last line
                 original_line = html_lines[index]
                 if line != original_line:
-                    self._log_error("F3", line_offset=index, column=0)
+                    self._handle_error("F3", line_offset=index, column=0)
 
         # Check for & fix too many consecutive empty lines
         extra_vertical_lines = r"\n{3,}"
@@ -469,7 +470,7 @@ class HTMLLinter(HTMLParser):
         else:
             for match in re.finditer(extra_vertical_lines, html_data):
                 line_offset = html_data.count("\n", 0, match.start())
-                self._log_error("F4", line_offset=line_offset, column=0)
+                self._handle_error("F4", line_offset=line_offset, column=0)
 
         lines = []
         for index, line in enumerate(html_data.split("\n")):
@@ -505,7 +506,7 @@ class HTMLLinter(HTMLParser):
                     len_line,
                 )
 
-                self._log_error("F5", line_offset=index, column=len(line_start) + column)
+                self._handle_error("F5", line_offset=index, column=len(line_start) + column)
 
             lines.append(original_line)
 
@@ -621,7 +622,7 @@ class HTMLLinter(HTMLParser):
                 elif startswith("<!", cursor):
                     cursor2 = self.parse_html_declaration(cursor)
                 else:
-                    self._log_error("E3")
+                    self._handle_error("E3")
                     self.handle_data("<")
                     cursor2 = cursor + 1
 
@@ -648,7 +649,7 @@ class HTMLLinter(HTMLParser):
 
                 # bail by consuming &#
                 if self.cdata_elem is not None:
-                    self._log_error("E2")
+                    self._handle_error("E2")
 
                 self.handle_data(rawdata[cursor : cursor + 2])
                 cursor = self.updatepos(cursor, cursor + 2)
@@ -675,7 +676,7 @@ class HTMLLinter(HTMLParser):
                     ref_data = "&amp;"
                 else:
                     ref_data = "&"
-                    self._log_error("E2")
+                    self._handle_error("E2")
 
                 self.handle_data(ref_data)
                 cursor = self.updatepos(cursor, cursor + 1)
@@ -709,18 +710,15 @@ class HTMLLinter(HTMLParser):
             )
             match = overlap.match(rawdata, cursor)
             if match:
-                line, column = self.getpos()
                 error_code = "P1"
-                raise self.preprocessor.make_fatal_error(
+                raise self._make_fatal_error(
                     error_code,
-                    line=line,
-                    column=column,
                     tag="Instruction",
                 )
 
         end_cursor = self.check_for_whole_start_tag(cursor)
         if end_cursor < 0:
-            self._log_error("D7")
+            self._handle_error("D7")
             return end_cursor
 
         self.__starttag_text = rawdata[cursor:end_cursor]  # noqa: WPS112 (copied)
@@ -747,9 +745,9 @@ class HTMLLinter(HTMLParser):
             elif attrvalue[:1] == "'" == attrvalue[-1:]:
                 attrvalue = attrvalue[1:-1]
                 if '"' not in attrvalue:
-                    self._log_error("F10", attr=attrname)
+                    self._handle_error("F10", attr=attrname)
             elif not self.fix:
-                self._log_error("F9", attr=attrname)
+                self._handle_error("F9", attr=attrname)
 
             attrs.append((attrname, attrvalue))
             cursor2 = match.end()
@@ -796,16 +794,13 @@ class HTMLLinter(HTMLParser):
                 )
                 match = overlap.match(rawdata, cursor)
                 if match:
-                    line, column = self.getpos()
                     error_code = "P1"
-                    raise self.preprocessor.make_fatal_error(
+                    raise self._make_fatal_error(
                         error_code,
-                        line=line,
-                        column=column,
                         tag="Instruction",
                     )
 
-            self._log_error("D8")
+            self._handle_error("D8")
             return -1
 
         end_cursor = match.end()
@@ -816,7 +811,7 @@ class HTMLLinter(HTMLParser):
             if self.fix:
                 parsed_data = re.sub(r"\s", "", parsed_data)
             else:
-                self._log_error("F11", tag=f"</{tag}>")
+                self._handle_error("F11", tag=f"</{tag}>")
 
         if self.cdata_elem is not None and tag.lower() != self.cdata_elem:
             # script or style
@@ -862,7 +857,7 @@ class HTMLLinter(HTMLParser):
         if self.fix:
             self._process(indentation)
         elif self._expected_indentation != indentation:
-            self._log_error("F3", column=0)
+            self._handle_error("F3", column=0)
 
         self._expected_indentation = None
 
@@ -892,7 +887,7 @@ class HTMLLinter(HTMLParser):
                         split_name = name[:start_index]
                         split_name_lower = split_name.lower()
                         if not self.fix and split_name != split_name_lower:
-                            self._log_error("F8", attr=split_name_lower)
+                            self._handle_error("F8", attr=split_name_lower)
 
                         quote_char = "'" if '"' in split_name_lower else '"'
                         all_attrs.append((split_name_lower, value, quote_char))
@@ -906,7 +901,7 @@ class HTMLLinter(HTMLParser):
             if name:
                 name_lower = name.lower()
                 if not self.fix and name != name_lower:
-                    self._log_error("F8", attr=name_lower)
+                    self._handle_error("F8", attr=name_lower)
 
                 quote_char = "'" if '"' in (value or "") else '"'
                 all_attrs.append((name_lower, value, quote_char))
@@ -979,7 +974,7 @@ class HTMLLinter(HTMLParser):
                         if processing_errors:
                             self._errors.extend(processing_errors)
                         elif not fix_f17 and value != processed_value:
-                            self._log_error("F17", attr=name)
+                            self._handle_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 
@@ -988,7 +983,7 @@ class HTMLLinter(HTMLParser):
         else:
             sorted_groups = sorted(attr_keys_and_groups, key=attr_sort)
             if attr_keys_and_groups != sorted_groups:
-                self._log_error("F6")
+                self._handle_error("F6")
 
         try:
             sort_key = attr_keys_and_groups[0][0]
@@ -1022,26 +1017,73 @@ class HTMLLinter(HTMLParser):
 
         return sort_key, attr_strings
 
-    def _log_error(
+    def _handle_error(
         self,
         rule_code: str,
         line_offset: int = 0,
         column: int | None = None,
         **replacements: str,
     ) -> None:
-        if self.is_rule_ignored(rule_code):
+        error = self._make_error(
+            rule_code=rule_code,
+            line_offset=line_offset,
+            column=column,
+            **replacements,
+        )
+
+        is_rule_ignored = self.is_rule_ignored(rule_code)
+
+        if self.fix and Rule.get(rule_code).structural:
+            exception: Exception
+            if is_rule_ignored:
+                message = f"Can’t run --fix with structural rule {rule_code} ignored"
+                exception = ConfigurationError(message)
+            else:
+                exception = self._make_fatal_error(error=error)
+            raise exception
+
+        if is_rule_ignored:
             return
 
+        self._errors.append(error)
+
+    def _make_fatal_error(
+        self,
+        rule_code: str | None = None,
+        line_offset: int = 0,
+        column: int | None = None,
+        *,
+        error: Error | None = None,
+        **replacements: str,
+    ) -> StructuralError:
+        if not error:
+            assert rule_code is not None
+            error = self._make_error(
+                rule_code=rule_code,
+                line_offset=line_offset,
+                column=column,
+                **replacements,
+            )
+
+        # Return a StructuralError which wraps the associated error; These
+        # errors are fatal, and handled specially.
+        return StructuralError(errors=[error])
+
+    def _make_error(
+        self,
+        rule_code: str,
+        line_offset: int = 0,
+        column: int | None = None,
+        **replacements: str,
+    ) -> Error:
         line, current_column = (self._line, self._column) if self.fix else self.getpos()
         line += line_offset
         if column is None:
             column = current_column
 
-        self._errors.append(
-            Error(
-                line=line,
-                column=column,
-                rule=Rule.get(rule_code),
-                replacements=replacements,
-            ),
+        return Error(
+            line=line,
+            column=column,
+            rule=Rule.get(rule_code),
+            replacements=replacements,
         )

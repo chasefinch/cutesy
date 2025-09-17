@@ -69,7 +69,7 @@ from . import HTMLLinter
 from .attribute_processors import BaseAttributeProcessor, reindent, whitespace
 from .attribute_processors.class_ordering import tailwind
 from .preprocessors import BasePreprocessor, django
-from .types import DoctypeError, PreprocessingError
+from .types import DoctypeError, StructuralError
 
 
 def _from_cli(context: click.Context, name: str) -> bool:
@@ -303,17 +303,17 @@ def main(
 
     result = None  # For passed-in-code mode
     for path, html in html_paths_and_strings:
-        is_preprocessing_error = False  # These are "fatal"
+        is_structural_error = False  # These are "fatal"
 
         try:
             result, errors = linter.lint(html)
         except DoctypeError:
             # Ignore this file due to non-HTML5 doctype, when this feature has been enabled
             continue
-        except PreprocessingError as preprocessing_error:
-            is_preprocessing_error = True
+        except StructuralError as structural_error:
+            is_structural_error = True
             num_files_failed += 1
-            errors = preprocessing_error.errors
+            errors = structural_error.errors
         else:
             if fix and html != result and path is not None:
                 with path.open("w") as html_file:
@@ -339,7 +339,7 @@ def main(
                     indentation = "  "
                     click.echo(f"\033[1m\033[4m{click.format_filename(path)}\033[0m")
 
-                warning_part = "\x1b[91m\x1b[1mFATAL\x1b[0m  " if is_preprocessing_error else ""
+                warning_part = "\x1b[91m\x1b[1mFATAL\x1b[0m  " if is_structural_error else ""
 
                 for error in errors:
                     rule = error.rule

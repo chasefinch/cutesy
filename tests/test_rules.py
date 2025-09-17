@@ -4,7 +4,7 @@ from cutesy import HTMLLinter
 from cutesy.attribute_processors import reindent, whitespace
 from cutesy.attribute_processors.class_ordering import tailwind
 from cutesy.preprocessors import django
-from cutesy.types import DoctypeError, PreprocessingError
+from cutesy.types import DoctypeError, StructuralError
 
 
 class TestRules:
@@ -48,7 +48,7 @@ class TestRules:
                 assert rule_code not in rule_codes_after_fix, (
                     f"Rule {rule_code} still present after fix: {rule_codes_after_fix}"
                 )
-        except (PreprocessingError, DoctypeError) as exception:
+        except (StructuralError, DoctypeError) as exception:
             # For some rules, the error is detected during preprocessing
             if hasattr(exception, "errors"):
                 rule_codes = [error.rule.code for error in exception.errors]

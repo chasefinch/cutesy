@@ -33,8 +33,8 @@ Rule("D3", "Expected {tag}", fixable=False, structural=False)  # Expected closin
 Rule("D4", "{tag} doesn’t have a matching opening tag", fixable=False, structural=False)
 Rule("D5", "Unnecessary self-closing of {tag}", fixable=True, structural=True)
 Rule("D6", "Self-closing of non-void element {tag}", fixable=True, structural=True)
-Rule("D7", "Malformed tag", fixable=False, structural=True)
-Rule("D8", "Malformed closing tag", fixable=False, structural=True)
+Rule("D7", "Malformed tag", fixable=False, structural=False)
+Rule("D8", "Malformed closing tag", fixable=False, structural=False)
 Rule("D9", "Expected blank line at end of document", fixable=True, structural=False)
 
 # Formatting rules

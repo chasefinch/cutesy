@@ -145,7 +145,7 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         return adjusted_body, self._errors
 
-    def _log_error(self, rule_code: str, **replacements: str) -> None:
+    def _handle_error(self, rule_code: str, **replacements: str) -> None:
         line, column = self.position
         self._errors.append(
             Error(

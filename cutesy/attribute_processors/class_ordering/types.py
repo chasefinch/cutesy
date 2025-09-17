@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, TypeAlias, cast
 from more_itertools import collapse
 
 from ...rules import Rule
-from ...types import Error, InstructionType
+from ...types import Error, InstructionType, StructuralError
 from .. import BaseAttributeProcessor
 
 if TYPE_CHECKING:
@@ -140,12 +140,13 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
             if raise_tw1:
                 error_code = "TW1"
-                raise preprocessor.make_fatal_error(
-                    error_code,
+                error = Error(
                     line=line,
                     column=column,
-                    tag="Instruction",
+                    rule=Rule.get(error_code),
+                    replacements={"tag": "Instruction"},
                 )
+                raise StructuralError(errors=[error])
 
             for index, index_range in enumerate(reversed(preprocessed_index_ranges)):
                 sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"

@@ -45,7 +45,7 @@ class Preprocessor(BasePreprocessor):
 
             # Can't parse any instruction
             error_code = "P4"
-            raise self.make_fatal_error(error_code) from error
+            raise self._make_fatal_error(error_code) from error
 
         if braces[0] == "{#":
             # Special directive comments allowed specifically for Cutesy

@@ -11,7 +11,7 @@ from utilities.base36 import base36_encode
 
 # Current App
 from ..rules import Rule
-from ..types import Error, InstructionType, PreprocessingError
+from ..types import Error, InstructionType, StructuralError
 
 SPECIAL_CHARS = frozenset(
     (
@@ -173,7 +173,7 @@ class BasePreprocessor(ABC):
             }[last_instruction]
             tag_string = f"{braces[0]} {expected_instruction} {braces[1]}"
             error_code = "P2"
-            raise self.make_fatal_error(error_code, tag=tag_string)
+            raise self._make_fatal_error(error_code, tag=tag_string)
 
         return "".join(self._modified_html_parts)
 
@@ -218,30 +218,6 @@ class BasePreprocessor(ABC):
 
         return modified_html
 
-    def make_fatal_error(
-        self,
-        rule_code: str,
-        line: int | None = None,
-        column: int | None = None,
-        **replacements: str,
-    ) -> PreprocessingError:
-        """Create a PreprocessingError based on the given details."""
-        if line is None:
-            line = self.line
-        if column is None:
-            column = self.offset
-
-        error = Error(
-            line=line,
-            column=column,
-            rule=Rule.get(rule_code),
-            replacements=replacements,
-        )
-
-        # Return a PreprocessingError which wraps the associated error; These
-        # errors are fatal, and handled specially.
-        return PreprocessingError(errors=[error])
-
     def parse_instruction_tag(
         self,
         braces: tuple[str, str],
@@ -269,7 +245,7 @@ class BasePreprocessor(ABC):
         if cursor2 < 0:
             # Malformed tag
             error_code = "P4"
-            raise self.make_fatal_error(error_code)
+            raise self._make_fatal_error(error_code)
 
         # This is implemented by individual processors.
         instruction_string, instruction_type = self.parse_instruction_tag(
@@ -283,7 +259,7 @@ class BasePreprocessor(ABC):
 
         # Ensure balanced tags
         tag_string = f"{braces[0]} {instruction_string} {braces[1]}"
-        hanging_closing_tag_error = self.make_fatal_error("P3", tag=tag_string)
+        hanging_closing_tag_error = self._make_fatal_error("P3", tag=tag_string)
 
         # Handle comment instructions
         if instruction_type == InstructionType.END_COMMENT:
@@ -306,7 +282,7 @@ class BasePreprocessor(ABC):
             match = search_regex.search(dynamic_html_lower, end_cursor)
             if not match:
                 error_code = "P2"
-                raise self.make_fatal_error(error_code, tag=search_string)
+                raise self._make_fatal_error(error_code, tag=search_string)
 
             end_cursor = match.end()
 
@@ -370,7 +346,7 @@ class BasePreprocessor(ABC):
             )
 
             if not has_valid_padding:
-                self._log_error("P6", tag=tag_string)
+                self._handle_error("P6", tag=tag_string)
 
         # Start with the opening brace
         formatted_instruction_parts = [part[:len_start]]
@@ -442,14 +418,14 @@ class BasePreprocessor(ABC):
 
             if stripped_raw_instruction != stripped_formatted_instruction:
                 # This wasn't collapsed before
-                self._log_error("P5", tag=tag_string)
+                self._handle_error("P5", tag=tag_string)
 
         raw_instruction = formatted_instruction
 
         padding_length = len(raw_instruction) - necessary_length - len(id_value)
         if padding_length < 0:
             error_code = "T1"
-            raise self.make_fatal_error(error_code)
+            raise self._make_fatal_error(error_code)
 
         padding = "-" * padding_length
 
@@ -486,7 +462,7 @@ class BasePreprocessor(ABC):
 
         return end_cursor
 
-    def _log_error(self, rule_code: str, **replacements: str) -> None:
+    def _handle_error(self, rule_code: str, **replacements: str) -> None:
         self.errors.append(
             Error(
                 line=self.line,
@@ -495,3 +471,27 @@ class BasePreprocessor(ABC):
                 replacements=replacements,
             ),
         )
+
+    def _make_fatal_error(
+        self,
+        rule_code: str,
+        line: int | None = None,
+        column: int | None = None,
+        **replacements: str,
+    ) -> StructuralError:
+        """Create a StructuralError based on the given details."""
+        if line is None:
+            line = self.line
+        if column is None:
+            column = self.offset
+
+        error = Error(
+            line=line,
+            column=column,
+            rule=Rule.get(rule_code),
+            replacements=replacements,
+        )
+
+        # Return a StructuralError which wraps the associated error; These
+        # errors are fatal, and handled specially.
+        return StructuralError(errors=[error])
