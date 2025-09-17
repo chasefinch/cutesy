@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbitrary Values and Variants</title>
+</head>
+<body>
+    <div class="[&>*]:text-center p-4 bg-[#ff6b35] text-[14px] [&:hover]:shadow-lg">
+        <h1 class="before:content-['★'] text-2xl after:content-['★'] font-bold">Title</h1>
+        <p class="[&:nth-child(odd)]:bg-gray-100 text-[theme(colors.gray.600)] leading-[1.8]">
+            Paragraph with arbitrary values
+        </p>
+        <button class="bg-blue-500 [@media(max-width:640px)]:text-sm text-white px-[calc(1rem+2px)] py-[0.75rem]">
+            Custom Button
+        </button>
+        <div class="grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-[clamp(1rem,4vw,2rem)] grid">
+            <div class="[&>svg]:w-6 bg-white p-4 [&>svg]:h-6">Card 1</div>
+            <div class="dark:[&>*]:text-white bg-slate-100 p-4">Card 2</div>
+        </div>
+    </div>
+</body>
+</html>

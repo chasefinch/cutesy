@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Negative Values and Edge Cases</title>
+</head>
+<body>
+	<div class="space-y-6 p-8">
+		<div
+			class="
+				-ml-2 -mr-8 -mt-4 p-4
+				text-white
+				bg-blue-500
+			"
+		>
+			Negative margins
+		</div>
+		<div
+			class="
+				p-6
+				bg-white
+				rounded-lg
+				shadow-lg
+				-rotate-3 transform
+			"
+		>
+			<h2 class="-mb-2 font-bold text-xl">Negative margin bottom</h2>
+			<p class="mt-4 text-gray-600">Some content with negative margin</p>
+		</div>
+		<div class="grid gap-4 -space-y-1">
+			<div class="p-2 bg-red-100">Item 1</div>
+			<div class="-order-1 p-2 bg-green-100">Item 2 (negative order)</div>
+			<div class="p-2 bg-blue-100">Item 3</div>
+		</div>
+		<div class="relative">
+			<div
+				class="
+					absolute -left-2 -right-4 -top-4
+					p-2
+					bg-yellow-400
+				"
+			>
+				Absolute positioning with negatives
+			</div>
+		</div>
+		<div class="flex -space-x-2">
+			<div class="-z-10 h-8 w-8 bg-purple-500 rounded-full"></div>
+			<div class="z-20 h-8 w-8 bg-pink-500 rounded-full"></div>
+			<div class="-z-20 h-8 w-8 bg-indigo-500 rounded-full"></div>
+		</div>
+	</div>
+</body>
+</html>
