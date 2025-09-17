@@ -1,7 +1,5 @@
 # Cutesy 🥰
 
-![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)
-
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
 Cutesy reformats & lints HTML documents, including HTML templates. Most code issues that it finds can be fixed automatically.
