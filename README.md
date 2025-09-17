@@ -132,6 +132,17 @@ Other options:
 - `--help`: Show the CLI help and exit.
 
 
+## Badge
+
+Show off how Cutesy keeps you in line.
+
+![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-d84193.svg?style=flat-square)](https://github.com/chasefinch/cutesy)
+
+```md
+![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-d84193.svg?style=flat-square)](https://github.com/chasefinch/cutesy)
+```
+
+
 ## Testing, etc.
 
 Install development requirements (Requires Python >= 3.13):
