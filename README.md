@@ -128,7 +128,7 @@ cutesy "*.html" --fix --extra=django
 
 To group & sort TailwindCSS classes automatically:
 ```bash
-cutesy "*.html" --fix --extra=django
+cutesy "*.html" --fix --extra=tailwind
 ```
 
 
