@@ -40,7 +40,7 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
             <h1>Hi     there!</h1>
 
 
-            {% if cookies_enabled %}
+            {% if request.user.is_authenticated %}
                     <p>Cutesy is so happy      when your code is neat.</p>
                             {% endif %}
 
@@ -63,7 +63,7 @@ Cutesy ensures that HTML documents contain consistent whitespace, follow best pr
 <body>
     <h1>Hi there!</h1>
 
-    {% if cookies_enabled %}
+    {% if request.user.is_authenticated %}
         <p>Cutesy is so happy when your code is neat.</p>
     {% endif %}
 
