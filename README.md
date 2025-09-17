@@ -2,7 +2,7 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-Cutesy reformats & lints HTML documents, including HTML templates. It can fix most issues automatically.
+Cutesy reformats & lints HTML documents, including HTML templates. It prints code with consistent indentation, line breaks, and formatting, and fixes most issues automatically.
 
 - Works with Django templates 🐍💕
 - Sorts classes for TailwindCSS 💖✨
