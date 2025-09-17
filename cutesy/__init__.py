@@ -1,4 +1,4 @@
-"""Lint & autoformat an HTML document in Python."""
+"""Lint & format an HTML document in Python."""
 
 from .linter import HTMLLinter
 

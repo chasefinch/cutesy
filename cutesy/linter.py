@@ -1,4 +1,4 @@
-"""Lint & autoformat an HTML document in Python."""
+"""Lint & format an HTML document in Python."""
 
 # Standard Library
 import re
