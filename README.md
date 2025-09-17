@@ -2,7 +2,7 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-Cutesy reformats & lints HTML documents, including HTML templates. Most code issues that it finds can be fixed automatically.
+Cutesy reformats & lints HTML documents, including HTML templates. It can fix most issues automatically.
 
 - Works with Django templates 🐍💕
 - Sorts classes for TailwindCSS 💖✨
@@ -16,7 +16,7 @@ Cutesy currently supports preprocessing for Django templates.
 
 ## Attribute-based CSS & JavaScript frameworks
 
-Works with CSS and JavaScript frameworks that rely heavily on HTML attributes, suxch as TailwindCSS, AlpineJS, and HTMX.
+Works with CSS and JavaScript frameworks that rely heavily on HTML attributes, such as TailwindCSS, AlpineJS, and htmx.
 
 ### CSS
 
