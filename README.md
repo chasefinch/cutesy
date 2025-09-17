@@ -93,33 +93,49 @@ Cutesy is written in Python. Install via PyPI:
 ## Usage
 
 Minimal usage:
-
-    cutesy some_file.html
+```bash
+cutesy some_file.html
+```
 
 
 Lint multiple files using a glob pattern:
-
-    cutesy "*.html"
-    cutesy "path/to/templates/**/*.html"
-    # etc…
+```bash
+cutesy "*.html"
+cutesy "path/to/templates/**/*.html"
+# etc…
+```
 
 
 Fix files automatically (recommended):
-
-    cutesy "*.html" --fix
+```bash
+cutesy "*.html" --fix
+```
 
 
 Cutesy can check HTML fragments, or whole HTML documents. By default, Cutesy ignores files specifying a non-HTML5 doctype (anything other than `<!doctype html>`).
 
 To assume (and enforce) that all matching files are HTML5, use the `--check-doctype` flag:
-
-    cutesy "*.html" --fix --check-doctype
+```bash
+cutesy "*.html" --fix --check-doctype
+```
 
 
 To lint files written in a template language, such as the Django Template Language:
+```bash
+cutesy "*.html" --fix --extra=django
+```
 
-    cutesy "*.html" --fix --preprocessor django
 
+To group & sort TailwindCSS classes automatically:
+```bash
+cutesy "*.html" --fix --extra=django
+```
+
+
+To use multiple extras:
+```bash
+cutesy "*.html" --fix --extra=[django,tailwind]
+```
 
 Other options:
 
