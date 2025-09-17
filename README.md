@@ -144,10 +144,10 @@ Other options:
 
 Show off how Cutesy keeps you in line.
 
-[![code style: cutesy](https://img.shields.io/badge/markup_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
+[![code style: cutesy](https://img.shields.io/badge/code_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
 
 ```md
-[![code style: cutesy](https://img.shields.io/badge/markup_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
+[![code style: cutesy](https://img.shields.io/badge/code_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
 ```
 
 ## Testing, etc.
