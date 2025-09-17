@@ -189,7 +189,7 @@ class HTMLLinter(HTMLParser):
 
         # Enforce a final blank line for full HTML documents.
         if self._mode == Mode.DOCUMENT and not result.endswith("\n"):
-            if self.fix:
+            if self.fix and not self.is_rule_ignored("D9"):
                 # Normalize to exactly one blank line at EOF.
                 result = "".join((result.rstrip("\n"), "\n"))
             else:
@@ -245,12 +245,16 @@ class HTMLLinter(HTMLParser):
             return
 
         decl_lower = decl.lower()
-        if decl_lower != decl and not self.fix:
+        fix_f1 = self.fix and not self.is_rule_ignored("F1")
+        if fix_f1:
+            decl = decl_lower
+        elif decl_lower != decl:
             self._log_error("F1")
 
         decl_lower_joined = " ".join(decl_lower.split())
-        if self.fix:
-            decl_lower = decl_lower_joined
+        fix_f13 = self.fix and not self.is_rule_ignored("F13")
+        if fix_f13:
+            decl = decl_lower_joined
         elif decl_lower != decl_lower_joined:
             self._log_error("F13", tag=f"<!{decl_lower_joined}>")
 
@@ -264,7 +268,7 @@ class HTMLLinter(HTMLParser):
         self._mode = Mode.DOCUMENT
 
         if self.fix:
-            self._process(f"<!{decl_lower}>")
+            self._process(f"<!{decl}>")
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Process a self-closing tag."""
@@ -320,7 +324,8 @@ class HTMLLinter(HTMLParser):
         )
 
         if wrap and not is_new_line:
-            if self.fix and self._break_for_inline_tag():
+            fix_f12 = self.fix and not self.is_rule_ignored("F12")
+            if fix_f12 and self._break_for_inline_tag():
                 self._process("\n")
                 self._expected_indentation = True
                 is_new_line = True
@@ -969,11 +974,10 @@ class HTMLLinter(HTMLParser):
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
                         )
-                        if not self.fix:
-                            if processing_errors:
-                                self._errors.extend(processing_errors)
-                            elif value != processed_value:
-                                self._log_error("F17", attr=name)
+                        if processing_errors:
+                            self._errors.extend(processing_errors)
+                        elif self.fix and value != processed_value:
+                            self._log_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 
