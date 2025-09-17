@@ -54,6 +54,7 @@ Examples
 import configparser
 import contextlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -69,6 +70,7 @@ from . import HTMLLinter
 from .attribute_processors import BaseAttributeProcessor, reindent, whitespace
 from .attribute_processors.class_ordering import tailwind
 from .preprocessors import BasePreprocessor, django
+from .rules import Rule
 from .types import DoctypeError, StructuralError
 
 
@@ -277,6 +279,35 @@ def main(
         raise click.BadParameter(error_message, param_hint="--extra")
 
     attr_processor_instances = [attr_processor_map[name]() for name in final_attr_processor_names]
+
+    # Check for structural rules being ignored in fix mode
+    if fix and ignore_rules:
+        structural_rules = {rule.code for rule in Rule.__members__.values() if rule.structural}
+        ignored_structural_rules = []
+
+        for ignored_rule in ignore_rules:
+            rule = ignored_rule.strip().upper()
+            if rule in structural_rules:
+                # It's a specific structural rule
+                ignored_structural_rules.append(rule)
+            else:
+                # It's a category that includes structural rules
+                # Extract prefix from ignore_rule (letters before digits)
+                prefix_match = re.match(r"^([A-Z]+)", rule)
+                if prefix_match:
+                    prefix = prefix_match.group(1)
+                    rules = [code for code in structural_rules if code.startswith(prefix)]
+                    ignored_structural_rules.extend(rules)
+
+        if ignored_structural_rules:
+            ignored_structural_rules = sorted(set(ignored_structural_rules))
+            maybe_s = "" if len(ignored_structural_rules) == 1 else "s"
+            rules_list = ", ".join(ignored_structural_rules)
+            click.echo(
+                f"🔪 \033[91m\033[1mCan’t ignore structural rule{maybe_s} {rules_list} in "
+                "fix mode\033[0m",
+            )
+            sys.exit(1)
 
     linter = HTMLLinter(
         fix=fix,
