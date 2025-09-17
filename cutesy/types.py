@@ -57,6 +57,8 @@ Rule("F12", "Long tag {tag} should be on a new line")
 Rule("F13", "Nonstandard whitespace in {tag}")
 Rule("F14", "Expected {tag} attributes on new lines")
 Rule("F15", "Expected {tag} attributes on a single line")
+Rule("F16", "Attribute “{attr}” contains its own quote character")
+Rule("F17", "Incorrect “{attr}” value formatting")
 
 # Encoding & language rules
 Rule("E1", "Doctype not “html”")

@@ -3,6 +3,7 @@
 import re
 
 from ..preprocessors import BasePreprocessor
+from ..types import Error
 from . import BaseAttributeProcessor
 
 
@@ -21,8 +22,10 @@ class AttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
-    ) -> str:
+    ) -> tuple[str, list[Error]]:
         """Reindent multiline attributes."""
+        errors: list[Error] = []
+
         indentation_strings = (" " * tab_width, "\t")
 
         adjusted_body = attr_body
@@ -30,7 +33,7 @@ class AttributeProcessor(BaseAttributeProcessor):
         # Strip leading whitespace before the first newline
         adjusted_body = re.sub(r"^[^\S\n]*(\S|\n)", r"\1", adjusted_body)
         if "\n" not in adjusted_body:
-            return adjusted_body
+            return adjusted_body, errors
 
         lines = adjusted_body.split("\n")
 
@@ -71,4 +74,4 @@ class AttributeProcessor(BaseAttributeProcessor):
         if indented_lines[-1] == "":
             indented_lines[-1] = indentation * current_indentation_level
 
-        return "\n".join(indented_lines)
+        return "\n".join(indented_lines), errors

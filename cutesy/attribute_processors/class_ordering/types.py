@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeAlias, cast
 
 from more_itertools import collapse
 
-from ...types import InstructionType, Rule
+from ...types import Error, InstructionType, Rule
 from .. import BaseAttributeProcessor
 
 if TYPE_CHECKING:
@@ -58,10 +58,11 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
-    ) -> str:
+    ) -> tuple[str, list[Error]]:
         """Update the class attribute body with sorted classes."""
+        errors: list[Error] = []
         if attr_name != "class":
-            return attr_body
+            return attr_body, errors
 
         self.indentation = indentation
         self.preprocessor = preprocessor
@@ -166,7 +167,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         )
 
         if single_line_mode:
-            return all_class_names_on_one_line
+            return all_class_names_on_one_line, errors
 
         # Multi-line modes...
         attribute_lines = [""]
@@ -201,7 +202,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                             )
         # Add the final line
         attribute_lines.append(current_indentation_level * indentation)
-        return "\n".join(attribute_lines)
+        return "\n".join(attribute_lines), errors
 
     def _extract_with_sentinel(
         self,

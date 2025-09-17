@@ -948,7 +948,7 @@ class HTMLLinter(HTMLParser):
                 if value is not None:
                     processed_value = value
                     for processor in self.attribute_processors:
-                        processed_value = processor.process(
+                        processed_value, processing_errors = processor.process(
                             attr_name=name,
                             indentation=self.indentation,
                             position=self.getpos(),
@@ -960,6 +960,11 @@ class HTMLLinter(HTMLParser):
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
                         )
+                        if not self.fix:
+                            if processing_errors:
+                                self._errors.extend(processing_errors)
+                            elif value != processed_value:
+                                self._log_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 

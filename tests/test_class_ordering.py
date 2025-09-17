@@ -128,7 +128,7 @@ class TestBaseClassOrderingAttributeProcessor:
             preprocessor=None,
             attr_body="my-id",
         )
-        assert result == "my-id"
+        assert result == ("my-id", [])
 
     def test_process_simple_class_attribute(self) -> None:
         """Test processing simple class attribute without preprocessor."""
@@ -145,7 +145,7 @@ class TestBaseClassOrderingAttributeProcessor:
             attr_body="z-class b-class a-class",
         )
         # Should be sorted alphabetically by our mock processor
-        assert result == "a-class b-class z-class"
+        assert result == ("a-class b-class z-class", [])
 
     def test_process_with_preprocessor_simple(self) -> None:
         """Test processing class attribute with simple preprocessor usage."""
@@ -162,10 +162,10 @@ class TestBaseClassOrderingAttributeProcessor:
             attr_body="btn {{ value }} text-red",
         )
         # Should include the dynamic value
-        assert "btn" in result
-        assert "text-red" in result
-        assert "{{" in result
-        assert "}}" in result
+        assert "btn" in result[0]
+        assert "text-red" in result[0]
+        assert "{{" in result[0]
+        assert "}}" in result[0]
 
     def test_process_overlapping_instructions_error(self) -> None:
         """Test that malformed instructions are handled."""
@@ -183,8 +183,11 @@ class TestBaseClassOrderingAttributeProcessor:
             preprocessor=self.preprocessor,
             attr_body="btn-{%if x%}lg{%else",  # Malformed/overlapping
         )
-        # Just verify it returns a string without crashing
-        assert isinstance(result, str)
+        # Just verify it returns a tuple without crashing
+        assert isinstance(result, tuple)
+        expected_result_length = 2
+        assert len(result) == expected_result_length
+        assert isinstance(result[0], str)
 
     def test_single_line_mode(self) -> None:
         """Test single line mode when classes fit on one line."""
@@ -200,7 +203,7 @@ class TestBaseClassOrderingAttributeProcessor:
             preprocessor=None,
             attr_body="a b c",
         )
-        assert result == "a b c"
+        assert result == ("a b c", [])
 
     def test_multi_line_mode_single_group(self) -> None:
         """Test multi-line mode with single group."""
@@ -220,7 +223,7 @@ class TestBaseClassOrderingAttributeProcessor:
             attr_body=long_class_list,
         )
         # Should be multi-line
-        assert "\n" in result
+        assert "\n" in result[0]
 
     def test_extract_with_sentinel(self) -> None:
         """Test _extract_with_sentinel method."""
@@ -429,8 +432,11 @@ class TestErrorHandling:
             preprocessor=self.preprocessor,
             attr_body="normal-class {%endif%}",  # End without start
         )
-        # Just verify it returns a string without crashing
-        assert isinstance(result, str)
+        # Just verify it returns a tuple without crashing
+        assert isinstance(result, tuple)
+        expected_result_length = 2
+        assert len(result) == expected_result_length
+        assert isinstance(result[0], str)
 
     def test_continuation_outside_block(self) -> None:
         """Test handling continuation outside a block."""
@@ -449,8 +455,11 @@ class TestErrorHandling:
             preprocessor=self.preprocessor,
             attr_body="normal-class {%else%}",  # Else without if
         )
-        # Just verify it returns a string without crashing
-        assert isinstance(result, str)
+        # Just verify it returns a tuple without crashing
+        assert isinstance(result, tuple)
+        expected_result_length = 2
+        assert len(result) == expected_result_length
+        assert isinstance(result[0], str)
 
 
 class TestIntegration:
@@ -480,8 +489,8 @@ class TestIntegration:
         )
 
         # Should be sorted and potentially wrapped
-        assert "a-class" in result
-        assert "z-class" in result
+        assert "a-class" in result[0]
+        assert "z-class" in result[0]
 
     def test_nested_block_processing(self) -> None:
         """Test processing with nested template blocks."""
@@ -501,7 +510,7 @@ class TestIntegration:
             attr_body="base {%if outer%} {%if inner%}nested{%endif%} outer-class {%endif%} final",
         )
 
-        assert "base" in result
-        assert "final" in result
-        assert "{%if" in result
-        assert "{%endif%}" in result
+        assert "base" in result[0]
+        assert "final" in result[0]
+        assert "{%if" in result[0]
+        assert "{%endif%}" in result[0]

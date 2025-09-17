@@ -3,9 +3,10 @@
 import re
 
 from ..preprocessors import BasePreprocessor
+from ..types import Error, Rule
 from . import BaseAttributeProcessor
 
-# Match "..." or '...' with escapes (no multiline strings)
+# Match "..." or '...' with backslash escapes (no multiline strings)
 STRING_RE = re.compile(
     r"""(?sx)
     ("(?:\\.|[^"\\])*")     # double-quoted string
@@ -15,6 +16,33 @@ STRING_RE = re.compile(
 
 # 2+ horizontal whitespace, not touching \n, between non-whitespace chars
 MIDDLE_WS_RUN = re.compile(r"(?<=\S)[^\S\n]{2,}(?=\S)")
+
+# --- Encoded/escaped quote detection ----------------------------------------
+
+# Safe encodings for a double quote (") that should NOT trigger a bail:
+DOUBLE_QUOTE_SAFE_RE = re.compile(r"&quot;;?|&#34;;?|&#x22;;?|%22|\\u0022|\\x22", re.IGNORECASE)
+
+# Safe encodings for a single quote / apostrophe (') that should NOT trigger a bail:
+SINGLE_QUOTE_SAFE_RE = re.compile(r"&apos;;?|&#39;;?|&#x27;;?|%27|\\u0027|\\x27", re.IGNORECASE)
+
+
+def has_inner_raw_bounding_quote(attr_body: str, bounding_character: str) -> bool:
+    r"""Return True if attr_body contains a quote matching bounding_character.
+
+    We first remove known *safe* encodings of that quote (entities, %XX,
+    \uXXXX, \xXX) and then look for the literal quote. Backslash-escape (e.g.
+    \") is NOT considered safe in HTML and will still contain a raw quote, so
+    it will trigger a bail.
+    """
+    if bounding_character == '"':
+        # Strip safe representations of double quotes so they don't confuse the check.
+        stripped = DOUBLE_QUOTE_SAFE_RE.sub("", attr_body)
+        return '"' in stripped
+    if bounding_character == "'":
+        stripped = SINGLE_QUOTE_SAFE_RE.sub("", attr_body)
+        return "'" in stripped
+    # Unexpected bounding char; be conservative.
+    return True
 
 
 def collapse_whitespace_outside_strings(string: str) -> str:
@@ -57,8 +85,29 @@ class AttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
-    ) -> str:
-        """Trim excess whitespace, and adjust starting & ending whitespace."""
+    ) -> tuple[str, list[Error]]:
+        """Trim excess whitespace, and adjust starting & ending whitespace.
+
+        If we detect a raw inner quote that matches the bounding_character, we
+        bail (return the original body unchanged) to avoid breaking the HTML.
+        """
+        self._errors: list[Error] = []
+        self.position = position
+
+        # --- Safety check: bail if an inner raw quote matches the bounding char
+        if has_inner_raw_bounding_quote(attr_body, bounding_character):
+            rule_code = "F16"
+            error = Error(
+                line=position[0],
+                column=position[1],
+                rule=Rule.get(rule_code),
+                replacements={"attr": attr_name},
+            )
+            self._errors.append(error)
+
+            replacement = {'"': "&quot;", "'": "&apos;"}[bounding_character]
+            attr_body = attr_body.replace(bounding_character, replacement)
+
         adjusted_body = attr_body
 
         if "\n" in attr_body.strip():
@@ -88,9 +137,20 @@ class AttributeProcessor(BaseAttributeProcessor):
             # Finally: collapse 2+ middle-of-line spaces/tabs *outside* strings
             adjusted_body = collapse_whitespace_outside_strings(adjusted_body)
         else:
-            # The only newlines were before or after all of the content. Trim
-            # them off.
+            # The only newlines were before or after all of the content. Trim them off.
             adjusted_body = re.sub(r"^\s*\n\s*", " ", adjusted_body)
             adjusted_body = re.sub(r"\s*\n\s*$", " ", adjusted_body)
             adjusted_body = adjusted_body.strip()
-        return adjusted_body
+
+        return adjusted_body, self._errors
+
+    def _log_error(self, rule_code: str, **replacements: str) -> None:
+        line, column = self.position
+        self._errors.append(
+            Error(
+                line=line,
+                column=column,
+                rule=Rule.get(rule_code),
+                replacements=replacements,
+            ),
+        )

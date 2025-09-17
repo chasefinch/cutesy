@@ -21,8 +21,9 @@ CONFIGURATION
     check_doctype = true|false
     code = true|false
     extra = ["django", "tailwind", ...]  # OPTIONAL
-      - NOTE: The internal processors "whitespace" and "reindent" are always
-        enabled by default (in that order). Disable both with --preserve-attr-whitespace.
+      - NOTE: The internal attribute processors "whitespace" and "reindent" are
+        always enabled by default (in that order). Disable both with
+        --preserve-attr-whitespace.
 
 CLI HIGHLIGHTS
 --------------
@@ -32,7 +33,7 @@ CLI HIGHLIGHTS
         --extra=django,tailwind
         --extra="[django, tailwind]"
         To override config with an empty list, pass:
-        --extra []
+        --extra=[]
 
   --preserve-attr-whitespace
       Disables the built-in 'whitespace' and 'reindent' processors.
@@ -40,13 +41,13 @@ CLI HIGHLIGHTS
 Examples
 --------
   # Lint all HTML files using defaults + tailwind attribute processor
-  cutesy --fix --attribute-processors tailwind "**/*.html"
+  cutesy --fix --attribute-processors=tailwind "**/*.html"
 
   # Run on a string of HTML passed on the command line
-  cutesy --code --fix --attribute-processors "tailwind alpine" "<div class='...'>…</div>"
+  cutesy --code --fix --attribute-processors=[tailwind,alpine] "<div class='...'>…</div>"
 
   # Disable built-ins that touch attribute whitespace/reindent
-  cutesy --preserve-attr-whitespace --attribute-processors tailwind "**/*.html"
+  cutesy --preserve-attr-whitespace --attribute-processors=tailwind "**/*.html"
 
 """  # noqa: D205, D400, D415
 
