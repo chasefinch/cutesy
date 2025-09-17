@@ -122,6 +122,7 @@ class HTMLLinter(HTMLParser):
         check_doctype: bool = False,
         preprocessor: BasePreprocessor | None = None,
         attribute_processors: Sequence[BaseAttributeProcessor] | None = None,
+        ignore_rules: Sequence[str] = (),
         convert_charrefs: bool = True,
     ) -> None:
         """Initialize HTMLLinter."""
@@ -133,6 +134,7 @@ class HTMLLinter(HTMLParser):
         # A preprocessor for handling dynamic templating languages
         self.preprocessor = preprocessor
         self.attribute_processors = attribute_processors or []
+        self.ignore_rules = ignore_rules
         self.convert_charrefs = False
         self.indentation_type = IndentationType.TAB
         # This applies even if indentation == TABS, to best infer what spaces
@@ -214,6 +216,16 @@ class HTMLLinter(HTMLParser):
             return " " * self.tab_width
 
         return "\t"
+
+    def is_rule_ignored(self, rule_code: str) -> bool:
+        """Check if a rule should be ignored based on ignore_rules."""
+        # Check if the exact rule code is ignored (e.g., "F1", "D5")
+        if rule_code in self.ignore_rules:
+            return True
+
+        # Check if the rule category is ignored (e.g., "F" ignores all F-rules)
+        rule_category = rule_code[0] if rule_code else ""
+        return rule_category in self.ignore_rules
 
     def handle_decl(self, decl: str) -> None:
         """Process a declaration string."""
@@ -1011,6 +1023,9 @@ class HTMLLinter(HTMLParser):
         column: int | None = None,
         **replacements: str,
     ) -> None:
+        if self.is_rule_ignored(rule_code):
+            return
+
         line, current_column = (self._line, self._column) if self.fix else self.getpos()
         line += line_offset
         if column is None:

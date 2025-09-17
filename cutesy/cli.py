@@ -194,6 +194,14 @@ def _load_config(start_dir: Path) -> dict:
     is_flag=True,
     help="Disable the default 'whitespace' and 'reindent' attribute processors.",
 )
+@click.option(
+    "--ignore",
+    metavar="<list>",
+    help=(
+        "Rules or rule categories to ignore. Accepts individual rules (F1, D5) or "
+        "categories (F, D). Examples: [F1,D5], F, [F,D]."
+    ),
+)
 @click.version_option()
 @click.argument("pattern")
 @click.pass_context
@@ -206,6 +214,7 @@ def main(
     check_doctype: bool,  # noqa: FBT001
     extra: str | None,
     preserve_attr_whitespace: bool,  # noqa: FBT001
+    ignore: str | None,
     pattern: str,
 ) -> None:
     """Cutesy 🥰.
@@ -225,6 +234,11 @@ def main(
     extras = _parse_list(extra)
     if extras is None:
         extras = None if _from_cli(context, "extra") else _parse_list(config.get("extra"))
+
+    # Parse ignore rules (from CLI or config)
+    ignore_rules = _parse_list(ignore)
+    if ignore_rules is None:
+        ignore_rules = None if _from_cli(context, "ignore") else _parse_list(config.get("ignore"))
 
     preprocessors: dict[str, type[BasePreprocessor]] = {
         "django": django.Preprocessor,
@@ -269,6 +283,7 @@ def main(
         check_doctype=check_doctype,
         preprocessor=preprocessor_instance,
         attribute_processors=attr_processor_instances,
+        ignore_rules=ignore_rules or [],
     )
     errors_by_file = {}
     num_errors = 0

@@ -131,9 +131,17 @@ To use multiple extras:
 cutesy "*.html" --fix --extra=[django,tailwind]
 ```
 
+To ignore specific rules or rule categories:
+```bash
+cutesy "*.html" --ignore=F1,D5
+cutesy "*.html" --ignore=F
+cutesy "*.html" --ignore=[F,D]
+```
+
 Other options:
 
 - `--code`: Process the code passed in as a string.
+- `--ignore`: Rules or rule categories to ignore. Accepts individual rules (F1, D5) or categories (F, D). Examples: `[F1,D5]`, `F`, `[F,D]`.
 - `--quiet`: Don't print individual problems.
 - `--return-zero`: Always exit with 0, even if unfixed problems remain.
 - `--version`: Show the version and exit.
