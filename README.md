@@ -136,10 +136,10 @@ Other options:
 
 Show off how Cutesy keeps you in line.
 
-[![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-d84193.svg?style=flat-square)](https://github.com/chasefinch/cutesy)
+[![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-e33e2d.svg?style=flat-square)](https://github.com/chasefinch/cutesy)
 
 ```md
-![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-d84193.svg?style=flat-square)
+![code style: cutesy](https://img.shields.io/badge/code_style-cutesy-e33e2d.svg?style=flat-square)
 ```
 
 
