@@ -70,6 +70,7 @@ class Preprocessor(BasePreprocessor):
                     "else": InstructionType.LAST_CONDITIONAL,
                     "endif": InstructionType.END_CONDITIONAL,
                     "for": InstructionType.REPEATABLE,
+                    "empty": InstructionType.MID_CONDITIONAL,
                     "endfor": InstructionType.END_REPEATABLE,
                     "while": InstructionType.REPEATABLE,
                     "endwhile": InstructionType.END_REPEATABLE,
