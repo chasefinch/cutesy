@@ -74,94 +74,6 @@ from .rules import Rule
 from .types import DoctypeError, StructuralError
 
 
-def _from_cli(context: click.Context, name: str) -> bool:
-    try:
-        return context.get_parameter_source(name) == ParameterSource.COMMANDLINE
-    except Exception:
-        return True  # be conservative
-
-
-def _find_in_parents(start: Path, names: list[str]) -> Path | None:
-    current = start.resolve()
-    while True:
-        for name in names:
-            part = current / name
-            if part.is_file():
-                return part
-        if current.parent == current:
-            return None
-        current = current.parent
-
-
-def _parse_bool(item: object) -> bool | None:
-    if isinstance(item, bool):
-        return item
-    if isinstance(item, str):
-        value = item.strip().lower()
-        if value in {"1", "true", "yes", "on"}:
-            return True
-        if value in {"0", "false", "no", "off"}:
-            return False
-    return None
-
-
-def _parse_list(item: object) -> list[str] | None:
-    """Parse config/CLI lists.
-
-    Accepts JSON arrays, comma/space separated strings, or sequences.
-    """
-    if item is None:
-        return None
-    if isinstance(item, (list, tuple)):
-        return [str(entry).strip() for entry in item if str(entry).strip()]
-    if isinstance(item, str):
-        string = item.strip()
-        if string == "":
-            return []
-        # Try JSON first (to allow explicit [] override)
-        with contextlib.suppress(Exception):
-            parsed = json.loads(string)
-            if isinstance(parsed, list):
-                return [str(entry).strip() for entry in parsed if str(entry).strip()]
-        # Fallback: comma/space separated tokens
-        parts = [part.strip() for part in string.replace(",", " ").split()]
-        return [part for part in parts if part]
-    return None
-
-
-def _load_config(start_dir: Path) -> dict:
-    """Load config from cutesy.toml, pyproject.toml, or setup.cfg."""
-    # 1) cutesy.toml
-    path = _find_in_parents(start_dir, ["cutesy.toml"])
-    if path:
-        with path.open("rb") as toml_file:
-            return tomllib.load(toml_file)
-
-    # 2) pyproject.toml
-    path = _find_in_parents(start_dir, ["pyproject.toml"])
-    if path:
-        with path.open("rb") as toml_file:
-            toml_data = tomllib.load(toml_file) or {}
-        if "cutesy" in toml_data and isinstance(toml_data["cutesy"], dict):
-            return toml_data["cutesy"]
-        if (
-            "tool" in toml_data
-            and isinstance(toml_data["tool"], dict)
-            and isinstance(toml_data["tool"].get("cutesy"), dict)
-        ):
-            return toml_data["tool"]["cutesy"]
-
-    # 3) setup.cfg
-    path = _find_in_parents(start_dir, ["setup.cfg"])
-    if path:
-        config = configparser.ConfigParser()
-        config.read(path)
-        if config.has_section("cutesy"):
-            return {key: value for key, value in config.items("cutesy")}
-
-    return {}
-
-
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
     "--code",
@@ -465,3 +377,91 @@ def main(
         click.echo("\033[1mNo problems found\033[0m 🥰")
 
     sys.exit(0)
+
+
+def _from_cli(context: click.Context, name: str) -> bool:
+    try:
+        return context.get_parameter_source(name) == ParameterSource.COMMANDLINE
+    except Exception:
+        return True  # be conservative
+
+
+def _find_in_parents(start: Path, names: list[str]) -> Path | None:
+    current = start.resolve()
+    while True:
+        for name in names:
+            part = current / name
+            if part.is_file():
+                return part
+        if current.parent == current:
+            return None
+        current = current.parent
+
+
+def _parse_bool(item: object) -> bool | None:
+    if isinstance(item, bool):
+        return item
+    if isinstance(item, str):
+        value = item.strip().lower()
+        if value in {"1", "true", "yes", "on"}:
+            return True
+        if value in {"0", "false", "no", "off"}:
+            return False
+    return None
+
+
+def _parse_list(item: object) -> list[str] | None:
+    """Parse config/CLI lists.
+
+    Accepts JSON arrays, comma/space separated strings, or sequences.
+    """
+    if item is None:
+        return None
+    if isinstance(item, (list, tuple)):
+        return [str(entry).strip() for entry in item if str(entry).strip()]
+    if isinstance(item, str):
+        string = item.strip()
+        if string == "":
+            return []
+        # Try JSON first (to allow explicit [] override)
+        with contextlib.suppress(Exception):
+            parsed = json.loads(string)
+            if isinstance(parsed, list):
+                return [str(entry).strip() for entry in parsed if str(entry).strip()]
+        # Fallback: comma/space separated tokens
+        parts = [part.strip() for part in string.replace(",", " ").split()]
+        return [part for part in parts if part]
+    return None
+
+
+def _load_config(start_dir: Path) -> dict:
+    """Load config from cutesy.toml, pyproject.toml, or setup.cfg."""
+    # 1) cutesy.toml
+    path = _find_in_parents(start_dir, ["cutesy.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            return tomllib.load(toml_file)
+
+    # 2) pyproject.toml
+    path = _find_in_parents(start_dir, ["pyproject.toml"])
+    if path:
+        with path.open("rb") as toml_file:
+            toml_data = tomllib.load(toml_file) or {}
+        if "cutesy" in toml_data and isinstance(toml_data["cutesy"], dict):
+            return toml_data["cutesy"]
+        if (
+            "tool" in toml_data
+            and isinstance(toml_data["tool"], dict)
+            and isinstance(toml_data["tool"].get("cutesy"), dict)
+        ):
+            return toml_data["tool"]["cutesy"]
+
+    # 3) setup.cfg
+    path = _find_in_parents(start_dir, ["setup.cfg"])
+    if path:
+        config = configparser.ConfigParser()
+        config.read(path)
+        if config.has_section("cutesy"):
+            return {key: value for key, value in config.items("cutesy")}
+
+    return {}
