@@ -12,11 +12,26 @@ This document provides a complete reference of all Cutesy rules, their purpose, 
 - **F-rules**: Formatting and style rules
 - **E-rules**: Encoding and language rules
 
+## Rule Attributes
+
+Each rule has two important attributes that determine how it behaves:
+
+### Fixable
+- **Yes**: Rule violations can be automatically corrected by Cutesy
+- **No**: Rule violations require manual intervention to resolve
+
+### Structural
+- **Yes**: Rule must be fixed when in `--fix` mode
+- **No**: Rule addresses optional style or formatting preferences
+
 ---
 
 ## Temporary Preprocessing Rules (T)
 
 ### T1: Instruction not long enough to generate a placeholder
+**Fixable:** No
+**Structural:** Yes
+
 *Internal rule used during template preprocessing*
 
 This rule is used internally by the preprocessor when dynamic template instructions are too short to generate proper placeholders.
@@ -29,6 +44,7 @@ These rules apply to dynamic template languages like Django templates that mix H
 
 ### P1: {tag} overlaps HTML elements or attributes
 **Fixable:** No
+**Structural:** Yes
 
 Template instructions that interfere with HTML tag parsing.
 
@@ -39,6 +55,7 @@ Template instructions that interfere with HTML tag parsing.
 
 ### P2: Expected {tag}
 **Fixable:** No
+**Structural:** Yes
 
 Missing closing template instruction.
 
@@ -51,6 +68,7 @@ Missing closing template instruction.
 
 ### P3: {tag} doesn't have a matching opening instruction
 **Fixable:** No
+**Structural:** Yes
 
 Closing template instruction without matching opening instruction.
 
@@ -62,6 +80,7 @@ Closing template instruction without matching opening instruction.
 
 ### P4: Malformed processing instruction
 **Fixable:** No
+**Structural:** Yes
 
 Template instruction with invalid syntax.
 
@@ -72,6 +91,7 @@ Template instruction with invalid syntax.
 
 ### P5: Extra whitespace in {tag}
 **Fixable:** Yes
+**Structural:** No
 
 Template instruction contains unnecessary whitespace.
 
@@ -87,6 +107,7 @@ Template instruction contains unnecessary whitespace.
 
 ### P6: Expected padding in {tag}
 **Fixable:** Yes
+**Structural:** No
 
 Template instruction missing required padding spaces.
 
@@ -108,6 +129,7 @@ These rules ensure proper HTML document structure and valid tag nesting.
 
 ### D1: Expected doctype before other HTML elements
 **Fixable:** No
+**Structural:** Yes
 
 HTML elements appear before the doctype declaration.
 
@@ -119,6 +141,7 @@ HTML elements appear before the doctype declaration.
 
 ### D2: Second declaration found; "doctype" should be the only declaration
 **Fixable:** No
+**Structural:** Yes
 
 Multiple doctype declarations in a single document.
 
@@ -130,6 +153,7 @@ Multiple doctype declarations in a single document.
 
 ### D3: Expected {tag}
 **Fixable:** No
+**Structural:** Yes
 
 Missing closing tag due to improper nesting.
 
@@ -140,6 +164,7 @@ Missing closing tag due to improper nesting.
 
 ### D4: {tag} doesn't have a matching opening tag
 **Fixable:** No
+**Structural:** Yes
 
 Closing tag without corresponding opening tag.
 
@@ -150,6 +175,7 @@ Closing tag without corresponding opening tag.
 
 ### D5: Unnecessary self-closing of {tag}
 **Fixable:** Yes
+**Structural:** Yes
 
 Void elements don't need explicit self-closing syntax.
 
@@ -165,6 +191,7 @@ Void elements don't need explicit self-closing syntax.
 
 ### D6: Self-closing of non-void element {tag}
 **Fixable:** Yes
+**Structural:** Yes
 
 Non-void elements should not be self-closed.
 
@@ -180,6 +207,7 @@ Non-void elements should not be self-closed.
 
 ### D7: Malformed tag
 **Fixable:** No
+**Structural:** Yes
 
 Tag with invalid syntax.
 
@@ -190,6 +218,7 @@ Tag with invalid syntax.
 
 ### D8: Malformed closing tag
 **Fixable:** No
+**Structural:** Yes
 
 Closing tag with invalid syntax.
 
@@ -200,6 +229,7 @@ Closing tag with invalid syntax.
 
 ### D9: Expected blank line at end of document
 **Fixable:** Yes
+**Structural:** No
 
 HTML documents should end with a newline.
 
@@ -223,6 +253,7 @@ These rules enforce consistent formatting and style conventions.
 
 ### F1: Doctype not lowercase
 **Fixable:** Yes
+**Structural:** No
 
 Doctype declaration should be lowercase.
 
@@ -238,6 +269,7 @@ Doctype declaration should be lowercase.
 
 ### F2: Trailing whitespace
 **Fixable:** Yes
+**Structural:** No
 
 Lines should not end with whitespace characters.
 
@@ -255,6 +287,7 @@ Lines should not end with whitespace characters.
 
 ### F3: Incorrect indentation
 **Fixable:** Yes
+**Structural:** No
 
 Elements should be properly indented.
 
@@ -274,6 +307,7 @@ Elements should be properly indented.
 
 ### F4: Extra vertical whitespace
 **Fixable:** Yes
+**Structural:** No
 
 No more than one blank line between elements.
 
@@ -296,6 +330,7 @@ No more than one blank line between elements.
 
 ### F5: Extra horizontal whitespace
 **Fixable:** Yes
+**Structural:** No
 
 Multiple consecutive spaces should be collapsed.
 
@@ -311,6 +346,7 @@ Multiple consecutive spaces should be collapsed.
 
 ### F6: Incorrect attribute order
 **Fixable:** Yes
+**Structural:** No
 
 Attributes should follow a consistent ordering convention.
 
@@ -326,6 +362,7 @@ Attributes should follow a consistent ordering convention.
 
 ### F7: {tag} not lowercase
 **Fixable:** Yes
+**Structural:** No
 
 HTML tags should be lowercase.
 
@@ -341,6 +378,7 @@ HTML tags should be lowercase.
 
 ### F8: Attribute "{attr}" not lowercase
 **Fixable:** Yes
+**Structural:** No
 
 Attribute names should be lowercase.
 
@@ -356,6 +394,7 @@ Attribute names should be lowercase.
 
 ### F9: Attribute "{attr}" missing quotes
 **Fixable:** Yes
+**Structural:** No
 
 Attribute values should be quoted.
 
@@ -371,6 +410,7 @@ Attribute values should be quoted.
 
 ### F10: Attribute "{attr}" using wrong quotes
 **Fixable:** Yes
+**Structural:** No
 
 Attributes containing double quotes should use single quotes.
 
@@ -386,6 +426,7 @@ Attributes containing double quotes should use single quotes.
 
 ### F11: {tag} contains whitespace
 **Fixable:** Yes
+**Structural:** No
 
 Tags should not contain internal whitespace.
 
@@ -401,6 +442,7 @@ Tags should not contain internal whitespace.
 
 ### F12: Long tag {tag} should be on a new line
 **Fixable:** Yes
+**Structural:** No
 
 Tags with many attributes should start on a new line.
 
@@ -417,6 +459,7 @@ Tags with many attributes should start on a new line.
 
 ### F13: Nonstandard whitespace in {tag}
 **Fixable:** Yes
+**Structural:** No
 
 Tags should use standard spaces between attributes.
 
@@ -432,6 +475,7 @@ Tags should use standard spaces between attributes.
 
 ### F14: Expected {tag} attributes on new lines
 **Fixable:** Yes
+**Structural:** No
 
 Long tags should have attributes wrapped to new lines.
 
@@ -462,6 +506,7 @@ Long tags should have attributes wrapped to new lines.
 
 ### F15: Expected {tag} attributes on a single line
 **Fixable:** Yes
+**Structural:** No
 
 Short tags with few attributes should be on a single line.
 
@@ -480,6 +525,7 @@ Short tags with few attributes should be on a single line.
 
 ### F16: Attribute "{attr}" contains its own quote character
 **Fixable:** Yes
+**Structural:** No
 
 Attribute values should not contain raw quote characters that match the bounding quotes.
 
@@ -495,6 +541,7 @@ Attribute values should not contain raw quote characters that match the bounding
 
 ### F17: Incorrect "{attr}" value formatting
 **Fixable:** Yes
+**Structural:** No
 
 Attribute values should be properly formatted with correct whitespace.
 
@@ -516,6 +563,7 @@ These rules ensure proper HTML5 compliance and character encoding.
 
 ### E1: Doctype not "html"
 **Fixable:** No
+**Structural:** Yes
 
 Doctype should be the standard HTML5 doctype.
 
@@ -526,6 +574,7 @@ Doctype should be the standard HTML5 doctype.
 
 ### E2: Ampersand not represented as "&amp;"
 **Fixable:** Yes
+**Structural:** No
 
 Ampersands in text content should be properly escaped.
 
@@ -541,6 +590,7 @@ Ampersands in text content should be properly escaped.
 
 ### E3: Left angle bracket not represented as "&lt;"
 **Fixable:** No
+**Structural:** Yes
 
 Left angle brackets in text content should be escaped.
 
@@ -556,6 +606,7 @@ Left angle brackets in text content should be escaped.
 
 ### E4: Right angle bracket not represented as "&gt;"
 **Fixable:** No
+**Structural:** Yes
 
 Right angle brackets in text content should be escaped.
 
@@ -571,6 +622,18 @@ Right angle brackets in text content should be escaped.
 
 ---
 
-## Fixability
+## Rule Reference Summary
 
-Rules marked as **Fixable: Yes** can be automatically corrected by Cutesy when run with the `--fix` flag. Rules marked as **Fixable: No** require manual intervention to resolve, as they typically indicate structural or logical issues that require human judgment to fix properly.
+This document describes Cutesy's comprehensive rule system. Each rule is designed to enforce consistent, valid HTML while providing clear feedback about issues in your code.
+
+### Understanding Rule Attributes
+
+When Cutesy reports rule violations, understanding the rule's **Fixable** and **Structural** attributes helps you understand:
+
+- **Whether the issue can be automatically resolved** (Fixable vs Nonfixable)
+- **How critical the issue is** (Structural vs Nonstructural)
+- **How the rule behaves in different modes** (check vs fix mode)
+
+Structural rules that are nonfixable represent serious document validity issues that require careful manual correction. Nonstructural rules typically address code style and maintainability concerns.
+
+Use the `--fix` flag to automatically resolve all fixable rule violations while reviewing nonfixable issues manually.

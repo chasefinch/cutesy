@@ -97,7 +97,7 @@ Minimal usage:
 cutesy some_file.html
 ```
 
-Lint multiple files using a glob pattern:
+Clean multiple files using a glob pattern:
 ```bash
 cutesy "*.html"
 cutesy "path/to/templates/**/*.html"
