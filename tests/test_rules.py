@@ -216,6 +216,38 @@ class TestRules:
         # F15: Expected tag attributes on a single line
         self.run_test('<div\n\tid="test"\n\tclass="small"\n>content</div>', "F15")
 
+    def test_f16(self) -> None:
+        """Test rule F16."""
+        # F16: Attribute contains its own quote character
+        processor = whitespace.AttributeProcessor()
+        result, errors = processor.process(
+            attr_name="title",
+            position=(1, 10),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            max_chars_per_line=100,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body='Hello "world" test',  # Contains raw double quotes
+        )
+
+        # Check that F16 error was generated
+        rule_codes = [error.rule.code for error in errors]
+        assert "F16" in rule_codes, f"Expected F16 error not found in {rule_codes}"
+
+        # Check that the quotes were fixed (encoded)
+        assert "&quot;" in result, f"Expected encoded quotes in result: {result}"
+        assert '"' not in result or result.count('"') == 0, (
+            f"Raw quotes should be encoded: {result}"
+        )
+
+    def test_f17(self) -> None:
+        """Test rule F17."""
+        # F17: Incorrect attribute value formatting
+        self.run_test('<div class="  test  class  ">content</div>', "F17")
+
     def test_e1(self) -> None:
         """Test rule E1."""
         # E1: Doctype not "html" - not fixable as it requires manual intervention

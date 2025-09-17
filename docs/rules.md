@@ -478,6 +478,36 @@ Short tags with few attributes should be on a single line.
 <div id="test" class="small">content</div>
 ```
 
+### F16: Attribute "{attr}" contains its own quote character
+**Fixable:** Yes
+
+Attribute values should not contain raw quote characters that match the bounding quotes.
+
+**Example:**
+```html
+<div title="Say "hello" world">content</div>  <!-- Raw quotes inside -->
+```
+
+**Fixed:**
+```html
+<div title="Say &quot;hello&quot; world">content</div>
+```
+
+### F17: Incorrect "{attr}" value formatting
+**Fixable:** Yes
+
+Attribute values should be properly formatted with correct whitespace.
+
+**Example:**
+```html
+<div class="  test  class  ">content</div>  <!-- Extra whitespace -->
+```
+
+**Fixed:**
+```html
+<div class="test class">content</div>
+```
+
 ---
 
 ## Encoding & Language Rules (E)
