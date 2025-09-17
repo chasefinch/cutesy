@@ -1,6 +1,5 @@
 """Prerendering to accommodate template languages."""
 
-# Standard Library
 import re
 import unicodedata
 from abc import ABC
@@ -11,7 +10,8 @@ from typing import ClassVar
 from utilities.base36 import base36_encode
 
 # Current App
-from ..types import Error, InstructionType, PreprocessingError, Rule
+from ..rules import Rule
+from ..types import Error, InstructionType, PreprocessingError
 
 SPECIAL_CHARS = frozenset(
     (

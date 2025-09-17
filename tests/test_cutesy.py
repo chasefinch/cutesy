@@ -1,6 +1,5 @@
 """Tests for HTMLLinter and related functionality."""
 
-# Cutesy
 from cutesy import HTMLLinter
 from cutesy.attribute_processors import reindent, whitespace
 from cutesy.attribute_processors.class_ordering import tailwind

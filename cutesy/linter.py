@@ -1,6 +1,5 @@
 """Lint & format an HTML document in Python."""
 
-# Standard Library
 import re
 import string
 from collections.abc import Sequence
@@ -8,9 +7,8 @@ from html.parser import HTMLParser
 from typing import Any, Never, TypeGuard
 
 from .attribute_processors import BaseAttributeProcessor
-
-# Third Party
 from .preprocessors import BasePreprocessor
+from .rules import Rule
 from .types import (
     DoctypeError,
     Error,
@@ -18,7 +16,6 @@ from .types import (
     InstructionType,
     Mode,
     PreprocessingError,
-    Rule,
 )
 
 

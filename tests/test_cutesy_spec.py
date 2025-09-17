@@ -1,14 +1,10 @@
 """Test against Cutesy Tailwind spec files."""
 
-# Standard Library
 from pathlib import Path
-
-# Third Party
 from types import MappingProxyType
 
 import pytest
 
-# Cutesy
 from cutesy import HTMLLinter
 from cutesy.attribute_processors import reindent, whitespace
 from cutesy.attribute_processors.class_ordering import tailwind

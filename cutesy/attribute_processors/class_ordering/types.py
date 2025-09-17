@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, TypeAlias, cast
 
 from more_itertools import collapse
 
-from ...types import Error, InstructionType, Rule
+from ...rules import Rule
+from ...types import Error, InstructionType
 from .. import BaseAttributeProcessor
 
 if TYPE_CHECKING:

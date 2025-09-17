@@ -1,6 +1,5 @@
 """Processors for attribute strings."""
 
-# Standard Library
 from abc import ABC, abstractmethod
 
 from ..preprocessors import BasePreprocessor

@@ -3,7 +3,8 @@
 import re
 
 from ..preprocessors import BasePreprocessor
-from ..types import Error, Rule
+from ..rules import Rule
+from ..types import Error
 from . import BaseAttributeProcessor
 
 # Match "..." or '...' with backslash escapes (no multiline strings)

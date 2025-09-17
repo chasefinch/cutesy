@@ -1,6 +1,5 @@
 """Define metadata for Cutesy 🥰."""
 
-# Third Party
 from pathlib import Path
 
 import setuptools

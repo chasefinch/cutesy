@@ -1,6 +1,5 @@
 """Test each rule."""
 
-# Cutesy
 from cutesy import HTMLLinter
 from cutesy.attribute_processors import reindent, whitespace
 from cutesy.attribute_processors.class_ordering import tailwind
