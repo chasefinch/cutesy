@@ -123,7 +123,7 @@ from .types import DoctypeError, IndentationType, StructuralError
 @click.option(
     "--indentation-type",
     type=click.Choice(["spaces", "tabs"]),
-    help="Use spaces or tabs for indentation (default: spaces).",
+    help="Use spaces or tabs for indentation (default: tabs).",
 )
 @click.option(
     "--tab-width",
@@ -282,7 +282,7 @@ def main(
             sys.exit(1)
 
     # Convert string indentation_type to enum
-    indentation_type_enum = IndentationType.SPACES  # default
+    indentation_type_enum = IndentationType.TAB  # default (matches HTMLLinter default)
     if indentation_type == "tabs":
         indentation_type_enum = IndentationType.TAB
     elif indentation_type == "spaces":
