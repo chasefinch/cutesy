@@ -21,6 +21,10 @@ CONFIGURATION
     check_doctype = true|false
     code = true|false
     extras = ["django", "tailwind", ...]  # OPTIONAL
+    indentation_type = "spaces"|"tabs"  # OPTIONAL (default: "spaces")
+    tab_width = 4  # OPTIONAL (default: 4, used for line length even with tabs)
+    max_items_per_line = 3  # OPTIONAL (default: 5, item = attribute/instruction/etc.)
+    line_length = 88  # OPTIONAL (default: 99, lines may exceed but tags wrap when possible)
       - NOTE: The internal attribute processors "whitespace" and "reindent" are
         always enabled by default (in that order). Disable both with
         --preserve-attr-whitespace.
@@ -71,7 +75,7 @@ from .attribute_processors import BaseAttributeProcessor, reindent, whitespace
 from .attribute_processors.class_ordering import tailwind
 from .preprocessors import BasePreprocessor, django
 from .rules import Rule
-from .types import DoctypeError, StructuralError
+from .types import DoctypeError, IndentationType, StructuralError
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -116,6 +120,32 @@ from .types import DoctypeError, StructuralError
         "categories (F, D). Examples: [F1,D5], F, [F,D]."
     ),
 )
+@click.option(
+    "--indentation-type",
+    type=click.Choice(["spaces", "tabs"]),
+    help="Use spaces or tabs for indentation (default: spaces).",
+)
+@click.option(
+    "--tab-width",
+    type=int,
+    help="Tab width for display and line length calculation (default: 4).",
+)
+@click.option(
+    "--max-items-per-line",
+    type=int,
+    help=(
+        "Maximum items per line before wrapping (default: 5). "
+        "An item is an attribute, instruction, etc."
+    ),
+)
+@click.option(
+    "--line-length",
+    type=int,
+    help=(
+        "Maximum line length for wrapping tags and attributes (default: 99). "
+        "Lines may exceed this but tags wrap when possible."
+    ),
+)
 @click.version_option()
 @click.argument("pattern")
 @click.pass_context
@@ -129,6 +159,10 @@ def main(
     extras: str | None,
     preserve_attr_whitespace: bool,  # noqa: FBT001
     ignore: str | None,
+    indentation_type: str | None,
+    tab_width: int | None,
+    max_items_per_line: int | None,
+    line_length: int | None,
     pattern: str,
 ) -> None:
     """Cutesy 🥰.
@@ -153,6 +187,28 @@ def main(
     ignore_rules = _parse_list(ignore)
     if ignore_rules is None:
         ignore_rules = None if _from_cli(context, "ignore") else _parse_list(config.get("ignore"))
+
+    # Parse formatting options (from CLI or config)
+    if indentation_type is None and not _from_cli(context, "indentation_type"):
+        indentation_type = config.get("indentation_type")
+
+    if tab_width is None and not _from_cli(context, "tab_width"):
+        tab_width_config = config.get("tab_width")
+        if tab_width_config is not None:
+            with contextlib.suppress(ValueError, TypeError):
+                tab_width = int(tab_width_config)
+
+    if max_items_per_line is None and not _from_cli(context, "max_items_per_line"):
+        max_items_per_line_config = config.get("max_items_per_line")
+        if max_items_per_line_config is not None:
+            with contextlib.suppress(ValueError, TypeError):
+                max_items_per_line = int(max_items_per_line_config)
+
+    if line_length is None and not _from_cli(context, "line_length"):
+        line_length_config = config.get("line_length")
+        if line_length_config is not None:
+            with contextlib.suppress(ValueError, TypeError):
+                line_length = int(line_length_config)
 
     preprocessors: dict[str, type[BasePreprocessor]] = {
         "django": django.Preprocessor,
@@ -221,12 +277,28 @@ def main(
             )
             sys.exit(1)
 
+    # Convert string indentation_type to enum
+    indentation_type_enum = IndentationType.SPACES  # default
+    if indentation_type == "tabs":
+        indentation_type_enum = IndentationType.TAB
+    elif indentation_type == "spaces":
+        indentation_type_enum = IndentationType.SPACES
+
+    # Set defaults for None values
+    tab_width = tab_width or 4
+    max_items_per_line = max_items_per_line or 5
+    max_chars_per_line = line_length or 99  # line_length maps to max_chars_per_line
+
     linter = HTMLLinter(
         fix=fix,
         check_doctype=check_doctype,
         preprocessor=preprocessor_instance,
         attribute_processors=attr_processor_instances,
         ignore_rules=ignore_rules or [],
+        indentation_type=indentation_type_enum,
+        tab_width=tab_width,
+        max_items_per_line=max_items_per_line,
+        max_chars_per_line=max_chars_per_line,
     )
     errors_by_file = {}
     num_errors = 0

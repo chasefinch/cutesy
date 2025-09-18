@@ -120,7 +120,7 @@ class HTMLLinter(HTMLParser):
     attribute_processors: Final[Sequence[BaseAttributeProcessor]]
     indentation_type: Final[IndentationType]
     tab_width: Final[int]
-    max_attrs_per_line: Final[int]
+    max_items_per_line: Final[int]
     max_chars_per_line: Final[int]
 
     _expected_indentation: Any = None
@@ -135,7 +135,7 @@ class HTMLLinter(HTMLParser):
         ignore_rules: Sequence[str] = (),
         indentation_type: IndentationType = IndentationType.TAB,
         tab_width: int = 4,
-        max_attrs_per_line: int = 5,
+        max_items_per_line: int = 5,
         max_chars_per_line: int = 99,
         convert_charrefs: bool = True,  # ignore
     ) -> None:
@@ -155,7 +155,7 @@ class HTMLLinter(HTMLParser):
         # mean in the incoming HTML document
         self.tab_width = tab_width
         # Tuners for attribute wrapping logic
-        self.max_attrs_per_line = max_attrs_per_line
+        self.max_items_per_line = max_items_per_line
         self.max_chars_per_line = max_chars_per_line
 
     def reset(self) -> None:
@@ -331,7 +331,7 @@ class HTMLLinter(HTMLParser):
         )
         wrap = any(
             (
-                len(attr_strings) > self.max_attrs_per_line,
+                len(attr_strings) > self.max_items_per_line,
                 len(attr_strings) > 1 and num_chars > self.max_chars_per_line,
                 has_breaking_attr,
             ),
@@ -978,7 +978,7 @@ class HTMLLinter(HTMLParser):
                             current_indentation_level=self._indentation_level + 1,
                             tab_width=self.tab_width,
                             max_chars_per_line=self.max_chars_per_line,
-                            max_items_per_line=self.max_attrs_per_line,
+                            max_items_per_line=self.max_items_per_line,
                             bounding_character=quote_char,
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
@@ -1009,7 +1009,7 @@ class HTMLLinter(HTMLParser):
             num_empty_dyamic_context_attrs = 2
 
             is_flattenable = (
-                num_dynamic_tag_parts <= len(group) <= self.max_attrs_per_line
+                num_dynamic_tag_parts <= len(group) <= self.max_items_per_line
                 and not any("\n" in item for item in group)
                 and sum(len(item) for item in group)
                 + self.tab_width * (self._indentation_level + 1)
