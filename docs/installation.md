@@ -211,18 +211,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+
     - name: Install Cutesy
       run: pip install cutesy
-      
+
     - name: Check HTML formatting
       run: cutesy "**/*.html" --extras=[django,tailwind]
-      
+
     - name: Verify no changes needed
       run: |
         if ! git diff --quiet; then
@@ -251,12 +251,6 @@ lint-html:
     - main
 ```
 
-## Getting Help
-
-- **Configuration**: See [Configuration Guide](configuration.md) to customize Cutesy  
-- **Rules**: Check [Rules Reference](rules.md) to understand what Cutesy checks
-- **Issues**: Report bugs at [GitHub Issues](https://github.com/chasefinch/cutesy/issues)
-
 ## Next Steps
 
 After installation:
@@ -265,4 +259,4 @@ After installation:
 2. **Rules**: Review the [Rules Reference](rules.md) to understand what Cutesy checks
 3. **Integration**: Set up editor integration and pre-commit hooks for your workflow
 
-Now you're ready to start using Cutesy to keep your HTML clean and consistent! 🥰
+Now you're ready to start ~~working for~~ using Cutesy! 🥰

@@ -4,7 +4,6 @@ Cutesy is a linter and formatter for HTML that enforces consistent code style an
 
 ## Table of Contents
 
-- [Quick Reference](#quick-reference)
 - [Understanding Rules](#understanding-rules)
 - [Temporary Preprocessing Rules (T)](#temporary-preprocessing-rules-t)
 - [Preprocessing Rules (P)](#preprocessing-rules-p)
@@ -12,24 +11,6 @@ Cutesy is a linter and formatter for HTML that enforces consistent code style an
 - [Formatting Rules (F)](#formatting-rules-f)
 - [Encoding & Language Rules (E)](#encoding--language-rules-e)
 - [Rule Summary Table](#rule-summary-table)
-
----
-
-## Quick Reference
-
-**Most Common Issues:**
-- **F7**: Tags should be lowercase (`<DIV>` → `<div>`)
-- **F8**: Attributes should be lowercase (`CLASS=` → `class=`)
-- **F3**: Fix indentation
-- **F2**: Remove trailing whitespace
-- **D5/D6**: Fix self-closing tags
-
-**Ignoring Rules:**
-```bash
-cutesy "*.html" --ignore=F1        # Ignore specific rule
-cutesy "*.html" --ignore=F         # Ignore entire category
-cutesy "*.html" --ignore=[F1,D5]   # Ignore multiple rules
-```
 
 ---
 
@@ -60,8 +41,7 @@ Each rule has two key attributes:
 ### Rule Behavior
 
 - **In `--fix` mode**: All fixable rules are automatically corrected
-- **Structural rules**: Cannot be ignored in `--fix` mode (too important)
-- **Non-structural rules**: Can be ignored with `--ignore` option
+- **Structural rules**: Cannot be ignored (with `--ignore`) in `--fix` mode
 
 ---
 
@@ -362,7 +342,7 @@ Lines shouldn't end with spaces or tabs.
 
 **❌ Problem:**
 ```html
-<div>content   
+<div>content
 </div>
 ```
 
