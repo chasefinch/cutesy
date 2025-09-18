@@ -118,22 +118,22 @@ cutesy "*.html" --fix --check-doctype
 
 To lint files written in a template language, such as the Django Template Language:
 ```bash
-cutesy "*.html" --fix --extra=django
+cutesy "*.html" --fix --extras=django
 ```
 
 To group & sort TailwindCSS classes automatically:
 ```bash
-cutesy "*.html" --fix --extra=tailwind
+cutesy "*.html" --fix --extras=tailwind
 ```
 
 To use multiple extras:
 ```bash
-cutesy "*.html" --fix --extra=[django,tailwind]
+cutesy "*.html" --fix --extras=[django,tailwind]
 ```
 
 To ignore specific rules or rule categories:
 ```bash
-cutesy "*.html" --ignore=F1,D5
+cutesy "*.html" --ignore=[F1,D5]
 cutesy "*.html" --ignore=F
 cutesy "*.html" --ignore=[F,D]
 ```

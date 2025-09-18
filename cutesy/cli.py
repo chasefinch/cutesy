@@ -20,20 +20,20 @@ CONFIGURATION
     quiet = true|false
     check_doctype = true|false
     code = true|false
-    extra = ["django", "tailwind", ...]  # OPTIONAL
+    extras = ["django", "tailwind", ...]  # OPTIONAL
       - NOTE: The internal attribute processors "whitespace" and "reindent" are
         always enabled by default (in that order). Disable both with
         --preserve-attr-whitespace.
 
 CLI HIGHLIGHTS
 --------------
-    --extra "<list>"
+    --extras "<list>"
         Provide one or more extras to enable.
-        --extra=django
-        --extra=django,tailwind
-        --extra="[django, tailwind]"
+        --extras=django
+        --extras=django,tailwind
+        --extras="[django, tailwind]"
         To override config with an empty list, pass:
-        --extra=[]
+        --extras=[]
 
   --preserve-attr-whitespace
       Disables the built-in 'whitespace' and 'reindent' processors.
@@ -97,7 +97,7 @@ from .types import DoctypeError, StructuralError
     help="Process files with non-HTML5 doctypes. Without this flag, non-HTML5 files are skipped.",
 )
 @click.option(
-    "--extra",
+    "--extras",
     metavar="<list>",
     help=(
         "Extra processors to enable. Accepts a JSON array.Examples: [django], [django, tailwind]."
@@ -126,7 +126,7 @@ def main(
     return_zero: bool,  # noqa: FBT001
     quiet: bool,  # noqa: FBT001
     check_doctype: bool,  # noqa: FBT001
-    extra: str | None,
+    extras: str | None,
     preserve_attr_whitespace: bool,  # noqa: FBT001
     ignore: str | None,
     pattern: str,
@@ -145,9 +145,9 @@ def main(
                 locals()[attr_name] = value  # type: ignore[misc]  # noqa: WPS421
 
     # Parse extras (from CLI or config)
-    extras = _parse_list(extra)
+    extras = _parse_list(extras)
     if extras is None:
-        extras = None if _from_cli(context, "extra") else _parse_list(config.get("extra"))
+        extras = None if _from_cli(context, "extras") else _parse_list(config.get("extras"))
 
     # Parse ignore rules (from CLI or config)
     ignore_rules = _parse_list(ignore)
@@ -188,7 +188,7 @@ def main(
     ]
     if unknown:
         error_message = f"Unknown extra(s): {', '.join(unknown)}"
-        raise click.BadParameter(error_message, param_hint="--extra")
+        raise click.BadParameter(error_message, param_hint="--extras")
 
     attr_processor_instances = [attr_processor_map[name]() for name in final_attr_processor_names]
 
