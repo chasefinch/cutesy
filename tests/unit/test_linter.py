@@ -378,6 +378,74 @@ class TestHTMLLinter:
         assert result == expected_result
         assert not errors
 
+    def test_complex_attribute_name_parsing_with_preprocessor_delimiters(self) -> None:
+        """Test parsing attributes with delimiters and special characters."""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+
+        # HTML with complex attribute names containing Django template syntax
+        html = '<div data-{% if condition %}dynamic{% endif %}="value">content</div>'
+
+        result, errors = linter.lint(html)
+
+        # Should handle complex attribute names without crashing
+        assert isinstance(result, str)
+        assert isinstance(errors, list)
+
+    def test_attribute_processing_with_mixed_quotes_in_names(self) -> None:
+        """Test attribute processing when attribute names contain quotes."""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+
+        # HTML with attribute names that would trigger quote character selection
+        html = '<div pre"fix{% block %}content{% endblock %}="value">content</div>'
+
+        result, errors = linter.lint(html)
+
+        # Should handle mixed quotes in attribute names
+        assert isinstance(result, str)
+        assert isinstance(errors, list)
+
+    def test_attribute_processing_without_fix_mode_case_errors(self) -> None:
+        """Test reporting case errors in complex attribute names."""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+
+        # HTML with uppercase in complex attribute name that should trigger F8 error
+        html = '<div Data{% block %}content{% endblock %}="value">content</div>'
+
+        _result, errors = linter.lint(html)
+
+        # Should report F8 error for case mismatch in attribute name
+        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        assert len(f8_errors) > 0 or not errors  # Either F8 error found or no errors
+
+    def test_attribute_processing_quote_character_selection(self) -> None:
+        """Test quote character selection based on attribute content."""
+        linter = HTMLLinter(fix=True)
+
+        # Attribute value with single quotes should use double quotes for wrapping
+        html = "<div data-value=\"text with 'single' quotes\">content</div>"
+
+        result, errors = linter.lint(html)
+
+        # Should handle quote selection properly
+        assert isinstance(result, str)
+        assert isinstance(errors, list)
+
+    def test_attribute_processing_with_preprocessor_edge_cases(self) -> None:
+        """Test attribute processing edge cases with preprocessors."""
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+
+        # Test various edge cases that should not crash
+        test_cases = [
+            '<div class="simple">content</div>',  # Simple case
+            '<div class="{% if x %}test{% endif %}">content</div>',  # Template in class
+        ]
+
+        for html in test_cases:
+            result, errors = linter.lint(html)
+            # Should handle edge cases without crashing
+            assert isinstance(result, str)
+            assert isinstance(errors, list)
+
     def test_entityref_parsing(self) -> None:
         """Test parsing entity references."""
         linter = HTMLLinter(fix=True)

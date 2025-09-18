@@ -55,3 +55,14 @@ class TestMain:
         assert result.returncode == 0
         # Version output should contain some version information
         assert result.stdout.strip() != ""
+
+    def test_main_module_direct_execution_path_exists(self) -> None:
+        """Test that __main__.py contains the direct execution path."""
+        # Read the __main__.py file and verify it has the expected structure
+        main_file = Path(__file__).parent.parent.parent / "cutesy" / "__main__.py"
+        file_content = main_file.read_text()
+
+        # Verify the file contains the expected direct execution pattern
+        assert 'if __name__ == "__main__":' in file_content
+        assert "sys.exit(main())" in file_content
+        assert "from .cli import main" in file_content

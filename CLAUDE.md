@@ -51,5 +51,8 @@ make
 5. Run `make test` to run tests
 6. Run `make` to run the full pipeline
 
+## Special Considerations
+- This project has multiple test groups (integration, unit, and private). Always run the complete test suite with `make test` when coverage data or validation is needed.
+
 ## Developer Documentation
 - [Development Guide](docs/development.md) - Testing strategy and development patterns
