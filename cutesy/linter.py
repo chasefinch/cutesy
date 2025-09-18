@@ -4,7 +4,7 @@ import re
 import string
 from collections.abc import Sequence
 from html.parser import HTMLParser
-from typing import Any, Never, TypeGuard
+from typing import Any, Final, Never, TypeGuard
 
 from .attribute_processors import BaseAttributeProcessor
 from .preprocessors import BasePreprocessor
@@ -114,6 +114,15 @@ VOID_ELEMENTS = frozenset(
 class HTMLLinter(HTMLParser):
     """A parser to ingest HTML and lint it."""
 
+    fix: Final[bool]
+    check_doctype: Final[bool]
+    preprocessor: Final[BasePreprocessor | None]
+    attribute_processors: Final[Sequence[BaseAttributeProcessor]]
+    indentation_type: Final[IndentationType]
+    tab_width: Final[int]
+    max_attrs_per_line: Final[int]
+    max_chars_per_line: Final[int]
+
     _expected_indentation: Any = None
 
     def __init__(
@@ -124,10 +133,14 @@ class HTMLLinter(HTMLParser):
         preprocessor: BasePreprocessor | None = None,
         attribute_processors: Sequence[BaseAttributeProcessor] | None = None,
         ignore_rules: Sequence[str] = (),
-        convert_charrefs: bool = True,
+        indentation_type: IndentationType = IndentationType.TAB,
+        tab_width: int = 4,
+        max_attrs_per_line: int = 5,
+        max_chars_per_line: int = 99,
+        convert_charrefs: bool = True,  # ignore
     ) -> None:
         """Initialize HTMLLinter."""
-        super().__init__(convert_charrefs=convert_charrefs)
+        super().__init__(convert_charrefs=False)
         self.fix = fix  # Whether we're fixing the files
         # If true, assume all files are HTML5 files, and complain when they
         # aren't. Otherwise, skip any files without an HTML5 doctype.
@@ -137,13 +150,13 @@ class HTMLLinter(HTMLParser):
         self.attribute_processors = attribute_processors or []
         self.ignore_rules = ignore_rules
         self.convert_charrefs = False
-        self.indentation_type = IndentationType.TAB
+        self.indentation_type = indentation_type
         # This applies even if indentation == TABS, to best infer what spaces
         # mean in the incoming HTML document
-        self.tab_width = 4
+        self.tab_width = tab_width
         # Tuners for attribute wrapping logic
-        self.max_attrs_per_line = 5
-        self.max_chars_per_line = 99
+        self.max_attrs_per_line = max_attrs_per_line
+        self.max_chars_per_line = max_chars_per_line
 
     def reset(self) -> None:
         """Reset the state of the linter so that it can be run again."""

@@ -76,7 +76,7 @@ class BasePreprocessor(ABC):
         """Prepare the preprocessor for processing."""
         self._dynamic_html = dynamic_html
         self._size = len(self._dynamic_html)
-        self._fix = fix
+        self.fix = fix
 
         # Choose start and end delimiters for placeholders which do not appear
         # in the HTML string
@@ -337,7 +337,7 @@ class BasePreprocessor(ABC):
         id_value = base36_encode(self._placeholder_id_num)
 
         raw_instruction = part
-        if not self._fix:
+        if not self.fix:
             has_valid_padding = all(
                 (
                     raw_instruction[len_start:].startswith(" "),
@@ -405,7 +405,7 @@ class BasePreprocessor(ABC):
 
         # Collapse
         formatted_instruction = " ".join(formatted_instruction_parts)
-        if not self._fix:
+        if not self.fix:
             # Check if collapsing changed anything
             stripped_raw_instruction = raw_instruction[len_start : -1 * len_end]
             stripped_formatted_instruction = formatted_instruction[len_start : -1 * len_end]

@@ -147,16 +147,13 @@ class TestHTMLLinter:
 
     def test_indentation_property_with_tabs(self) -> None:
         """Test indentation property returns tabs when configured for tabs."""
-        linter = HTMLLinter()
-        linter.indentation_type = IndentationType.TAB
+        linter = HTMLLinter(indentation_type=IndentationType.TAB)
 
         assert linter.indentation == "\t"
 
     def test_indentation_property_with_spaces(self) -> None:
         """Test indentation property returns spaces when specified."""
-        linter = HTMLLinter()
-        linter.indentation_type = IndentationType.SPACES
-        linter.tab_width = 2
+        linter = HTMLLinter(indentation_type=IndentationType.SPACES, tab_width=2)
 
         assert linter.indentation == "  "
 

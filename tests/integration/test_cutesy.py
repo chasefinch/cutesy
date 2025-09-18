@@ -36,8 +36,8 @@ class TestSpec:
     def _run_test(self, spec: str) -> None:
         current_file_path = Path(__file__)
         local_path = current_file_path.parent
-        input_path_string = f"{local_path}/spec/{spec}/input.html"
-        output_path_string = f"{local_path}/spec/{spec}/expected_output.html"
+        input_path_string = f"{local_path}/spec/cutesy/{spec}/input.html"
+        output_path_string = f"{local_path}/spec/cutesy/{spec}/expected_output.html"
 
         input_path = Path(input_path_string)
         with input_path.open() as html_file:

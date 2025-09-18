@@ -119,7 +119,7 @@ class TestBasePreprocessor:
 
         assert preprocessor._dynamic_html == html
         assert preprocessor._size == len(html)
-        assert preprocessor._fix is False
+        assert preprocessor.fix is False
 
     def test_reset_with_fix_mode(self) -> None:
         """Test reset method with fix mode enabled."""
@@ -128,7 +128,7 @@ class TestBasePreprocessor:
 
         preprocessor.reset(html, fix=True)
 
-        assert preprocessor._fix is True
+        assert preprocessor.fix is True
 
     def test_reset_finds_unused_delimiters(self) -> None:
         """Test reset finds unused characters for delimiters."""

@@ -100,8 +100,11 @@ asdf
             reindent.AttributeProcessor(),
             tailwind.AttributeProcessor(),
         ]
-        linter = HTMLLinter(fix=True, attribute_processors=attribute_processors)
-        linter.indentation_type = IndentationType.SPACES
+        linter = HTMLLinter(
+            fix=True,
+            attribute_processors=attribute_processors,
+            indentation_type=IndentationType.SPACES,
+        )
         result, errors = linter.lint(basic_html)
 
         assert result == expected_result
