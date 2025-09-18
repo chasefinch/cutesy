@@ -4,30 +4,31 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 **Cutesy reformats & lints HTML documents**, including HTML templates. It ensures consistent indentation, line breaks, and formatting while automatically fixing most issues.
 
-## ❤️ First-class support for your favorite frameworks
+## First-class support for your favorite frameworks ❤️
 
 - Full support for Django templates 🐍💕
 - Sorts classes for TailwindCSS 💖✨
 - Works with AlpineJS and HTMX ⚡💘
 
-## ✨ Features
+## Features ✨
 
-- **🔧 Auto-Fix**: Automatically corrects most formatting issues
-- **📏 Configurable**: Extensive configuration options for your project's needs
-- **🏃‍♂️ Fast**: Processes large codebases quickly
+- **Auto-Fix**: Automatically corrects most formatting issues
+- **Configurable**: Extensive configuration options for your project's needs
+- **Fast**: Processes large codebases quickly
 
 ## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Basic Usage](#-basic-usage)
-- [Configuration](#-configuration)
-- [Template Languages](#-template-languages)
-- [CSS Framework Support](#-css-framework-support)
-- [JS Framework Support](#-js-framework-support)
-- [Examples](#-examples)
-- [Documentation](#-documentation)
-- [Development](#-development)
+- [🚀 Quick Start](#-quick-start)
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+- [Configuration](#configuration)
+- [Framework Support](#framework-support)
+- [Examples](#examples)
+- [Documentation](#documentation)
+- [Benefits](#benefits)
+- [Badge](#badge)
+- [License](#license)
+- [Contributing](#contributing)
 
 ## 🚀 Quick Start
 
@@ -127,7 +128,7 @@ max_items_per_line = 6
 
 > 📚 **Complete guide**: See [Configuration Documentation](docs/configuration.md) for all options and examples.
 
-## Template Languages
+## Framework Support
 
 ### Django Templates
 
@@ -159,8 +160,6 @@ cutesy "templates/*.html" --fix --extras=django
 {% endif %}
 ```
 
-## CSS Framework Support
-
 ### TailwindCSS
 
 Automatic class sorting and organization:
@@ -183,8 +182,6 @@ cutesy "*.html" --fix --extras=tailwind
 <!-- After -->
 <div class="bg-white hover:bg-gray-100 p-4 md:p-8 rounded-lg text-red-500">
 ```
-
-## JS Framework Support
 
 ### AlpineJS & HTMX
 
@@ -287,29 +284,6 @@ Show off how Cutesy keeps you in line.
 ```markdown
 [![code style: cutesy](https://img.shields.io/badge/code_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
 ```
-
-## Development
-
-**Setup development environment:**
-```bash
-git clone https://github.com/chasefinch/cutesy.git
-cd cutesy
-make setup
-source bin/activate
-```
-
-**Run tests:**
-```bash
-make test        # Run all tests
-make test-unit   # Unit tests only
-make lint        # Check code style
-make format      # Format code
-```
-
-**Project requirements:**
-- **Python 3.11+** for development
-- Uses modern Python features and type hints
-- Comprehensive test suite with 91%+ coverage
 
 ## License
 
