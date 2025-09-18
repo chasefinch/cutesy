@@ -241,7 +241,7 @@ class TestMainIntegration:
     def test_main_with_unknown_extra_raises_error(self) -> None:
         """Test main function raises error with unknown extra."""
         runner = CliRunner()
-        result = runner.invoke(main, ["--extra", "unknown_extra", "*.html"])
+        result = runner.invoke(main, ["--extras", "unknown_extra", "*.html"])
 
         assert result.exit_code != 0
         assert "Unknown extra(s): unknown_extra" in result.output
@@ -249,7 +249,7 @@ class TestMainIntegration:
     def test_main_with_multiple_unknown_extras_raises_error(self) -> None:
         """Test main function raises error with multiple unknown extras."""
         runner = CliRunner()
-        result = runner.invoke(main, ["--extra", "unknown1,unknown2", "*.html"])
+        result = runner.invoke(main, ["--extras", "unknown1,unknown2", "*.html"])
 
         assert result.exit_code != 0
         assert "Unknown extra(s): unknown1, unknown2" in result.output
@@ -262,7 +262,7 @@ class TestMainIntegration:
             html_file = temp_path / "test.html"
             html_file.write_text("<div>{{ variable }}</div>")
 
-            result = runner.invoke(main, ["--extra", "django", str(html_file)])
+            result = runner.invoke(main, ["--extras", "django", str(html_file)])
 
             # Should process without error (django preprocessor handles {{ }} syntax)
             assert result.exit_code == 0
@@ -382,7 +382,7 @@ class TestMainIntegration:
         """Test main function with unknown extra."""
         runner = CliRunner()
 
-        result = runner.invoke(main, ["--code", "--extra", "unknown", "<div>test</div>"])
+        result = runner.invoke(main, ["--code", "--extras", "unknown", "<div>test</div>"])
 
         assert result.exit_code != 0
         assert "Unknown extra" in result.output
@@ -457,7 +457,7 @@ class TestEdgeCases:
         runner = CliRunner()
 
         # Test with Django preprocessor (should not crash)
-        result = runner.invoke(main, ["--extra", "django", "--code", "<div>test</div>"])
+        result = runner.invoke(main, ["--extras", "django", "--code", "<div>test</div>"])
 
         # Should complete without error (might have lint issues but no crash)
         assert result.exit_code in (0, 1)  # Either no errors or lint errors

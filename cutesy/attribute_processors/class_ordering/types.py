@@ -54,7 +54,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         indentation: str,
         current_indentation_level: int,
         tab_width: int,
-        max_chars_per_line: int,
+        line_length: int,
         max_items_per_line: int,
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
@@ -68,7 +68,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         self.indentation = indentation
         self.preprocessor = preprocessor
 
-        self.max_length = max_chars_per_line - ((current_indentation_level + 1) * tab_width)
+        self.max_length = line_length - ((current_indentation_level + 1) * tab_width)
         self.max_items_per_line = max_items_per_line
 
         self.stashed_class_names = []

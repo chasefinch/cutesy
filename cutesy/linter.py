@@ -121,7 +121,7 @@ class HTMLLinter(HTMLParser):
     indentation_type: Final[IndentationType]
     tab_width: Final[int]
     max_items_per_line: Final[int]
-    max_chars_per_line: Final[int]
+    line_length: Final[int]
 
     _expected_indentation: Any = None
 
@@ -136,7 +136,7 @@ class HTMLLinter(HTMLParser):
         indentation_type: IndentationType = IndentationType.TAB,
         tab_width: int = 4,
         max_items_per_line: int = 5,
-        max_chars_per_line: int = 99,
+        line_length: int = 99,
         convert_charrefs: bool = True,  # ignore
     ) -> None:
         """Initialize HTMLLinter."""
@@ -156,7 +156,7 @@ class HTMLLinter(HTMLParser):
         self.tab_width = tab_width
         # Tuners for attribute wrapping logic
         self.max_items_per_line = max_items_per_line
-        self.max_chars_per_line = max_chars_per_line
+        self.line_length = line_length
 
     def reset(self) -> None:
         """Reset the state of the linter so that it can be run again."""
@@ -332,7 +332,7 @@ class HTMLLinter(HTMLParser):
         wrap = any(
             (
                 len(attr_strings) > self.max_items_per_line,
-                len(attr_strings) > 1 and num_chars > self.max_chars_per_line,
+                len(attr_strings) > 1 and num_chars > self.line_length,
                 has_breaking_attr,
             ),
         )
@@ -977,7 +977,7 @@ class HTMLLinter(HTMLParser):
                             position=self.getpos(),
                             current_indentation_level=self._indentation_level + 1,
                             tab_width=self.tab_width,
-                            max_chars_per_line=self.max_chars_per_line,
+                            line_length=self.line_length,
                             max_items_per_line=self.max_items_per_line,
                             bounding_character=quote_char,
                             preprocessor=self.preprocessor,
@@ -1013,7 +1013,7 @@ class HTMLLinter(HTMLParser):
                 and not any("\n" in item for item in group)
                 and sum(len(item) for item in group)
                 + self.tab_width * (self._indentation_level + 1)
-                <= self.max_chars_per_line
+                <= self.line_length
             )
 
             if is_flattenable:

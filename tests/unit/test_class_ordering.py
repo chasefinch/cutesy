@@ -200,7 +200,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -216,7 +216,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -233,7 +233,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=10,
             bounding_character='"',
             preprocessor=self.preprocessor,
@@ -255,7 +255,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=self.preprocessor,
@@ -275,7 +275,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -287,14 +287,14 @@ class TestBaseClassOrderingAttributeProcessor:
         """Test multi-line mode with single group."""
         # Create a long list that exceeds max_items_per_line
         long_class_list = " ".join([f"class-{index}" for index in range(10)])
-        max_chars_per_line = 50
+        line_length = 50
         result = self.processor.process(
             attr_name="class",
             position=(1, 0),
             indentation="\t",
             current_indentation_level=1,
             tab_width=4,
-            max_chars_per_line=max_chars_per_line,
+            line_length=line_length,
             max_items_per_line=3,
             bounding_character='"',
             preprocessor=None,
@@ -317,7 +317,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=MockPreprocessor(),
@@ -342,7 +342,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -368,7 +368,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="  ",
             current_indentation_level=1,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -389,7 +389,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="  ",
             current_indentation_level=1,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
@@ -409,7 +409,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="    ",
             current_indentation_level=2,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=3,
             bounding_character='"',
             preprocessor=None,
@@ -432,14 +432,14 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="  ",
             current_indentation_level=1,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,
             attr_body="btn",
         )
 
-        # max_length = max_chars_per_line - ((current_indentation_level + 1) * tab_width)
+        # max_length = line_length - ((current_indentation_level + 1) * tab_width)
         # max_length = 80 - ((1 + 1) * 4) = 80 - 8 = 72
         expected_max_length = MAX_CHARS_PER_LINE - ((1 + 1) * 4)
         assert processor.max_length == expected_max_length
@@ -468,7 +468,7 @@ class TestBaseClassOrderingAttributeProcessor:
             indentation="  ",
             current_indentation_level=1,
             tab_width=4,
-            max_chars_per_line=MAX_CHARS_PER_LINE,
+            line_length=MAX_CHARS_PER_LINE,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=MockPreprocessor(),
@@ -523,7 +523,7 @@ class TestErrorHandling:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=self.preprocessor,
@@ -546,7 +546,7 @@ class TestErrorHandling:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=self.preprocessor,
@@ -571,14 +571,14 @@ class TestIntegration:
         """Test processing complex class list with multiple features."""
         processor = MockClassOrderingProcessor()
 
-        max_chars_per_line = 80
+        line_length = 80
         result = processor.process(
             attr_name="class",
             position=(1, 0),
             indentation="  ",
             current_indentation_level=1,
             tab_width=2,
-            max_chars_per_line=max_chars_per_line,
+            line_length=line_length,
             max_items_per_line=4,
             bounding_character='"',
             preprocessor=None,
@@ -600,7 +600,7 @@ class TestIntegration:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=10,
             bounding_character='"',
             preprocessor=self.preprocessor,

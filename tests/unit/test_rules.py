@@ -225,7 +225,7 @@ class TestRules:
             indentation="\t",
             current_indentation_level=0,
             tab_width=4,
-            max_chars_per_line=100,
+            line_length=100,
             max_items_per_line=5,
             bounding_character='"',
             preprocessor=None,

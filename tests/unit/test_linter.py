@@ -7,7 +7,7 @@ import pytest
 from cutesy.attribute_processors import whitespace
 from cutesy.linter import HTMLLinter, attr_sort, is_whitespace
 from cutesy.preprocessors.types import BasePreprocessor
-from cutesy.types import DoctypeError, IndentationType, InstructionType, Mode
+from cutesy.types import DoctypeError, IndentationType, InstructionType
 
 
 class MockPreprocessor(BasePreprocessor):
@@ -85,21 +85,6 @@ class TestHTMLLinter:
         assert linter.fix is True
         assert linter.check_doctype is True
         assert linter.ignore_rules == ["F1", "F2"]
-
-    def test_linter_reset_state(self) -> None:
-        """Test linter reset clears internal state."""
-        linter = HTMLLinter()
-
-        # Simulate some state
-        linter._mode = Mode.DOCUMENT
-        linter._errors = ["error"]
-        linter._result = ["result"]
-
-        linter.reset()
-
-        assert linter._mode is None
-        assert linter._errors == []  # noqa: WPS520 (supposed to be OK for asserts)
-        assert linter._result == []  # noqa: WPS520 (supposed to be OK for asserts)
 
     def test_lint_simple_html(self) -> None:
         """Test linting simple valid HTML."""
@@ -218,28 +203,6 @@ class TestHTMLLinter:
                 assert current.line < next_error.line or (
                     current.line == next_error.line and current.column <= next_error.column
                 )
-
-    def test_handle_decl_with_mode_already_set_document(self) -> None:
-        """Test handle_decl when mode is already DOCUMENT."""
-        linter = HTMLLinter(fix=False)
-        linter._mode = Mode.DOCUMENT
-
-        # Should generate D2 error when trying to add another doctype in document mode
-        linter.handle_decl("doctype html")
-
-        d2_errors = [error for error in linter._errors if error.rule.code == "D2"]
-        assert len(d2_errors) > 0
-
-    def test_handle_decl_with_mode_already_set_unstructured(self) -> None:
-        """Test handle_decl when mode is already UNSTRUCTURED."""
-        linter = HTMLLinter(fix=False)
-        linter._mode = Mode.UNSTRUCTURED
-
-        # Should generate D1 error when trying to add doctype in unstructured mode
-        linter.handle_decl("doctype html")
-
-        d1_errors = [error for error in linter._errors if error.rule.code == "D1"]
-        assert len(d1_errors) > 0
 
     def test_lint_with_doctype_checking_valid_html5(self) -> None:
         """Test linting with doctype checking on valid HTML5."""

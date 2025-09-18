@@ -179,14 +179,16 @@ def main(
                 locals()[attr_name] = value  # type: ignore[misc]  # noqa: WPS421
 
     # Parse extras (from CLI or config)
-    extras = _parse_list(extras)
-    if extras is None:
-        extras = None if _from_cli(context, "extras") else _parse_list(config.get("extras"))
+    extras_list = _parse_list(extras)
+    if extras_list is None:
+        extras_list = None if _from_cli(context, "extras") else _parse_list(config.get("extras"))
 
     # Parse ignore rules (from CLI or config)
-    ignore_rules = _parse_list(ignore)
-    if ignore_rules is None:
-        ignore_rules = None if _from_cli(context, "ignore") else _parse_list(config.get("ignore"))
+    ignore_rules_list = _parse_list(ignore)
+    if ignore_rules_list is None:
+        ignore_rules_list = (
+            None if _from_cli(context, "ignore") else _parse_list(config.get("ignore"))
+        )
 
     # Parse formatting options (from CLI or config)
     if indentation_type is None and not _from_cli(context, "indentation_type"):
@@ -221,8 +223,8 @@ def main(
 
     # Build preprocessor instance (only one supported for now)
     preprocessor_instance = None
-    extras = extras or []
-    if "django" in extras:
+    extras_list = extras_list or []
+    if "django" in extras_list:
         preprocessor_instance = preprocessors["django"]()
 
     # Compose attribute processor order
@@ -233,14 +235,16 @@ def main(
     final_attr_processor_names.extend(
         [
             attr_processor_name
-            for attr_processor_name in extras
+            for attr_processor_name in extras_list
             if attr_processor_name in attr_processor_map
             and attr_processor_name not in default_attr_processors
         ],
     )
 
     unknown = [
-        name for name in extras if name not in preprocessors and name not in attr_processor_map
+        name
+        for name in extras_list
+        if name not in preprocessors and name not in attr_processor_map
     ]
     if unknown:
         error_message = f"Unknown extra(s): {', '.join(unknown)}"
@@ -249,11 +253,11 @@ def main(
     attr_processor_instances = [attr_processor_map[name]() for name in final_attr_processor_names]
 
     # Check for structural rules being ignored in fix mode
-    if fix and ignore_rules:
+    if fix and ignore_rules_list:
         structural_rules = {rule.code for rule in Rule.members if rule.structural}
         ignored_structural_rules = []
 
-        for ignored_rule in ignore_rules:
+        for ignored_rule in ignore_rules_list:
             rule = ignored_rule.strip().upper()
             if rule in structural_rules:
                 # It's a specific structural rule
@@ -287,18 +291,20 @@ def main(
     # Set defaults for None values
     tab_width = tab_width or 4
     max_items_per_line = max_items_per_line or 5
-    max_chars_per_line = line_length or 99  # line_length maps to max_chars_per_line
+
+    default_line_length = 99
+    line_length = line_length or default_line_length
 
     linter = HTMLLinter(
         fix=fix,
         check_doctype=check_doctype,
         preprocessor=preprocessor_instance,
         attribute_processors=attr_processor_instances,
-        ignore_rules=ignore_rules or [],
+        ignore_rules=ignore_rules_list or [],
         indentation_type=indentation_type_enum,
         tab_width=tab_width,
         max_items_per_line=max_items_per_line,
-        max_chars_per_line=max_chars_per_line,
+        line_length=line_length,
     )
     errors_by_file = {}
     num_errors = 0

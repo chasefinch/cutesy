@@ -17,7 +17,7 @@ class AttributeProcessor(BaseAttributeProcessor):
         indentation: str,
         current_indentation_level: int,
         tab_width: int,
-        max_chars_per_line: int,
+        line_length: int,
         max_items_per_line: int,
         bounding_character: str,
         preprocessor: BasePreprocessor | None,

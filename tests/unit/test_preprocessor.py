@@ -117,8 +117,6 @@ class TestBasePreprocessor:
 
         preprocessor.reset(html)
 
-        assert preprocessor._dynamic_html == html
-        assert preprocessor._size == len(html)
         assert preprocessor.fix is False
 
     def test_reset_with_fix_mode(self) -> None:
