@@ -50,3 +50,6 @@ make
 4. Run `make check` for type checking
 5. Run `make test` to run tests
 6. Run `make` to run the full pipeline
+
+## Developer Documentation
+- [Development Guide](docs/development.md) - Testing strategy and development patterns

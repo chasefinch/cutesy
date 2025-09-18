@@ -43,11 +43,27 @@ check:
 	@mypy .
 	@echo "...done. No issues found."
 
-test:
+test: test-unit test-integration test-private
+	@echo "Combining coverage reports..."
+	coverage combine
+	coverage report -m --fail-under 89
+	@echo "All tests completed successfully!"
+
+test-unit:
+	@echo "Running unit tests..."
 	find . -name "*.pyc" -delete
 	coverage erase
-	coverage run --source=cutesy -m pytest --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
-	coverage report -m --fail-under 89
+	coverage run --source=cutesy --data-file=.coverage.unit -m pytest tests/unit --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
+
+test-integration:
+	@echo "Running integration tests..."
+	find . -name "*.pyc" -delete
+	coverage run --source=cutesy --data-file=.coverage.integration -m pytest tests/integration --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
+
+test-private:
+	@echo "Running private tests..."
+	find . -name "*.pyc" -delete
+	coverage run --source=cutesy --data-file=.coverage.private -m pytest tests/private --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
 
 setup:
 	python3 -m venv .
@@ -59,4 +75,4 @@ teardown:
 	-rm -r bin/*
 	-rm pyvenv.cfg
 
-.PHONY: default configure format lint test setup
+.PHONY: default configure format lint test test-unit test-integration test-private setup
