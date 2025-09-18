@@ -2,8 +2,6 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) ![PyPI - Version](https://img.shields.io/pypi/v/cutesy)
-
 **Cutesy reformats & lints HTML documents**, including HTML templates. It ensures consistent indentation, line breaks, and formatting while automatically fixing most issues.
 
 ## First-class support for your favorite frameworks ❤️
@@ -11,6 +9,8 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 - Full support for Django templates 🐍💕
 - Sorts classes for TailwindCSS 💖✨
 - Works with AlpineJS and HTMX ⚡💘
+
+![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) [![PyPI - Version](https://img.shields.io/pypi/v/cutesy)](https://pypi.org/project/cutesy/) ![Coverage: 91%](https://img.shields.io/badge/coverage-91%-66ff66.svg?style=flat)
 
 ## Features ✨
 
