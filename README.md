@@ -12,7 +12,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 ## Features ✨
 
-- **Auto-Fix**: Automatically corrects most formatting issues
+- **Auto-fix**: Automatically corrects most formatting issues
 - **Configurable**: Extensive configuration options for your project's needs
 - **Fast**: Processes large codebases quickly
 
