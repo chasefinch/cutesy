@@ -4,8 +4,10 @@ from typing import ClassVar
 
 import pytest
 
-from cutesy.attribute_processors import whitespace
+from cutesy.attribute_processors import reindent, whitespace
+from cutesy.attribute_processors.class_ordering import tailwind
 from cutesy.linter import HTMLLinter, attr_sort, is_whitespace
+from cutesy.preprocessors import django
 from cutesy.preprocessors.types import BasePreprocessor
 from cutesy.types import DoctypeError, IndentationType, InstructionType
 
@@ -364,3 +366,103 @@ class TestHTMLLinter:
 
         assert isinstance(result, str)
         # Should handle nested structure
+
+    def test_basic_empty_html(self) -> None:
+        """Test the baseline HTML structure."""
+        basic_html = ""
+        expected_result = ""
+
+        linter = HTMLLinter(fix=True)
+        result, errors = linter.lint(basic_html)
+
+        assert result == expected_result
+        assert not errors
+
+    def test_entityref_parsing(self) -> None:
+        """Test parsing entity references."""
+        linter = HTMLLinter(fix=True)
+
+        basic_html = "<span>Hi! &amp; </span>"
+        expected_result = "<span>Hi! &amp; </span>"
+
+        result, errors = linter.lint(basic_html)
+        assert result == expected_result
+        assert not errors
+
+        basic_html = "&copy;"
+        expected_result = "&copy;"
+        result, errors = linter.lint(basic_html)
+        assert result == expected_result
+        assert not errors
+
+    def test_charref_parsing(self) -> None:
+        """Test parsing character references."""
+        basic_html = "<span>Hi! &#x999; </span>"
+        expected_result = "<span>Hi! &#x999; </span>"
+
+        linter = HTMLLinter(fix=True)
+        result, errors = linter.lint(basic_html)
+
+        assert result == expected_result
+        assert not errors
+
+    def test_django_preprocessor_integration(self) -> None:
+        """Test Django template preprocessing."""
+        basic_html = "<span>Hi! &#x999; {% block %}{% endblock %} </span>"
+        expected_result = "<span>Hi! &#x999; {% block %}{% endblock %} </span>"
+
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+        result, errors = linter.lint(basic_html)
+
+        assert result == expected_result
+        assert not errors
+
+    def test_multiline_attribute_handling(self) -> None:
+        """Test multiline attributes with proper indentation."""
+        basic_html = """
+<div
+    x-data="() => {
+        state1: true,
+
+        state2: true,
+
+        init() {
+            state1 = false;
+            state2 = false;
+        }
+    }"
+>
+asdf
+</div>
+        """
+        expected_result = """
+<div
+    x-data="() => {
+        state1: true,
+
+        state2: true,
+
+        init() {
+            state1 = false;
+            state2 = false;
+        }
+    }"
+>
+    asdf
+</div>
+"""
+
+        attribute_processors = [
+            whitespace.AttributeProcessor(),
+            reindent.AttributeProcessor(),
+            tailwind.AttributeProcessor(),
+        ]
+        linter = HTMLLinter(
+            fix=True,
+            attribute_processors=attribute_processors,
+            indentation_type=IndentationType.SPACES,
+        )
+        result, errors = linter.lint(basic_html)
+
+        assert result == expected_result
+        assert not errors
