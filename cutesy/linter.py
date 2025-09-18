@@ -329,13 +329,24 @@ class HTMLLinter(HTMLParser):
             + len(tag)
             + self.tab_width * self._indentation_level
         )
-        wrap = any(
+        wrap = len(attr_strings) > 1 and any(
             (
                 len(attr_strings) > self.max_items_per_line,
-                len(attr_strings) > 1 and num_chars > self.line_length,
+                num_chars > self.line_length,
                 has_breaking_attr,
             ),
         )
+
+        if has_breaking_attr and not wrap:
+            self._indentation_level -= 1
+            # Recalculate attr_stings at the new indentation level
+            _, attr_strings = self._make_attr_strings(attrs, second_pass=True)
+            has_breaking_attr = any(
+                char in attr_string for attr_string in attr_strings for char in ("\n", "\t")
+            )
+            if not has_breaking_attr:
+                wrap = False
+            self._indentation_level += 1
 
         if wrap and not is_new_line:
             fix_f12 = self.fix and not self.is_rule_ignored("F12")
@@ -351,12 +362,12 @@ class HTMLLinter(HTMLParser):
         wrap = wrap and is_new_line
 
         if wrap:
-            indentation = self.indentation * (self._indentation_level + 1)
+            indentation_level = self._indentation_level + 1
+            indentation = self.indentation * indentation_level
             attrs_string = f"\n{indentation}".join(attr_strings)
 
-            end_char = self.indentation * self._indentation_level
+            end_char = self.indentation * (indentation_level - 1)
             attrs_string = f"\n{indentation}{attrs_string}\n{end_char}"
-
         elif attr_strings:
             # Don't wrap; Just separate all by a space
             attrs_string = " ".join(attr_strings)
@@ -877,6 +888,8 @@ class HTMLLinter(HTMLParser):
     def _make_attr_strings(
         self,
         attrs: Sequence[tuple[str, Any]],
+        *,
+        second_pass: bool = False,
     ) -> tuple[str | None, Sequence[str]]:
         """Return the prepared attribute strings.
 
@@ -899,7 +912,7 @@ class HTMLLinter(HTMLParser):
                     if start_index > 0:
                         split_name = name[:start_index]
                         split_name_lower = split_name.lower()
-                        if not self.fix and split_name != split_name_lower:
+                        if not self.fix and split_name != split_name_lower and not second_pass:
                             self._handle_error("F8", attr=split_name_lower)
 
                         quote_char = "'" if '"' in split_name_lower else '"'
@@ -913,7 +926,7 @@ class HTMLLinter(HTMLParser):
                     name = name[end_index:]
             if name:
                 name_lower = name.lower()
-                if not self.fix and name != name_lower:
+                if not self.fix and name != name_lower and not second_pass:
                     self._handle_error("F8", attr=name_lower)
 
                 quote_char = "'" if '"' in (value or "") else '"'
@@ -941,7 +954,10 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_middle:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
+                    subgroup_key, subgroup = self._make_attr_strings(
+                        subgroup_attrs,
+                        second_pass=second_pass,
+                    )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:
@@ -953,7 +969,10 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_end:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
+                    subgroup_key, subgroup = self._make_attr_strings(
+                        subgroup_attrs,
+                        second_pass=second_pass,
+                    )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:
@@ -986,7 +1005,7 @@ class HTMLLinter(HTMLParser):
                         fix_f17 = self.fix and not self.is_rule_ignored("F17")
                         if processing_errors:
                             self._errors.extend(processing_errors)
-                        elif not fix_f17 and value != processed_value:
+                        elif not fix_f17 and value != processed_value and not second_pass:
                             self._handle_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
@@ -995,7 +1014,7 @@ class HTMLLinter(HTMLParser):
             attr_keys_and_groups.sort(key=attr_sort)
         else:
             sorted_groups = sorted(attr_keys_and_groups, key=attr_sort)
-            if attr_keys_and_groups != sorted_groups:
+            if attr_keys_and_groups != sorted_groups and not second_pass:
                 self._handle_error("F6")
 
         try:

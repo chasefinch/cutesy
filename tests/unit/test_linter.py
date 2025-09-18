@@ -504,18 +504,16 @@ asdf
 </div>
         """
         expected_result = """
-<div
-    x-data="() => {
-        state1: true,
+<div x-data="() => {
+    state1: true,
 
-        state2: true,
+    state2: true,
 
-        init() {
-            state1 = false;
-            state2 = false;
-        }
-    }"
->
+    init() {
+        state1 = false;
+        state2 = false;
+    }
+}">
     asdf
 </div>
 """

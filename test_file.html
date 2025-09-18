@@ -83,22 +83,9 @@
 {% block header %}
 	{{ block.super }}
 
-	<div
-		class="
-			lg:hidden
-			pl-6
-			font-brand text-white
-			bg-brand-blue
-			select-none
-		"
-	>
+	<div class="lg:hidden pl-6 font-brand text-white bg-brand-blue select-none">
 		<div class="flex gap-1ch items-stretch w-full">
-			<span
-				class="
-					basis-[15px] flex flex-col grow-0 shrink-0
-					justify-center
-				"
-			>
+			<span class="basis-[15px] flex flex-col grow-0 shrink-0 justify-center">
 				<svg
 					class="h-auto w-[15px] align-middle"
 					width="32px"
@@ -113,13 +100,11 @@
 					</g>
 				</svg>
 			</span>
-			<span
-				class="
-					basis-full flex flex-col flex-grow flex-shrink
-					justify-center
-					leading-tight tracking-tight
-				"
-			>
+			<span class="
+				basis-full flex flex-col flex-grow flex-shrink
+				justify-center
+				leading-tight tracking-tight
+			">
 				{% if hotel.is_rental %}
 					<span>{% blocktrans with type=hotel.structure_type_display|lower %}This {{ type }} can be booked&nbsp;instantly.{% endblocktrans %}</span>
 				{% else %}
@@ -165,13 +150,7 @@
 {% endkwacro %}
 
 {% block body_main %}
-	<div
-		class="
-			mx-auto pb-16 pt-4 lg:pt-8 px-6
-			max-w-box
-			@container
-		"
-	>
+	<div class="mx-auto pb-16 pt-4 lg:pt-8 px-6 max-w-box @container">
 		<form id="bookReservationForm" action="" method="POST" novalidate>
 			<input type="hidden" name="instance_code" value="{{ instance_code }}">
 			<input
@@ -183,18 +162,16 @@
 
 			<input type="hidden" id="applePayData" name="apple_pay_data" value="">
 
-			<div
-				class="
-					grid
-					grid-cols-[minmax(0,1fr)]
-					grid-flow-col
-					grid-rows-[auto_auto]
-					lg:grid-cols-[repeat(3,minmax(0,1fr))]
-					lg:grid-flow-row
-					gap-8
-					box-border lg:auto-rows-auto
-				"
-			>
+			<div class="
+				grid
+				grid-cols-[minmax(0,1fr)]
+				grid-flow-col
+				grid-rows-[auto_auto]
+				lg:grid-cols-[repeat(3,minmax(0,1fr))]
+				lg:grid-flow-row
+				gap-8
+				box-border lg:auto-rows-auto
+			">
 				<div class="lg:col-span-2 flex flex-col flex-grow gap-s4">
 					<div class="lg:flex flex-col hidden gap-s-1">
 						<h1 class="text-4xl">
@@ -202,17 +179,15 @@
 						</h1>
 						{% if not errors and not form.errors and not card_form.errors %}
 							<div class="hurry" {% if page == 2 %}hidden{% endif %}>
-								<div
-									class="
-										float-left
-										flex
-										gap-1ch items-center
-										px-3 py-2
-										font-brand tracking-tight
-										bg-gray-field
-										rounded-super-base
-									"
-								>
+								<div class="
+									float-left
+									flex
+									gap-1ch items-center
+									px-3 py-2
+									font-brand tracking-tight
+									bg-gray-field
+									rounded-super-base
+								">
 									{% if hotel.pets_allowed %}
 										<span class="flex flex-col justify-center">
 											<svg
@@ -250,16 +225,14 @@
 					</div>
 
 					{% if errors or form.errors or card_form.errors %}{# Got errors back from Expedia #}
-						<div
-							class="
-								flex flex-col
-								gap-s-1
-								px-3 py-2
-								font-brand text-error
-								bg-error
-								rounded-super-base
-							"
-						>
+						<div class="
+							flex flex-col
+							gap-s-1
+							px-3 py-2
+							font-brand text-error
+							bg-error
+							rounded-super-base
+						">
 							{% if errors %}
 								{# These should be self-explanatory and not need any introduction. #}
 								<ul class="flex flex-col gap-s-1">
@@ -286,14 +259,12 @@
 						class="flex flex-col gap-s-1"
 						{% if page == 1 %}hidden{% endif %}
 					>
-						<div
-							class="
-								flex
-								p-3
-								bg-gray-field
-								border-1 border-gray-line rounded-super-base
-							"
-						>
+						<div class="
+							flex
+							p-3
+							bg-gray-field
+							border-1 border-gray-line rounded-super-base
+						">
 							<39vas
 							id="pageSummary__text"
 							class="
@@ -477,13 +448,7 @@
 										{% endif %}
 									>
 										{% if is_address_known and not is_guest_known %}
-											<div
-												class="
-													flex
-													items-center justify-between
-													w-full
-												"
-											>
+											<div class="flex items-center justify-between w-full">
 												<h2 class="text-xl">{% trans 'Address' %}</h2>
 												<button
 													type="button"
@@ -573,12 +538,10 @@
 												{{ form.address_2.errors }}
 											</div>
 
-											<div
-												class="
-													flex flex-col md:flex-row
-													gap-3 justify-between
-												"
-											>
+											<div class="
+												flex flex-col md:flex-row
+												gap-3 justify-between
+											">
 												<div class="relative basis-1/2">
 													{{ form.city }}
 													<label for="id_city">{% trans 'City' %}</label>
@@ -619,23 +582,18 @@
 
 											<div class="relative">
 												<div id="passwordStrength" hidden>
-													<div
-														class="
-															h-1
-															bg-gray-field
-															rounded-full
-															passwordStrength__meter
-														"
-													></div>
+													<div class="
+														h-1
+														bg-gray-field
+														rounded-full
+														passwordStrength__meter
+													"></div>
 													<div class="passwordStrength__description">
 														{% trans 'Password Strength' %}:
-														<span
-															class="
-																font-bold
-																font-brand
-																passwordStrength__description__value
-															"
-														></span>
+														<span class="
+															font-bold font-brand
+															passwordStrength__description__value
+														"></span>
 													</div>
 												</div>
 											</div>
@@ -758,25 +716,13 @@
 								<div class="flex items-stretch justify-between">
 									<h1>{% trans 'Payment Method' %}</h1>
 
-									<div
-										class="
-											flex flex-col
-											justify-center
-											cursor-default
-											group
-										"
-									>
+									<div class="flex flex-col justify-center cursor-default group">
 										<div class="relative">
-											<span
-												class="
-													flex
-													gap-1 items-center
-													font-bold
-													font-brand
-													text-sm
-													text-touch
-												"
-											>
+											<span class="
+												flex
+												gap-1 items-center
+												font-bold font-brand text-sm text-touch
+											">
 												<svg
 													class="icon"
 													width="10px"
@@ -807,34 +753,32 @@
 												{% trans 'This booking is secure.' %}
 											</span>
 
-											<div
-												class="
-													absolute
-													after:absolute
-													bottom-full
-													-right-2
-													after:right-1/2
-													after:top-full
-													after:content-['']
-													p-3
-													min-w-40
-													text-sm text-white
-													bg-dark
-													after:border-x-6
-													after:border-x-transparent
-													after:border-t-6
-													after:border-t-dark
-													rounded-super-sm
-													scale-90
-													group-hover:scale-100
-													-translate-y-2
-													after:translate-x-1/2
-													transition-transform
-													antialiased
-													invisible
-													group-hover:visible
-												"
-											>
+											<div class="
+												absolute
+												after:absolute
+												bottom-full
+												-right-2
+												after:right-1/2
+												after:top-full
+												after:content-['']
+												p-3
+												min-w-40
+												text-sm text-white
+												bg-dark
+												after:border-x-6
+												after:border-x-transparent
+												after:border-t-6
+												after:border-t-dark
+												rounded-super-sm
+												scale-90
+												group-hover:scale-100
+												-translate-y-2
+												after:translate-x-1/2
+												transition-transform
+												antialiased
+												invisible
+												group-hover:visible
+											">
 												{% blocktrans trimmed %}
 													All transactions are secure and encrypted.
 												{% endblocktrans %}
@@ -859,12 +803,7 @@
 													checked
 												{% endif %}
 											>
-											<div
-												class="
-													flex flex-row-reverse
-													gap-1ch items-center
-												"
-											>
+											<div class="flex flex-row-reverse gap-1ch items-center">
 												<span>{% trans 'Credit Card' %}</span>
 
 												<img
@@ -886,12 +825,7 @@
 													checked
 												{% endif %}
 											>
-											<div
-												class="
-													flex flex-row-reverse
-													gap-1ch items-center
-												"
-											>
+											<div class="flex flex-row-reverse gap-1ch items-center">
 												<span>{% trans 'Apple Pay' %}</span>
 
 												<img
@@ -971,65 +905,56 @@
 												>
 												<label for="securityCode1">{% trans 'Security code' %}</label>
 
-												<div
-													class="
-														absolute right-0 top-1/2
-														flex flex-col
-														justify-center
-														pr-3
-														h-6
-														-translate-y-1/2
-														group
-													"
-												>
-													<span
-														class="
-															inline-flex
-															items-center
-															justify-center
-															h-4 w-4
-															font-bold
-															font-brand
-															text-white
-															bg-touch
-															rounded-full
-															cursor-pointer
-															antialiased
-														"
-													>?</span>
-													<div
-														class="
-															absolute
-															after:absolute
-															bottom-full
-															-right-2
-															after:right-[22px]
-															after:top-full
-															after:content-['']
-															p-3
-															min-w-38
-															text-sm text-white
-															bg-dark
-															after:border-x-6
-															after:border-x-transparent
-															after:border-t-6
-															after:border-t-dark
-															rounded-super-sm
-															scale-90
-															group-hover:scale-100
-															-translate-y-2
-															transition-transform
-															antialiased
-															invisible
-															group-hover:visible
-														"
-													>
-														<div
-															class="
-																securityCodeText
-																securityCodeText--default
-															"
-														>
+												<div class="
+													absolute right-0 top-1/2
+													flex flex-col
+													justify-center
+													pr-3
+													h-6
+													-translate-y-1/2
+													group
+												">
+													<span class="
+														inline-flex
+														items-center justify-center
+														h-4 w-4
+														font-bold
+														font-brand
+														text-white
+														bg-touch
+														rounded-full
+														cursor-pointer
+														antialiased
+													">?</span>
+													<div class="
+														absolute
+														after:absolute
+														bottom-full
+														-right-2
+														after:right-[22px]
+														after:top-full
+														after:content-['']
+														p-3
+														min-w-38
+														text-sm text-white
+														bg-dark
+														after:border-x-6
+														after:border-x-transparent
+														after:border-t-6
+														after:border-t-dark
+														rounded-super-sm
+														scale-90
+														group-hover:scale-100
+														-translate-y-2
+														transition-transform
+														antialiased
+														invisible
+														group-hover:visible
+													">
+														<div class="
+															securityCodeText
+															securityCodeText--default
+														">
 															{% blocktrans trimmed %}
 																3-digit security code usually found on the back of your card. American Express cards have a 4-digit code located on the front.
 															{% endblocktrans %}
@@ -1195,64 +1120,54 @@
 												autocomplete="cc-csc"
 												validate="security_code"
 											>
-											<div
-												class="
-													absolute right-0 top-1/2
-													flex flex-col
-													justify-center
-													pr-3
-													h-6
-													-translate-y-1/2
-													group
-												"
-											>
-												<span
-													class="
-														inline-flex
-														items-center justify-center
-														h-4 w-4
-														font-bold
-														font-brand
-														text-white
-														bg-touch
-														rounded-full
-														cursor-pointer
-														antialiased
-													"
-												>?</span>
-												<div
-													class="
-														absolute
-														after:absolute
-														bottom-full
-														-right-2
-														after:right-[22px]
-														after:top-full
-														after:content-['']
-														p-3
-														min-w-48
-														text-sm text-white
-														bg-dark
-														after:border-x-6
-														after:border-x-transparent
-														after:border-t-6
-														after:border-t-dark
-														rounded-super-sm
-														scale-90
-														group-hover:scale-100
-														-translate-y-2
-														transition-transform
-														antialiased
-														invisible
-														group-hover:visible
-													"
-												>
-													<div
-														class="
-															securityCodeText
-															securityCodeText--default
-														"
-													>
+											<div class="
+												absolute right-0 top-1/2
+												flex flex-col
+												justify-center
+												pr-3
+												h-6
+												-translate-y-1/2
+												group
+											">
+												<span class="
+													inline-flex
+													items-center justify-center
+													h-4 w-4
+													font-bold font-brand text-white
+													bg-touch
+													rounded-full
+													cursor-pointer
+													antialiased
+												">?</span>
+												<div class="
+													absolute
+													after:absolute
+													bottom-full
+													-right-2
+													after:right-[22px]
+													after:top-full
+													after:content-['']
+													p-3
+													min-w-48
+													text-sm text-white
+													bg-dark
+													after:border-x-6
+													after:border-x-transparent
+													after:border-t-6
+													after:border-t-dark
+													rounded-super-sm
+													scale-90
+													group-hover:scale-100
+													-translate-y-2
+													transition-transform
+													antialiased
+													invisible
+													group-hover:visible
+												">
+													<div class="
+														securityCodeText
+														securityCodeText--default
+													">
 														{% blocktrans trimmed %}
 															3-digit security code usually found on the back of your card. American Express cards have a 4-digit code located on the front.
 														{% endblocktrans %}
@@ -1379,15 +1294,13 @@
 										<h3 class="text-lg">
 											{% trans 'Cancellation Policy' %}
 										</h3>
-										<div
-											class="
-												flex flex-col
-												gap-3
-												[&_ul]:ms-3
-												[&_ul]:list-disc
-												[&_ul]:list-inside
-											"
-										>
+										<div class="
+											flex flex-col
+											gap-3
+											[&_ul]:ms-3
+											[&_ul]:list-disc
+											[&_ul]:list-inside
+										">
 											{% make_cancellation_policy_html_safe request hotel rate arrival %}
 
 											{% if not is_same_day_arrival %}
@@ -1588,15 +1501,13 @@
 						</div>
 					</div>
 					<div>
-						<aside
-							class="
-								md:flex flex-col hidden
-								gap-s1
-								p-8 pb-0
-								bg-gray-field
-								rounded-b-none rounded-super-sm
-							"
-						>
+						<aside class="
+							md:flex flex-col hidden
+							gap-s1
+							p-8 pb-0
+							bg-gray-field
+							rounded-b-none rounded-super-sm
+						">
 							<img
 								class="rounded-super-base roomImg"
 								src="{{ room_type.thumbnail.url_full }}"
@@ -1660,18 +1571,16 @@
 							<hr class="border-2 opacity-50">
 						</aside>
 						<!-- Another div so it can be sticky -->
-						<aside
-							class="
-								sticky
-								lg:top-[var(--header-height)]
-								top-[var(--header-height-sm)]
-								md:flex flex-col hidden
-								gap-s1
-								p-8 pt-4
-								bg-gray-field
-								rounded-super-sm rounded-t-none
-							"
-						>
+						<aside class="
+							sticky
+							lg:top-[var(--header-height)]
+							top-[var(--header-height-sm)]
+							md:flex flex-col hidden
+							gap-s1
+							p-8 pt-4
+							bg-gray-field
+							rounded-super-sm rounded-t-none
+						">
 							<div class="flex flex-col gap-s-1">
 								<h1 class="font-bold text-lg">{% trans 'Summary of Charges' %}</h1>
 								<div class="flex flex-col gap-1">
@@ -1680,36 +1589,24 @@
 									{% endif %}
 									{% if rate.nightly_rates %}
 										<details class="flex flex-col gap-1">
-											<summary
-												class="
-													relative
-													-ml-4
-													w-[calc(100%_+_calc(var(--spacing)_*_4))]
-												"
-											>
-												<span
-													class="
-														absolute left-4
-														w-[calc(100%_-_calc(var(--spacing)_*_4))]
-													"
-												>
+											<summary class="
+												relative
+												-ml-4
+												w-[calc(100%_+_calc(var(--spacing)_*_4))]
+											">
+												<span class="
+													absolute left-4
+													w-[calc(100%_-_calc(var(--spacing)_*_4))]
+												">
 													<span class="flex gap-1ch justify-between">
-														<span
-															class="
-																font-bold
-																font-brand
-																text-dark
-															"
-														>
+														<span class="font-bold font-brand text-dark">
 															{{ num_nights }} {% blocktrans count c=num_nights %}night{% plural %}nights{% endblocktrans %} ×
 															{% if rate.deal %}
-																<span
-																	class="
-																		font-normal
-																		text-plain
-																		line-through
-																	"
-																>{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
+																<span class="
+																	font-normal
+																	text-plain
+																	line-through
+																">{% format_currency rate.deal.original_amount request is_long=False skip_currency=True %}</span>
 															{% endif %}
 															{% format_currency rate.average_nightly_rate request is_long=False skip_currency=True %}{% if num_rooms > 1 %}/{% elif num_nights > 1 %}/avg{% endif %}
 														</span>
@@ -1818,12 +1715,10 @@
 												{% trans 'Host fees' %}
 												<span class="feeHelp">
 													<span class="feeHelp__icon">?</span>
-													<div
-														class="
-															feeHelp__text
-															feeHelp__text--scootRight
-														"
-													>
+													<div class="
+														feeHelp__text
+														feeHelp__text--scootRight
+													">
 														{% blocktrans trimmed %}
 															Includes cleaning fee, management fee, and other fees specified by the&nbsp;host.
 														{% endblocktrans %}
@@ -1962,29 +1857,20 @@
 		x-show="$store.popout.is('compactRateSummary')"
 	>
 		<div class="absolute inset-0 -z-1" tabindex="0" role="button" @click="close"></div>
-		<div
-			class="
-				h-full
-				md:h-auto
-				max-h-full
-				md:max-w-100
-				md:max-h-[calc(100%_-_calc(var(--spacing)_*_2))]
-				w-full
-				overflow-y-auto
-				bg-white
-				md:rounded-super-sm
-				md:shadow-high
-				overscroll-contain
-			"
-		>
-			<div
-				class="
-					flex flex-col
-					p-8 pb-12
-					md:min-h-0 min-h-full-scroll
-					box-border
-				"
-			>
+		<div class="
+			h-full
+			md:h-auto
+			max-h-full
+			md:max-w-100
+			md:max-h-[calc(100%_-_calc(var(--spacing)_*_2))]
+			w-full
+			overflow-y-auto
+			bg-white
+			md:rounded-super-sm
+			md:shadow-high
+			overscroll-contain
+		">
+			<div class="flex flex-col p-8 pb-12 md:min-h-0 min-h-full-scroll box-border">
 				asdf
 			</div>
 		</div>
