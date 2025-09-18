@@ -959,10 +959,7 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_middle:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(
-                        subgroup_attrs,
-                        final_pass=final_pass,
-                    )
+                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:
@@ -974,10 +971,7 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_end:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(
-                        subgroup_attrs,
-                        final_pass=final_pass,
-                    )
+                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:

@@ -387,24 +387,6 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             if len(normalized) == 1:
                 return normalized[0]  # single string
 
-            # Check if any string item contains block instructions
-            # (not just any preprocessor instructions)
-            has_block_instructions = False
-            if self.preprocessor:
-                left_delimiter = self.preprocessor.delimiters[0]
-                min_instruction_length = 4
-                has_block_instructions = any(
-                    isinstance(block_item, str)
-                    and block_item.startswith(left_delimiter)
-                    and len(block_item) >= min_instruction_length
-                    and InstructionType(block_item[1]).starts_block
-                    for block_item in normalized
-                )
-
-            # If this contains block instructions, preserve list structure
-            if has_block_instructions:
-                return normalized  # Preserve list structure for block instructions
-
             # Join and fix spaces around delimiters
             pieces = [str(normalized_item) for normalized_item in normalized]
             candidate = " ".join(pieces)
@@ -417,6 +399,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             candidate = re.sub(rf" {left}", left, candidate)
             candidate = re.sub(rf"{right} ", right, candidate)
 
+            # Allow flattening if it fits within length, even with block instructions
             if len(candidate) <= self.max_length:
                 return candidate
 
