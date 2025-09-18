@@ -24,6 +24,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 - [Configuration](#-configuration)
 - [Template Languages](#-template-languages)
 - [CSS Framework Support](#-css-framework-support)
+- [JS Framework Support](#-js-framework-support)
 - [Examples](#-examples)
 - [Documentation](#-documentation)
 - [Development](#-development)
@@ -183,6 +184,8 @@ cutesy "*.html" --fix --extras=tailwind
 <div class="bg-white hover:bg-gray-100 p-4 md:p-8 rounded-lg text-red-500">
 ```
 
+## JS Framework Support
+
 ### AlpineJS & HTMX
 
 Cutesy works great with attribute-heavy frameworks:
@@ -268,12 +271,12 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 
 ## Benefits
 
-✅ **Validate AI code output** - Catch inconsistencies in generated HTML
-✅ **Enforce team standards** - Consistent formatting across all developers
-✅ **Catch errors early** - Find malformed HTML and template syntax issues
-✅ **Save time** - No more manual formatting or style discussions
-✅ **Better code reviews** - Focus on logic, not formatting
-✅ **Framework integration** - Works with your existing tools and workflows
+- ✅ **Validate AI code output** - Catch inconsistencies in generated HTML
+- ✅ **Enforce team standards** - Consistent formatting across all developers
+- ✅ **Catch errors early** - Find malformed HTML and template syntax issues
+- ✅ **Save time** - No more manual formatting or style discussions
+- ✅ **Better code reviews** - Focus on logic, not formatting
+- ✅ **Framework integration** - Works with your existing tools and workflows
 
 ## Badge
 
