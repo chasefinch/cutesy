@@ -1,639 +1,827 @@
 # Cutesy Rules Reference
 
-Cutesy is a linter and formatter for HTML that enforces consistent code style and structure. It analyzes your HTML documents and applies a comprehensive set of rules to ensure clean, maintainable code. Rules are organized into categories based on their purpose, and each rule has a unique code for easy identification in error reports.
+Cutesy is a linter and formatter for HTML that enforces consistent code style and structure. This comprehensive guide covers all rules Cutesy uses to analyze your HTML documents.
 
-This document provides a complete reference of all Cutesy rules, their purpose, and examples of code that would trigger each rule.
+## Table of Contents
 
-## Rule Categories
+- [Quick Reference](#quick-reference)
+- [Understanding Rules](#understanding-rules)
+- [Temporary Preprocessing Rules (T)](#temporary-preprocessing-rules-t)
+- [Preprocessing Rules (P)](#preprocessing-rules-p)
+- [Document Structure Rules (D)](#document-structure-rules-d)
+- [Formatting Rules (F)](#formatting-rules-f)
+- [Encoding & Language Rules (E)](#encoding--language-rules-e)
+- [Rule Summary Table](#rule-summary-table)
 
-- **T-rules**: Temporary preprocessing rules (internal)
-- **P-rules**: Preprocessing rules for dynamic template languages (Django, etc.)
-- **D-rules**: Document structure rules
-- **F-rules**: Formatting and style rules
-- **E-rules**: Encoding and language rules
+---
 
-## Rule Attributes
+## Quick Reference
 
-Each rule has two important attributes that determine how it behaves:
+**Most Common Issues:**
+- **F7**: Tags should be lowercase (`<DIV>` → `<div>`)
+- **F8**: Attributes should be lowercase (`CLASS=` → `class=`)
+- **F3**: Fix indentation
+- **F2**: Remove trailing whitespace
+- **D5/D6**: Fix self-closing tags
 
-### Fixable
-- **Yes**: Rule violations can be automatically corrected by Cutesy
-- **No**: Rule violations require manual intervention to resolve
+**Ignoring Rules:**
+```bash
+cutesy "*.html" --ignore=F1        # Ignore specific rule
+cutesy "*.html" --ignore=F         # Ignore entire category
+cutesy "*.html" --ignore=[F1,D5]   # Ignore multiple rules
+```
 
-### Structural
-- **Yes**: Rule must be fixed when in `--fix` mode
-- **No**: Rule addresses optional style or formatting preferences
+---
+
+## Understanding Rules
+
+### Rule Categories
+
+| Category | Description | Example Rules |
+|----------|-------------|---------------|
+| **T** | Temporary preprocessing (internal) | T1 |
+| **P** | Template language processing | P1-P6 |
+| **D** | Document structure & validity | D1-D9 |
+| **F** | Formatting & style | F1-F17 |
+| **E** | Encoding & HTML5 compliance | E1-E4 |
+
+### Rule Attributes
+
+Each rule has two key attributes:
+
+**🔧 Fixable**
+- ✅ **Yes**: Cutesy can automatically fix this issue
+- ❌ **No**: Requires manual correction
+
+**🏗️ Structural**
+- ✅ **Yes**: Critical issue that affects document validity
+- ❌ **No**: Style preference that can be ignored
+
+### Rule Behavior
+
+- **In `--fix` mode**: All fixable rules are automatically corrected
+- **Structural rules**: Cannot be ignored in `--fix` mode (too important)
+- **Non-structural rules**: Can be ignored with `--ignore` option
 
 ---
 
 ## Temporary Preprocessing Rules (T)
 
-### T1: Instruction not long enough to generate a placeholder
-**Fixable:** No
-**Structural:** Yes
+> ℹ️ **Note**: These are internal rules used during template processing. You typically won't encounter them directly.
 
-*Internal rule used during template preprocessing*
+<details>
+<summary><strong>T1: Instruction not long enough to generate a placeholder</strong></summary>
 
-This rule is used internally by the preprocessor when dynamic template instructions are too short to generate proper placeholders.
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+Internal rule used when template instructions are too short for processing placeholders.
+
+</details>
 
 ---
 
 ## Preprocessing Rules (P)
 
-These rules apply to dynamic template languages like Django templates that mix HTML with template syntax.
+> 🎯 **When you'll see these**: Using template languages like Django templates with `--extras=django`
 
-### P1: {tag} overlaps HTML elements or attributes
-**Fixable:** No
-**Structural:** Yes
+<details>
+<summary><strong>P1: Template instruction overlaps HTML elements</strong></summary>
 
-Template instructions that interfere with HTML tag parsing.
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
 
-**Example:**
+Template syntax interferes with HTML parsing.
+
+**❌ Problem:**
 ```html
 <div{% if x %} class='test'{% endif %}>
 ```
 
-### P2: Expected {tag}
-**Fixable:** No
-**Structural:** Yes
+**💡 Solution:** Restructure template logic outside of HTML tags.
 
-Missing closing template instruction.
+</details>
 
-**Example:**
+<details>
+<summary><strong>P2: Missing closing template instruction</strong></summary>
+
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+Template block not properly closed.
+
+**❌ Problem:**
 ```html
 {% if condition %}
 <p>content</p>
 <!-- Missing {% endif %} -->
 ```
 
-### P3: {tag} doesn't have a matching opening instruction
-**Fixable:** No
-**Structural:** Yes
+**✅ Solution:**
+```html
+{% if condition %}
+<p>content</p>
+{% endif %}
+```
 
-Closing template instruction without matching opening instruction.
+</details>
 
-**Example:**
+<details>
+<summary><strong>P3: Unmatched closing template instruction</strong></summary>
+
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+Closing template instruction without matching opener.
+
+**❌ Problem:**
 ```html
 <p>content</p>
 {% endif %}  <!-- No matching {% if %} -->
 ```
 
-### P4: Malformed processing instruction
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Template instruction with invalid syntax.
+<details>
+<summary><strong>P4: Malformed template instruction</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+Invalid template syntax.
+
+**❌ Problem:**
 ```html
 {% %}  <!-- Empty instruction -->
 ```
 
-### P5: Extra whitespace in {tag}
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Template instruction contains unnecessary whitespace.
+<details>
+<summary><strong>P5: Extra whitespace in template instruction</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-{%  if  condition  %}  <!-- Extra spaces -->
+{%  if  condition  %}
 ```
 
-**Fixed:**
+**✅ Fixed:**
+```html
+{% if condition %}
+```
+
+</details>
+
+<details>
+<summary><strong>P6: Missing padding in template instruction</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
+```html
+{%if condition%}
+```
+
+**✅ Fixed:**
 ```html
 {% if condition %}
 ```
 
-### P6: Expected padding in {tag}
-**Fixable:** Yes
-**Structural:** No
-
-Template instruction missing required padding spaces.
-
-**Example:**
-```html
-{%if condition%}  <!-- Missing spaces -->
-```
-
-**Fixed:**
-```html
-{% if condition %}
-```
+</details>
 
 ---
 
 ## Document Structure Rules (D)
 
-These rules ensure proper HTML document structure and valid tag nesting.
+> 🎯 **When you'll see these**: Document structure and HTML validity issues
 
-### D1: Expected doctype before other HTML elements
-**Fixable:** No
-**Structural:** Yes
+<details>
+<summary><strong>D1: Doctype must come first</strong></summary>
 
-HTML elements appear before the doctype declaration.
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
 
-**Example:**
+**❌ Problem:**
 ```html
 <html></html>
-<!doctype html>  <!-- Doctype should come first -->
+<!doctype html>  <!-- Should be first -->
 ```
 
-### D2: Second declaration found; "doctype" should be the only declaration
-**Fixable:** No
-**Structural:** Yes
+**✅ Solution:** Move doctype to the beginning of the document.
 
-Multiple doctype declarations in a single document.
+</details>
 
-**Example:**
+<details>
+<summary><strong>D2: Multiple doctype declarations</strong></summary>
+
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
 <!doctype html>
-<!doctype html>  <!-- Duplicate doctype -->
+<!doctype html>  <!-- Duplicate -->
 ```
 
-### D3: Expected {tag}
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Missing closing tag due to improper nesting.
+<details>
+<summary><strong>D3: Missing closing tag</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+Improper tag nesting or missing closing tags.
+
+**❌ Problem:**
 ```html
-<div><span><p>content</p></div></span>  <!-- Wrong closing order -->
+<div><span><p>content</p></div></span>  <!-- Wrong order -->
 ```
 
-### D4: {tag} doesn't have a matching opening tag
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Closing tag without corresponding opening tag.
+<details>
+<summary><strong>D4: Unmatched closing tag</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
 <p>content</p></div>  <!-- No opening <div> -->
 ```
 
-### D5: Unnecessary self-closing of {tag}
-**Fixable:** Yes
-**Structural:** Yes
+</details>
 
-Void elements don't need explicit self-closing syntax.
+<details>
+<summary><strong>D5: Unnecessary self-closing syntax</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** Yes
+
+Void elements don't need self-closing syntax in HTML5.
+
+**❌ Problem:**
 ```html
-<br/>  <!-- Unnecessary / -->
+<br/> <img src="..."/>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<br>
+<br> <img src="...">
 ```
 
-### D6: Self-closing of non-void element {tag}
-**Fixable:** Yes
-**Structural:** Yes
+</details>
 
-Non-void elements should not be self-closed.
+<details>
+<summary><strong>D6: Invalid self-closing of non-void element</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
-<div/>  <!-- div is not a void element -->
+<div/>  <!-- div needs closing tag -->
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <div></div>
 ```
 
-### D7: Malformed tag
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Tag with invalid syntax.
+<details>
+<summary><strong>D7: Malformed opening tag</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
 <div class="test>content</div>  <!-- Unclosed quote -->
 ```
 
-### D8: Malformed closing tag
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Closing tag with invalid syntax.
+<details>
+<summary><strong>D8: Malformed closing tag</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
-<div>content</div body>  <!-- Invalid closing tag -->
+<div>content</div body>  <!-- Invalid syntax -->
 ```
 
-### D9: Expected blank line at end of document
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-HTML documents should end with a newline.
+<details>
+<summary><strong>D9: Missing final newline</strong></summary>
 
-**Example:**
-```html
-<!doctype html>
-<html><body></body></html>  <!-- Missing final newline -->
-```
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
 
-**Fixed:**
+Files should end with a newline character.
+
+**❌ Problem:**
 ```html
 <!doctype html>
 <html><body></body></html>
 ```
 
+**✅ Fixed:**
+```html
+<!doctype html>
+<html><body></body></html>
+
+```
+
+</details>
+
 ---
 
 ## Formatting Rules (F)
 
-These rules enforce consistent formatting and style conventions.
+> 🎯 **When you'll see these**: Code style and formatting issues
 
-### F1: Doctype not lowercase
-**Fixable:** Yes
-**Structural:** No
+### Basic Formatting
 
-Doctype declaration should be lowercase.
+<details>
+<summary><strong>F1: Doctype should be lowercase</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<!DOCTYPE HTML>  <!-- Uppercase -->
+<!DOCTYPE HTML>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <!doctype html>
 ```
 
-### F2: Trailing whitespace
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Lines should not end with whitespace characters.
+<details>
+<summary><strong>F2: Trailing whitespace</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+Lines shouldn't end with spaces or tabs.
+
+**❌ Problem:**
 ```html
-<div>  ⎵⎵
+<div>content   
 </div>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div>
+<div>content
 </div>
 ```
 
-### F3: Incorrect indentation
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Elements should be properly indented.
+<details>
+<summary><strong>F3: Incorrect indentation</strong></summary>
 
-**Example:**
-```html
-<div>
-  <p></p>  <!-- Wrong indentation (spaces instead of tabs) -->
-</div>
-```
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
 
-**Fixed:**
+**❌ Problem:**
 ```html
 <div>
-	<p></p>
+  <p>Wrong indentation</p>
 </div>
 ```
 
-### F4: Extra vertical whitespace
-**Fixable:** Yes
-**Structural:** No
-
-No more than one blank line between elements.
-
-**Example:**
+**✅ Fixed:**
 ```html
 <div>
-
-
-<p></p>  <!-- Too many blank lines -->
+    <p>Correct indentation</p>
 </div>
 ```
 
-**Fixed:**
+</details>
+
+<details>
+<summary><strong>F4: Too much vertical whitespace</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+Maximum one blank line between elements.
+
+**❌ Problem:**
 ```html
 <div>
 
-<p></p>
+
+
+<p>Too many blank lines above</p>
 </div>
 ```
 
-### F5: Extra horizontal whitespace
-**Fixable:** Yes
-**Structural:** No
-
-Multiple consecutive spaces should be collapsed.
-
-**Example:**
+**✅ Fixed:**
 ```html
-<div>text  with  extra  spaces</div>  <!-- Multiple spaces -->
+<div>
+
+<p>One blank line maximum</p>
+</div>
 ```
 
-**Fixed:**
+</details>
+
+<details>
+<summary><strong>F5: Too much horizontal whitespace</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
+```html
+<div>text  with    extra   spaces</div>
+```
+
+**✅ Fixed:**
 ```html
 <div>text with extra spaces</div>
 ```
 
-### F6: Incorrect attribute order
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attributes should follow a consistent ordering convention.
+### Tag and Attribute Formatting
 
-**Example:**
+<details>
+<summary><strong>F6: Incorrect attribute order</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+Attributes should follow a consistent order.
+
+**❌ Problem:**
 ```html
-<div style="color: red" id="main" class="test"></div>  <!-- Wrong order -->
+<div style="color: red" id="main" class="test">
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div id="main" class="test" style="color: red"></div>
+<div id="main" class="test" style="color: red">
 ```
 
-### F7: {tag} not lowercase
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-HTML tags should be lowercase.
+<details>
+<summary><strong>F7: Tags should be lowercase</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<DIV><P></P></DIV>  <!-- Uppercase tags -->
+<DIV><P>Content</P></DIV>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div><p></p></div>
+<div><p>Content</p></div>
 ```
 
-### F8: Attribute "{attr}" not lowercase
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attribute names should be lowercase.
+<details>
+<summary><strong>F8: Attributes should be lowercase</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div CLASS="test"></div>  <!-- Uppercase attribute -->
+<div CLASS="test" ID="main">
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div class="test"></div>
+<div class="test" id="main">
 ```
 
-### F9: Attribute "{attr}" missing quotes
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attribute values should be quoted.
+<details>
+<summary><strong>F9: Attribute values need quotes</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div class=test></div>  <!-- Unquoted value -->
+<div class=test id=main>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div class="test"></div>
+<div class="test" id="main">
 ```
 
-### F10: Attribute "{attr}" using wrong quotes
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attributes containing double quotes should use single quotes.
+<details>
+<summary><strong>F10: Attribute using wrong quote type</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div title='He said "hello"'></div>  <!-- Should use double quotes -->
+<div title='He said "hello"'>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div title="He said &quot;hello&quot;"></div>
+<div title="He said &quot;hello&quot;">
 ```
 
-### F11: {tag} contains whitespace
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Tags should not contain internal whitespace.
+### Tag Structure and Spacing
 
-**Example:**
+<details>
+<summary><strong>F11: Tag contains extra whitespace</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div></div >  <!-- Space before closing bracket -->
+<div ></div >
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <div></div>
 ```
 
-### F12: Long tag {tag} should be on a new line
-**Fixable:** Yes
-**Structural:** No
+</details>
+
+<details>
+<summary><strong>F12: Long tag should start on new line</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
 
 Tags with many attributes should start on a new line.
 
-**Example:**
+**❌ Problem:**
 ```html
-<p>text</p><div attr0="value0" attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5" attr6="value6" attr7="value7" attr8="value8" attr9="value9">content</div>
+<p>text</p><div attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5">
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <p>text</p>
-<div attr0="value0" attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5" attr6="value6" attr7="value7" attr8="value8" attr9="value9">content</div>
+<div attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5">
 ```
 
-### F13: Nonstandard whitespace in {tag}
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Tags should use standard spaces between attributes.
+<details>
+<summary><strong>F13: Non-standard whitespace in tag</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div	class="test"  id="main"></div>  <!-- Tab and multiple spaces -->
+<div	class="test"  id="main">  <!-- Tab and multiple spaces -->
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div class="test" id="main"></div>
+<div class="test" id="main">
 ```
 
-### F14: Expected {tag} attributes on new lines
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Long tags should have attributes wrapped to new lines.
+### Attribute Line Wrapping
 
-**Example:**
+<details>
+<summary><strong>F14: Long attributes should wrap to new lines</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
 <div>
-	<span attr0="value0" attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5" attr6="value6" attr7="value7" attr8="value8" attr9="value9">content</span>
+    <span attr1="value1" attr2="value2" attr3="value3" attr4="value4" attr5="value5" attr6="value6">
 </div>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <div>
-	<span
-		attr0="value0"
-		attr1="value1"
-		attr2="value2"
-		attr3="value3"
-		attr4="value4"
-		attr5="value5"
-		attr6="value6"
-		attr7="value7"
-		attr8="value8"
-		attr9="value9"
-	>content</span>
+    <span
+        attr1="value1"
+        attr2="value2"
+        attr3="value3"
+        attr4="value4"
+        attr5="value5"
+        attr6="value6"
+    >
 </div>
 ```
 
-### F15: Expected {tag} attributes on a single line
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Short tags with few attributes should be on a single line.
+<details>
+<summary><strong>F15: Short attributes should stay on one line</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
 <div
-	id="test"
-	class="small"
->content</div>  <!-- Should be on one line -->
+    id="test"
+    class="small"
+>content</div>
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
 <div id="test" class="small">content</div>
 ```
 
-### F16: Attribute "{attr}" contains its own quote character
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attribute values should not contain raw quote characters that match the bounding quotes.
+### Attribute Value Formatting
 
-**Example:**
+<details>
+<summary><strong>F16: Attribute contains unescaped quotes</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div title="Say "hello" world">content</div>  <!-- Raw quotes inside -->
+<div title="Say "hello" world">
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div title="Say &quot;hello&quot; world">content</div>
+<div title="Say &quot;hello&quot; world">
 ```
 
-### F17: Incorrect "{attr}" value formatting
-**Fixable:** Yes
-**Structural:** No
+</details>
 
-Attribute values should be properly formatted with correct whitespace.
+<details>
+<summary><strong>F17: Attribute value formatting</strong></summary>
 
-**Example:**
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
 ```html
-<div class="  test  class  ">content</div>  <!-- Extra whitespace -->
+<div class="  test   class  ">
 ```
 
-**Fixed:**
+**✅ Fixed:**
 ```html
-<div class="test class">content</div>
+<div class="test class">
 ```
+
+</details>
 
 ---
 
 ## Encoding & Language Rules (E)
 
-These rules ensure proper HTML5 compliance and character encoding.
+> 🎯 **When you'll see these**: HTML5 compliance and character encoding issues
 
-### E1: Doctype not "html"
-**Fixable:** No
-**Structural:** Yes
+<details>
+<summary><strong>E1: Non-HTML5 doctype</strong></summary>
 
-Doctype should be the standard HTML5 doctype.
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
 
-**Example:**
+Only HTML5 doctype is supported.
+
+**❌ Problem:**
 ```html
-<!doctype html5>  <!-- Should be just "html" -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!doctype html5>
+<!doctype HTML>
 ```
 
-### E2: Ampersand not represented as "&amp;"
-**Fixable:** Yes
-**Structural:** No
-
-Ampersands in text content should be properly escaped.
-
-**Example:**
+**✅ Correct:**
 ```html
-<div>Tom & Jerry</div>  <!-- Unescaped ampersand -->
+<!doctype html>
 ```
 
-**Fixed:**
+</details>
+
+<details>
+<summary><strong>E2: Unescaped ampersand</strong></summary>
+
+**🔧 Fixable:** Yes | **🏗️ Structural:** No
+
+**❌ Problem:**
+```html
+<div>Tom & Jerry</div>
+<div>Johnson & Johnson</div>
+```
+
+**✅ Fixed:**
 ```html
 <div>Tom &amp; Jerry</div>
+<div>Johnson &amp; Johnson</div>
 ```
 
-### E3: Left angle bracket not represented as "&lt;"
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Left angle brackets in text content should be escaped.
+<details>
+<summary><strong>E3: Unescaped left angle bracket</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
-<div>5 < 10</div>  <!-- Unescaped < -->
+<div>5 < 10 is true</div>
 ```
 
-**Should be:**
+**✅ Should be:**
 ```html
-<div>5 &lt; 10</div>
+<div>5 &lt; 10 is true</div>
 ```
 
-### E4: Right angle bracket not represented as "&gt;"
-**Fixable:** No
-**Structural:** Yes
+</details>
 
-Right angle brackets in text content should be escaped.
+<details>
+<summary><strong>E4: Unescaped right angle bracket</strong></summary>
 
-**Example:**
+**🔧 Fixable:** No | **🏗️ Structural:** Yes
+
+**❌ Problem:**
 ```html
-<div>10 > 5</div>  <!-- Unescaped > -->
+<div>10 > 5 is true</div>
 ```
 
-**Should be:**
+**✅ Should be:**
 ```html
-<div>10 &gt; 5</div>
+<div>10 &gt; 5 is true</div>
+```
+
+</details>
+
+---
+
+## Rule Summary Table
+
+| Rule | Name | Fixable | Structural | Category |
+|------|------|---------|------------|----------|
+| T1 | Instruction placeholder too short | ❌ | ✅ | Internal |
+| P1 | Template overlaps HTML | ❌ | ✅ | Template |
+| P2 | Missing closing template instruction | ❌ | ✅ | Template |
+| P3 | Unmatched closing template instruction | ❌ | ✅ | Template |
+| P4 | Malformed template instruction | ❌ | ✅ | Template |
+| P5 | Extra whitespace in template | ✅ | ❌ | Template |
+| P6 | Missing template padding | ✅ | ❌ | Template |
+| D1 | Doctype must come first | ❌ | ✅ | Structure |
+| D2 | Multiple doctype declarations | ❌ | ✅ | Structure |
+| D3 | Missing closing tag | ❌ | ✅ | Structure |
+| D4 | Unmatched closing tag | ❌ | ✅ | Structure |
+| D5 | Unnecessary self-closing | ✅ | ✅ | Structure |
+| D6 | Invalid self-closing | ✅ | ✅ | Structure |
+| D7 | Malformed opening tag | ❌ | ✅ | Structure |
+| D8 | Malformed closing tag | ❌ | ✅ | Structure |
+| D9 | Missing final newline | ✅ | ❌ | Structure |
+| F1 | Doctype case | ✅ | ❌ | Format |
+| F2 | Trailing whitespace | ✅ | ❌ | Format |
+| F3 | Incorrect indentation | ✅ | ❌ | Format |
+| F4 | Extra vertical whitespace | ✅ | ❌ | Format |
+| F5 | Extra horizontal whitespace | ✅ | ❌ | Format |
+| F6 | Attribute order | ✅ | ❌ | Format |
+| F7 | Tag case | ✅ | ❌ | Format |
+| F8 | Attribute case | ✅ | ❌ | Format |
+| F9 | Missing attribute quotes | ✅ | ❌ | Format |
+| F10 | Wrong quote type | ✅ | ❌ | Format |
+| F11 | Tag whitespace | ✅ | ❌ | Format |
+| F12 | Long tag line break | ✅ | ❌ | Format |
+| F13 | Non-standard tag whitespace | ✅ | ❌ | Format |
+| F14 | Attributes need wrapping | ✅ | ❌ | Format |
+| F15 | Attributes should not wrap | ✅ | ❌ | Format |
+| F16 | Unescaped quotes in attributes | ✅ | ❌ | Format |
+| F17 | Attribute value formatting | ✅ | ❌ | Format |
+| E1 | Non-HTML5 doctype | ❌ | ✅ | Encoding |
+| E2 | Unescaped ampersand | ✅ | ❌ | Encoding |
+| E3 | Unescaped left angle bracket | ❌ | ✅ | Encoding |
+| E4 | Unescaped right angle bracket | ❌ | ✅ | Encoding |
+
+---
+
+## Using This Reference
+
+### For Developers
+1. **See an error code?** Use the table above to jump to the specific rule
+2. **Want to ignore a rule?** Use `--ignore=RULE_CODE` (e.g., `--ignore=F1`)
+3. **Structural issues?** These need manual fixing - Cutesy can't auto-fix them
+4. **Template issues?** Make sure you're using `--extras=django` for Django templates
+
+### For Teams
+1. **Set project standards** by configuring which rules to ignore
+2. **Use in CI/CD** to enforce consistent code style
+3. **Document exceptions** when you need to ignore specific rules for your project
+
+### Quick Fixes
+Most common fixes you can do automatically:
+```bash
+# Fix all auto-fixable issues
+cutesy "*.html" --fix
+
+# Fix but ignore some style rules
+cutesy "*.html" --fix --ignore=[F1,F6]
+
+# Fix with template support
+cutesy "*.html" --fix --extras=[django,tailwind]
 ```
 
 ---
 
-## Rule Reference Summary
-
-This document describes Cutesy's comprehensive rule system. Each rule is designed to enforce consistent, valid HTML while providing clear feedback about issues in your code.
-
-### Understanding Rule Attributes
-
-When Cutesy reports rule violations, understanding the rule's **Fixable** and **Structural** attributes helps you understand:
-
-- **Whether the issue can be automatically resolved** (Fixable vs Nonfixable)
-- **How critical the issue is** (Structural vs Nonstructural)
-- **How the rule behaves in different modes** (check vs fix mode)
-
-Structural rules that are nonfixable represent serious document validity issues that require careful manual correction. Nonstructural rules typically address code style and maintainability concerns.
-
-Use the `--fix` flag to automatically resolve all fixable rule violations while reviewing nonfixable issues manually.
+*This reference covers all rules in Cutesy. For installation and configuration help, see [installation.md](installation.md) and [configuration.md](configuration.md).*
