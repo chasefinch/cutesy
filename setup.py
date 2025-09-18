@@ -10,7 +10,7 @@ with readme_path.open() as readme_file:
 
 setuptools.setup(
     name="cutesy",
-    version="1.0b3",
+    version="1.0b4",
     author="Chase Finch",
     author_email="chase@finch.email",
     description="A linter & formatter for consistent HTML code, or else.",
