@@ -1,0 +1,62 @@
+name: "Build"
+
+on:
+  push:
+    branches:
+      - "*"
+
+# Prevent multiple instances of this workflow from running for pushes to a branch.
+concurrency:
+  group: ${{ github.ref }} # Use the branch reference as the group identifier
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+jobs:
+  build:
+    name: "Lint, Check & Test"
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.13
+
+    steps:
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.13"
+
+      - name: Fetch repository
+        uses: actions/checkout@v4
+
+      - name: Install UV and update PATH
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          uv --version
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install python dependencies
+        run: |
+          . .venv/bin/activate
+          uv pip install -r requirements/test.txt
+
+      - name: Confirm configuration
+        run: |
+          . .venv/bin/activate
+          make configure
+
+      - name: Lint
+        run: |
+          . .venv/bin/activate
+          make lint
+
+      - name: Check
+        run: |
+          . .venv/bin/activate
+          make check
+
+      - name: Run tests
+        run: |
+          . .venv/bin/activate
+          make test
