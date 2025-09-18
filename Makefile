@@ -46,7 +46,7 @@ check:
 test: test-unit test-integration test-private
 	@echo "Combining coverage reports..."
 	coverage combine
-	coverage report -m --fail-under 89
+	coverage report -m --fail-under 91
 	@echo "All tests completed successfully!"
 
 test-unit:
