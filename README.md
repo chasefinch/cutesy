@@ -10,13 +10,15 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 - Sorts classes for TailwindCSS 💖✨
 - Works with AlpineJS and HTMX ⚡💘
 
-![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) [![PyPI - Version](https://img.shields.io/pypi/v/cutesy)](https://pypi.org/project/cutesy/) ![Coverage: 91%](https://img.shields.io/badge/coverage-91%-66ff66.svg?style=flat)
-
 ## Features ✨
 
 - **Auto-Fix**: Automatically corrects most formatting issues
 - **Configurable**: Extensive configuration options for your project's needs
 - **Fast**: Processes large codebases quickly
+
+## Status
+
+![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) [![PyPI - Version](https://img.shields.io/pypi/v/cutesy)](https://pypi.org/project/cutesy/) ![Coverage: 91%](https://img.shields.io/badge/coverage-91%25-66ff66.svg?style=flat)
 
 ## Table of Contents
 
