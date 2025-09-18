@@ -24,8 +24,7 @@ make             # Run everything
 
 **Project requirements:**
 - **Python 3.11+** for development
-- Uses modern Python features and type hints
-- Comprehensive test suite with 91%+ coverage
+- **uv** for dependency management - `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ## Testing Strategy
 
