@@ -65,7 +65,7 @@ def parse_tailwind_class(full: str) -> TailwindClass:
             escape = True
             continue
 
-        if char == ":" and not in_brackets:
+        if char in {":", "@"} and not in_brackets:
             parts.append("".join(buffer))
             buffer = []
         else:
@@ -79,9 +79,25 @@ def parse_tailwind_class(full: str) -> TailwindClass:
 
     modifiers, base = parts[:-1], parts[-1].removeprefix("-")
 
+    # Handle @ prefixed modifiers - combine empty strings with following parts
+    processed_modifiers = []
+    index = 0
+    while index < len(modifiers):
+        if modifiers[index] == "" and index + 1 < len(modifiers):
+            # Empty string from @ at start - combine with next part (e.g., @lg, @max-sm)
+            processed_modifiers.append(f"@{modifiers[index + 1]}")
+            index += 2
+        elif modifiers[index] == "" and index + 1 >= len(modifiers):
+            # Empty string at end from @ - means base should be @base (e.g., @container)
+            base = f"@{base}"
+            index += 1
+        else:
+            processed_modifiers.append(modifiers[index])
+            index += 1
+
     return TailwindClass(
         class_name=base,
-        modifiers=modifiers,
+        modifiers=processed_modifiers,
         full_string=full,
     )
 

@@ -162,11 +162,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         all_class_names_on_one_line = " ".join(all_class_names)
 
         max_attr_chars_per_line = self.max_length - len('class=""')
-        single_line_mode = (
-            len(all_class_names) <= max_items_per_line
-            and len(all_class_names_on_one_line) <= max_attr_chars_per_line
-        )
-
+        single_line_mode = len(all_class_names_on_one_line) <= max_attr_chars_per_line
         if single_line_mode:
             return all_class_names_on_one_line, errors
 
@@ -383,21 +379,20 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             if len(normalized) == 1:
                 return normalized[0]  # single string
 
-            if len(normalized) <= self.max_items_per_line:
-                # Join and fix spaces around delimiters
-                pieces = [str(normalized_item) for normalized_item in normalized]
-                candidate = " ".join(pieces)
+            # Join and fix spaces around delimiters
+            pieces = [str(normalized_item) for normalized_item in normalized]
+            candidate = " ".join(pieces)
 
-                assert self.preprocessor  # required for delimiters
-                left_raw, right_raw = self.preprocessor.delimiters
-                left, right = re.escape(left_raw), re.escape(right_raw)
+            assert self.preprocessor  # required for delimiters
+            left_raw, right_raw = self.preprocessor.delimiters
+            left, right = re.escape(left_raw), re.escape(right_raw)
 
-                # Remove space immediately after left delimiter and before right delimiter
-                candidate = re.sub(rf" {left}", left, candidate)
-                candidate = re.sub(rf"{right} ", right, candidate)
+            # Remove space immediately after left delimiter and before right delimiter
+            candidate = re.sub(rf" {left}", left, candidate)
+            candidate = re.sub(rf"{right} ", right, candidate)
 
-                if len(candidate) <= self.max_length:
-                    return candidate
+            if len(candidate) <= self.max_length:
+                return candidate
 
         # Could not compact; return the sequence with children preserved in place.
         return normalized

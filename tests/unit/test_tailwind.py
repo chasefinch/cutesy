@@ -97,6 +97,42 @@ class TestTailwind:
                     full_string="sm:-mt-4",
                 ),
             ),
+            # Container query with container declaration
+            (
+                "@container:bg-blue",
+                TailwindClass(
+                    class_name="bg-blue",
+                    modifiers=["@container"],
+                    full_string="@container:bg-blue",
+                ),
+            ),
+            # Named container query modifier
+            (
+                "@lg:text-center",
+                TailwindClass(
+                    class_name="text-center",
+                    modifiers=["@lg"],
+                    full_string="@lg:text-center",
+                ),
+            ),
+            # Combined regular and @ modifiers
+            (
+                "hover:@container:bg-red",
+                TailwindClass(
+                    class_name="bg-red",
+                    modifiers=["hover", "@container"],
+                    full_string="hover:@container:bg-red",
+                ),
+            ),
+            # Container declaration standalone
+            (
+                "@container",
+                TailwindClass(
+                    class_name="@container",
+                    modifiers=[],
+                    full_string="@container",
+                ),
+            ),
         ],
     )
     def test_parse_tailwind_class(self, raw: str, expected: TailwindClass) -> None:
@@ -191,3 +227,15 @@ class TestGroupAndSort:
         assert len(result) >= 1
         found = any("bg-red-500" in group for group in result)
         assert found
+
+    def test_at_container_queries(self) -> None:
+        """Test @ container queries are properly parsed and sorted."""
+        classes = ["@lg:text-lg", "bg-red-500", "hover:@max-sm:p-4", "@container"]
+        groups = group_and_sort(classes)
+
+        # Should find classes with @ modifiers and declarations
+        all_classes = [class_name for group in groups for class_name in group]
+        assert "@lg:text-lg" in all_classes
+        assert "hover:@max-sm:p-4" in all_classes
+        assert "bg-red-500" in all_classes
+        assert "@container" in all_classes
