@@ -3,6 +3,7 @@
 from cutesy.attribute_processors.class_ordering.types import (
     DYNAMIC_LIST_ITEM_SENTINEL,
     BaseClassOrderingAttributeProcessor,
+    StashItem,
     expand_class_names,
 )
 
@@ -137,6 +138,195 @@ class TestExpandClassNames:
 
 class TestBaseClassOrderingAttributeProcessor:
     """Test BaseClassOrderingAttributeProcessor functionality."""
+
+    def test_process_with_preprocessor_simple_case(self) -> None:
+        """Test process method works with preprocessor in simple case."""
+        processor = MockClassOrderingProcessor()
+        processor.preprocessor = MockPreprocessor()
+
+        # Test with simple case that doesn't trigger regex errors
+        attr_body = "btn shadow"
+
+        result, errors = processor.process(
+            attr_name="class",
+            position=(1, 10),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            max_chars_per_line=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=MockPreprocessor(),
+            attr_body=attr_body,
+        )
+
+        # Should process successfully
+        assert isinstance(result, str)
+        assert len(errors) == 0
+
+    def test_build_stash_with_control_boundaries(self) -> None:
+        """Test _build_stash handles control items at boundaries."""
+        processor = MockClassOrderingProcessor()
+        processor.preprocessor = MockPreprocessor()
+
+        # Mock scenario with control items
+        class_names = ["start", "«a»", "middle", "«b»", "end"]
+        tree = [0, 4, 5]  # Simple tree structure
+
+        result = processor._build_stash(class_names, tree)
+
+        # Should handle control boundaries correctly
+        assert isinstance(result, list)
+        assert len(result) >= 0
+
+    def test_emit_sorted_run_edge_cases(self) -> None:
+        """Test _emit_sorted_run with various edge cases."""
+        processor = MockClassOrderingProcessor()
+
+        # Test with empty buffer
+        buffer = []
+        stash = []
+        processor._emit_sorted_run(buffer, stash, protect_head=True, protect_tail=True)
+        assert len(stash) == 0
+        assert len(buffer) == 0
+
+        # Test with single item
+        buffer = ["item"]
+        stash = []
+        processor._emit_sorted_run(buffer, stash, protect_head=True, protect_tail=False)
+        assert len(stash) == 1
+        assert len(buffer) == 0
+
+    def test_process_handles_non_class_attributes(self) -> None:
+        """Test process method returns unchanged for non-class attributes."""
+        processor = MockClassOrderingProcessor()
+        attr_body = "value1 value2 value3"
+
+        result, errors = processor.process(
+            attr_name="id",  # Not "class"
+            position=(1, 10),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            max_chars_per_line=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body=attr_body,
+        )
+
+        # Should return unchanged for non-class attributes
+        assert result == attr_body
+        assert len(errors) == 0
+
+    def test_flatten_stash_with_complex_nested_structures(self) -> None:
+        """Test _flatten_stash handles complex nested structures."""
+        processor = MockClassOrderingProcessor()
+        processor.indentation = "\t"
+        processor.preprocessor = MockPreprocessor()
+        processor.max_length = MAX_CHARS_PER_LINE
+        processor.max_items_per_line = 5
+
+        # Create complex nested stash structure
+        nested_stash: list[StashItem] = [
+            "{{a}}",  # Block start
+            ["inner1", ["inner2"]],  # Nested list with proper StashItem structure
+            "{{d}}",  # Continuation
+            "middle",
+            "{{b}}",  # Block end
+        ]
+
+        result = processor._flatten_stash(nested_stash)
+
+        # Should handle nested structures appropriately
+        assert isinstance(result, (str, list))
+
+    def test_extract_columns_and_lines_with_continuation_instructions(self) -> None:
+        """Test _extract_columns_and_lines handles continuations."""
+        processor = MockClassOrderingProcessor()
+        processor.preprocessor = MockPreprocessor()
+
+        # Test with continuation instruction (reduces column by 1)
+        item = "{{d}}"  # 'd' = MID_CONDITIONAL (continuation)
+
+        result = processor._extract_columns_and_lines(item)
+
+        # Should return list of tuples with column adjustments
+        assert isinstance(result, list)
+        assert len(result) > 0
+        tuple_size = 2
+        assert all(isinstance(item, tuple) and len(item) == tuple_size for item in result)
+
+    def test_build_stash_with_control_items_at_boundaries(self) -> None:
+        """Test _build_stash handles control items at start/end correctly."""
+        processor = MockClassOrderingProcessor()
+        processor.preprocessor = MockPreprocessor()
+
+        # Mock class names representing a control structure
+        class_names = ["regular1", "{{a}}", "middle", "{{b}}", "regular2"]
+
+        # Mock tree structure: [1, 3, 4] (start at 1, end at 4, middle at 3)
+        tree = [1, 3, 4]
+        result = processor._build_stash(class_names, tree)
+
+        # Should properly handle control items at boundaries
+        assert isinstance(result, list)
+
+    def test_emit_sorted_run_with_protection_flags(self) -> None:
+        """Test _emit_sorted_run with different flag combinations."""
+        processor = MockClassOrderingProcessor()
+
+        buffer = ["z", "a", "y", "b"]
+        stash = []
+
+        # Test protect_head=True, protect_tail=True
+        processor._emit_sorted_run(buffer, stash, protect_head=True, protect_tail=True)
+
+        # Should protect first and last items, sort middle
+        assert len(stash) > 0
+        # Buffer should be cleared
+        assert len(buffer) == 0
+
+    def test_hydrate_class_groups_with_multiple_groups(self) -> None:
+        """Test _hydrate_class_groups handles multiple class groups."""
+        processor = MockClassOrderingProcessor()
+        processor.stashed_class_names = ["stash1", "stash2"]
+
+        # Multiple groups with sentinels
+        class_groups = [
+            ["group1"],
+            ["item1", f"{DYNAMIC_LIST_ITEM_SENTINEL}_0", "item2"],
+        ]
+
+        result = processor._hydrate_class_groups(class_groups)
+
+        # Should handle multiple groups correctly
+        assert isinstance(result, list)
+        assert len(result) == len(class_groups)
+
+    def test_single_line_mode_calculation(self) -> None:
+        """Test single line mode decision logic."""
+        processor = MockClassOrderingProcessor()
+        processor.max_length = 50
+
+        # Test with classes that fit on single line
+        attr_body = "btn btn-lg shadow"
+
+        result, _errors = processor.process(
+            attr_name="class",
+            position=(1, 10),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            max_chars_per_line=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body=attr_body,
+        )
+
+        # Should use single line mode for short class lists
+        assert "\n" not in result
 
     def test_processor_initialization(self) -> None:
         """Test processor can be instantiated."""

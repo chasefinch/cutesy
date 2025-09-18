@@ -1,6 +1,8 @@
 """Tests for CLI functionality."""
 
+import os
 import tempfile
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -235,6 +237,129 @@ class TestFromCli:
 
 class TestMainIntegration:
     """Test main function integration."""
+
+    def test_main_with_unknown_extra_raises_error(self) -> None:
+        """Test main function raises error with unknown extra."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--extra", "unknown_extra", "*.html"])
+
+        assert result.exit_code != 0
+        assert "Unknown extra(s): unknown_extra" in result.output
+
+    def test_main_with_multiple_unknown_extras_raises_error(self) -> None:
+        """Test main function raises error with multiple unknown extras."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--extra", "unknown1,unknown2", "*.html"])
+
+        assert result.exit_code != 0
+        assert "Unknown extra(s): unknown1, unknown2" in result.output
+
+    def test_main_with_django_extra_creates_preprocessor(self) -> None:
+        """Test main function creates preprocessor for django extra."""
+        runner = CliRunner()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            html_file = temp_path / "test.html"
+            html_file.write_text("<div>{{ variable }}</div>")
+
+            result = runner.invoke(main, ["--extra", "django", str(html_file)])
+
+            # Should process without error (django preprocessor handles {{ }} syntax)
+            assert result.exit_code == 0
+
+    def test_main_with_structural_rule_ignored_in_fix_mode_exits_with_error(self) -> None:
+        """Test error when structural rules are ignored in fix mode."""
+        runner = CliRunner()
+        # P2 is a structural rule
+        result = runner.invoke(main, ["--fix", "--ignore", "P2", "*.html"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rule" in result.output
+        assert "P2" in result.output
+
+    def test_main_with_structural_rule_category_ignored_in_fix_mode_exits_with_error(self) -> None:
+        """Test error when structural rule category is ignored in fix mode."""
+        runner = CliRunner()
+        # P category includes structural rules
+        result = runner.invoke(main, ["--fix", "--ignore", "P", "*.html"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rule" in result.output
+
+    def test_main_with_multiple_structural_rules_ignored_shows_plural(self) -> None:
+        """Test plural message when multiple structural rules are ignored."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--fix", "--ignore", "P", "*.html"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rules" in result.output  # plural
+
+    def test_main_with_absolute_file_path(self) -> None:
+        """Test main function with absolute file path."""
+        runner = CliRunner()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            html_file = temp_path / "test.html"
+            html_file.write_text("<div>content</div>")
+
+            result = runner.invoke(main, [str(html_file.absolute())])
+
+            assert result.exit_code == 0
+
+    def test_main_with_config_override_from_cli(self) -> None:
+        """Test main function overrides config with CLI parameters."""
+        runner = CliRunner()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            # Create config that sets fix=false
+            config_file = temp_path / "cutesy.toml"
+            config_file.write_text("fix = false")
+
+            html_file = temp_path / "test.html"
+            html_file.write_text("<div>content</div>")
+
+            with ExitStack() as stack:
+                original_cwd = Path.cwd()
+                stack.callback(os.chdir, original_cwd)
+                os.chdir(temp_path)
+                result = runner.invoke(main, ["--fix", str(html_file)])
+                assert result.exit_code == 0
+
+    def test_main_with_code_mode_no_errors(self) -> None:
+        """Test main function in code mode with no errors."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--code", "<div>valid</div>"])
+
+        assert result.exit_code == 0
+        assert "No problems found" in result.output
+
+    def test_main_with_code_mode_has_errors(self) -> None:
+        """Test main function in code mode with errors."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--code", "<DIV>invalid</DIV>"])  # Uppercase tag
+
+        assert result.exit_code == 1
+        assert "proble̴m" in result.output  # Stylized text
+
+    def test_main_with_code_mode_fix_and_errors(self) -> None:
+        """Test main function in code mode with fix and remaining errors."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--code", "--fix", "<DIV>test</DIV>"])
+
+        # Should show fixed output and completion message
+        if result.exit_code == 0:
+            assert "All done" in result.output or "Nothing to fix" in result.output
+        else:
+            assert "pro̵ble̴m" in result.output
+
+    def test_main_with_return_zero_flag(self) -> None:
+        """Test main function with --return-zero flag."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--return-zero", "--code", "<DIV>test</DIV>"])
+
+        # Should exit 0 even with errors when --return-zero is used
+        assert result.exit_code == 0
 
     def test_main_with_code_flag(self) -> None:
         """Test main function with --code flag."""

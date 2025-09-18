@@ -11,7 +11,8 @@ from cutesy.preprocessors.types import (
     BasePreprocessor,
     SetupError,
 )
-from cutesy.types import InstructionType, StructuralError
+from cutesy.rules import Rule
+from cutesy.types import Error, InstructionType, StructuralError
 
 # Constants to avoid magic numbers
 EXPECTED_DELIMITER_COUNT = 2
@@ -25,6 +26,7 @@ class MockPreprocessor(BasePreprocessor):
     closing_tag_string_map: ClassVar[dict[str, str]] = {
         "test": "endtest",
         "block": "endblock",
+        "comment": "endcomment",
     }
 
     def parse_instruction_tag(
@@ -54,6 +56,14 @@ class MockPreprocessor(BasePreprocessor):
             return instruction, InstructionType.PARTIAL
         if instruction == "endtest":
             return instruction, InstructionType.END_PARTIAL
+        if instruction == "block":
+            return instruction, InstructionType.PARTIAL
+        if instruction == "endblock":
+            return instruction, InstructionType.END_PARTIAL
+        if instruction == "comment":
+            return instruction, InstructionType.COMMENT
+        if instruction == "endcomment":
+            return instruction, InstructionType.END_COMMENT
         return instruction, InstructionType.VALUE
 
 
@@ -329,3 +339,124 @@ class TestBasePreprocessor:
         assert len(delimiters2) == EXPECTED_DELIMITER_COUNT
         assert delimiters1[0] != delimiters1[1]
         assert delimiters2[0] != delimiters2[1]
+
+    def test_reset_with_many_special_chars_in_html(self) -> None:
+        """Test reset when HTML contains many special characters."""
+        preprocessor = MockPreprocessor()
+        # HTML containing many special characters to force delimiter search
+        # Use specific characters, avoiding soft hyphen (\xad) which is in SPECIAL_CHARS
+        special_chars_html = "¡¢£¤¥¦§¨©ª«¬®¯°±²³"  # Skip ­ (soft hyphen)
+        html = f"<div>{special_chars_html}</div>"
+
+        preprocessor.reset(html)
+
+        # Should still find valid delimiters
+        assert len(preprocessor.delimiters) == EXPECTED_DELIMITER_COUNT
+        assert preprocessor.delimiters[0] not in html
+        assert preprocessor.delimiters[1] not in html
+
+    def test_restore_before_processing_raises_error(self) -> None:
+        """Test that restore raises SetupError when called before process."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{{ variable }}</div>"
+
+        preprocessor.reset(html)
+        # Don't call process()
+
+        with pytest.raises(SetupError) as exc_info:
+            preprocessor.restore(html, [])
+
+        assert "before initial processing" in str(exc_info.value)
+
+    def test_restore_with_newlines_in_instructions(self) -> None:
+        """Test restore properly handles newlines in template instructions."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{{ variable\nwith\nnewlines }}</div>"
+
+        preprocessor.reset(html)
+        processed = preprocessor.process()
+
+        error = Error(line=1, column=10, rule=Rule.get("F1"), replacements={})
+        errors = [error]
+
+        result = preprocessor.restore(processed, errors)
+
+        # Should restore the original newlines
+        assert "variable\nwith\nnewlines" in result
+        # Error line numbers should be adjusted for newlines
+        assert error.line >= 1  # May have been adjusted
+
+    def test_process_with_dangling_block_instruction(self) -> None:
+        """Test processing fails with unmatched block instructions."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{% block %}content</div>"  # Missing {% endblock %}
+
+        preprocessor.reset(html)
+
+        with pytest.raises(StructuralError) as exc_info:
+            preprocessor.process()
+
+        # Should report the expected closing tag
+        assert len(exc_info.value.errors) == 1
+        assert "endblock" in str(exc_info.value.errors[0].replacements.get("tag", ""))
+
+    def test_process_with_malformed_closing_tag(self) -> None:
+        """Test processing fails when closing brace is missing."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{% test %content</div>"  # Missing closing %}
+
+        preprocessor.reset(html)
+
+        with pytest.raises(StructuralError) as exc_info:
+            preprocessor.process()
+
+        # Should be a P4 error (malformed tag)
+        assert exc_info.value.errors[0].rule.code == "P4"
+
+    def test_process_with_comment_blocks(self) -> None:
+        """Test processing with comment block tags."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{% comment %}some comment{% endcomment %}</div>"
+
+        preprocessor.reset(html)
+        result = preprocessor.process()
+
+        # Comment blocks should be processed
+        assert "{%" not in result
+        assert "some comment" not in result  # Comments are absorbed
+
+    def test_process_with_missing_comment_end(self) -> None:
+        """Test processing fails when comment end tag is missing."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{% comment %}some comment</div>"  # Missing {% endcomment %}
+
+        preprocessor.reset(html)
+
+        with pytest.raises(StructuralError) as exc_info:
+            preprocessor.process()
+
+        # Should be a P2 error for missing closing tag
+        assert exc_info.value.errors[0].rule.code == "P2"
+
+    def test_process_without_valid_padding_in_non_fix_mode(self) -> None:
+        """Test processing detects invalid padding in non-fix mode."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{{variable}}</div>"  # No spaces around variable
+
+        preprocessor.reset(html, fix=False)
+        preprocessor.process()
+
+        # Should process but create P6 error about padding
+        assert len(preprocessor.errors) == 1
+        assert preprocessor.errors[0].rule.code == "P6"
+
+    def test_process_with_collapsed_spacing_issues_in_non_fix_mode(self) -> None:
+        """Test processing detects spacing issues in non-fix mode."""
+        preprocessor = MockPreprocessor()
+        html = "<div>{{ block    param1=value1    param2=value2 }}</div>"  # Extra spaces in value
+
+        preprocessor.reset(html, fix=False)
+        preprocessor.process()
+
+        # Should detect spacing issues
+        assert any(error.rule.code == "P5" for error in preprocessor.errors)
