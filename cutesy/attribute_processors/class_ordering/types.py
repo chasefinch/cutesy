@@ -161,8 +161,16 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         all_class_names = list(collapse(sorted_class_group_tree, base_type=str))
         all_class_names_on_one_line = " ".join(all_class_names)
 
+        # Check if any items were originally nested structures (i.e., came from block instructions)
+        has_originally_nested_content = any(
+            isinstance(item, list) for group in sorted_class_group_tree for item in group
+        )
+
         max_attr_chars_per_line = self.max_length - len('class=""')
-        single_line_mode = len(all_class_names_on_one_line) <= max_attr_chars_per_line
+        single_line_mode = (
+            len(all_class_names_on_one_line) <= max_attr_chars_per_line
+            and not has_originally_nested_content
+        )
         if single_line_mode:
             return all_class_names_on_one_line, errors
 
@@ -378,6 +386,24 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         if all_strings:
             if len(normalized) == 1:
                 return normalized[0]  # single string
+
+            # Check if any string item contains block instructions
+            # (not just any preprocessor instructions)
+            has_block_instructions = False
+            if self.preprocessor:
+                left_delimiter = self.preprocessor.delimiters[0]
+                min_instruction_length = 4
+                has_block_instructions = any(
+                    isinstance(block_item, str)
+                    and block_item.startswith(left_delimiter)
+                    and len(block_item) >= min_instruction_length
+                    and InstructionType(block_item[1]).starts_block
+                    for block_item in normalized
+                )
+
+            # If this contains block instructions, preserve list structure
+            if has_block_instructions:
+                return normalized  # Preserve list structure for block instructions
 
             # Join and fix spaces around delimiters
             pieces = [str(normalized_item) for normalized_item in normalized]
