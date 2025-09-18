@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from enum import Enum, auto, unique
 from typing import cast
 
-from classproperties import classproperty
 from data_enum import DataEnum
 
 from .rules import Rule
@@ -103,8 +102,8 @@ class InstructionType(Enum):
     # Ignore for processing
     IGNORED = "n"  # noqa: WPS115 (Caps preferred for Enums)
 
-    @classproperty
-    def block_starts(cls) -> set["InstructionType"]:  # noqa: N805 (Classproperty convention)
+    @classmethod
+    def block_starts(cls) -> set["InstructionType"]:  # noqa: N805
         """Return a set of instruction types which start a block."""
         starts: set[InstructionType] = {
             cast("InstructionType", cls.PARTIAL),
@@ -113,7 +112,7 @@ class InstructionType(Enum):
         }
         return starts
 
-    @classproperty
+    @classmethod
     def block_continuations(cls) -> set["InstructionType"]:  # noqa: N805
         """Return a set of instruction types which continue a block."""
         continuations: set[InstructionType] = {
@@ -122,7 +121,7 @@ class InstructionType(Enum):
         }
         return continuations
 
-    @classproperty
+    @classmethod
     def block_ends(cls) -> set["InstructionType"]:  # noqa: N805
         """Return a set of instruction types which end a block."""
         ends: set[InstructionType] = {
@@ -166,14 +165,14 @@ class InstructionType(Enum):
     @property
     def starts_block(self) -> bool:
         """Whether this instruction type causes an increase in indentation."""
-        return self in self.block_starts
+        return self in self.block_starts()
 
     @property
     def continues_block(self) -> bool:
         """Whether this instruction type continues a block."""
-        return self in self.block_continuations
+        return self in self.block_continuations()
 
     @property
     def ends_block(self) -> bool:
         """Whether this instruction type causes a decrease in indentation."""
-        return self in self.block_ends
+        return self in self.block_ends()

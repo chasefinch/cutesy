@@ -8,10 +8,9 @@ from abc import abstractmethod
 # add at top with your other imports
 from typing import TYPE_CHECKING, TypeAlias, cast
 
-from more_itertools import collapse
-
 from ...rules import Rule
 from ...types import Error, InstructionType, StructuralError
+from ...utilities.collections import collapse
 from .. import BaseAttributeProcessor
 
 if TYPE_CHECKING:
@@ -83,8 +82,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
             # Ensure that there aren't mid-class instructions
             esc = re.escape
-            block_starts = InstructionType.block_starts
-            block_ends = InstructionType.block_ends
+            block_starts = InstructionType.block_starts()
+            block_ends = InstructionType.block_ends()
             start_set = "".join(esc(type_.value) for type_ in block_starts)
             end_set = "".join(esc(type_.value) for type_ in block_ends)
 
