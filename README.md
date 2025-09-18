@@ -4,7 +4,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 **Cutesy reformats & lints HTML documents**, including HTML templates. It ensures consistent indentation, line breaks, and formatting while automatically fixing most issues.
 
-## First-class support for your favorite frameworks
+## ❤️ First-class support for your favorite frameworks
 
 - Full support for Django templates 🐍💕
 - Sorts classes for TailwindCSS 💖✨
@@ -16,13 +16,13 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 - **📏 Configurable**: Extensive configuration options for your project's needs
 - **🏃‍♂️ Fast**: Processes large codebases quickly
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Quick Start](#-quick-start)
 - [Installation](#-installation)
 - [Basic Usage](#-basic-usage)
 - [Configuration](#-configuration)
-- [Template Languages](#-template-languages)  
+- [Template Languages](#-template-languages)
 - [CSS Framework Support](#-css-framework-support)
 - [Examples](#-examples)
 - [Documentation](#-documentation)
@@ -45,7 +45,7 @@ cutesy "*.html" --fix
 cutesy "templates/**/*.html" --fix --extras=[django,tailwind]
 ```
 
-## 💾 Installation
+## Installation
 
 Cutesy requires **Python 3.11+** and works on Linux, macOS, and Windows.
 
@@ -68,7 +68,7 @@ pip install -e .
 
 > 📚 **Detailed guide**: See [Installation Documentation](docs/installation.md) for editor integration, pre-commit hooks, and CI/CD setup.
 
-## 🎯 Basic Usage
+## Basic Usage
 
 ### Command Line
 
@@ -96,7 +96,7 @@ cutesy "*.html" --return-zero      # Don't fail CI on issues
 | `--quiet` | Suppress detailed output | `--quiet` |
 | `--check-doctype` | Process non-HTML5 files | `--check-doctype` |
 
-## ⚙️ Configuration
+## Configuration
 
 ### Configuration Files
 
@@ -126,7 +126,7 @@ max_items_per_line = 6
 
 > 📚 **Complete guide**: See [Configuration Documentation](docs/configuration.md) for all options and examples.
 
-## 🎭 Template Languages
+## Template Languages
 
 ### Django Templates
 
@@ -158,7 +158,7 @@ cutesy "templates/*.html" --fix --extras=django
 {% endif %}
 ```
 
-## 🎨 CSS Framework Support
+## CSS Framework Support
 
 ### TailwindCSS
 
@@ -191,7 +191,7 @@ Cutesy works great with attribute-heavy frameworks:
 - **Whitespace normalization** inside attributes
 - **Consistent formatting** across your components
 
-## 📖 Examples
+## Examples
 
 Cutesy ensures that HTML documents contain consistent whitespace, follow best practices, and adhere to common conventions. In `--fix` mode, Cutesy turns this:
 
@@ -257,7 +257,7 @@ cutesy "src/**/*.html" --fix --line-length=120
 cutesy "src/components/*.html" --fix --extras=tailwind
 ```
 
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -266,7 +266,7 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 | **[Rules Reference](docs/rules.md)** | Complete list of all rules with examples and fixes |
 | **[Development Guide](docs/development.md)** | Contributing, testing, and development setup |
 
-## 🎯 Benefits
+## Benefits
 
 ✅ **Validate AI code output** - Catch inconsistencies in generated HTML
 ✅ **Enforce team standards** - Consistent formatting across all developers
@@ -275,7 +275,7 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 ✅ **Better code reviews** - Focus on logic, not formatting
 ✅ **Framework integration** - Works with your existing tools and workflows
 
-## 🏷️ Badge
+## Badge
 
 Show off how Cutesy keeps you in line.
 
@@ -285,7 +285,7 @@ Show off how Cutesy keeps you in line.
 [![code style: cutesy](https://img.shields.io/badge/code_style-cutesy_🥰-f34e5d.svg?style=flat)](https://github.com/chasefinch/cutesy)
 ```
 
-## 🛠️ Development
+## Development
 
 **Setup development environment:**
 ```bash
@@ -308,13 +308,11 @@ make format      # Format code
 - Uses modern Python features and type hints
 - Comprehensive test suite with 91%+ coverage
 
-> 📚 **Contributing**: See [Development Guide](docs/development.md) for detailed contribution guidelines.
-
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Whether it's:
 
