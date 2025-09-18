@@ -30,11 +30,11 @@ Cutesy is a linter and formatter for HTML that enforces consistent code style an
 
 Each rule has two key attributes:
 
-**🔧 Fixable**
+**Fixable**
 - ✅ **Yes**: Cutesy can automatically fix this issue
 - ❌ **No**: Requires manual correction
 
-**🏗️ Structural**
+**Structural**
 - ✅ **Yes**: Critical issue that affects document validity
 - ❌ **No**: Style preference that can be ignored
 
@@ -52,7 +52,7 @@ Each rule has two key attributes:
 <details>
 <summary><strong>T1: Instruction not long enough to generate a placeholder</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Internal rule used when template instructions are too short for processing placeholders.
 
@@ -67,7 +67,7 @@ Internal rule used when template instructions are too short for processing place
 <details>
 <summary><strong>P1: Template instruction overlaps HTML elements</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Template syntax interferes with HTML parsing.
 
@@ -83,7 +83,7 @@ Template syntax interferes with HTML parsing.
 <details>
 <summary><strong>P2: Missing closing template instruction</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Template block not properly closed.
 
@@ -106,7 +106,7 @@ Template block not properly closed.
 <details>
 <summary><strong>P3: Unmatched closing template instruction</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Closing template instruction without matching opener.
 
@@ -121,7 +121,7 @@ Closing template instruction without matching opener.
 <details>
 <summary><strong>P4: Malformed template instruction</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Invalid template syntax.
 
@@ -135,7 +135,7 @@ Invalid template syntax.
 <details>
 <summary><strong>P5: Extra whitespace in template instruction</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -152,7 +152,7 @@ Invalid template syntax.
 <details>
 <summary><strong>P6: Missing padding in template instruction</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -175,7 +175,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D1: Doctype must come first</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -190,7 +190,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D2: Multiple doctype declarations</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -203,7 +203,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D3: Missing closing tag</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Improper tag nesting or missing closing tags.
 
@@ -217,7 +217,7 @@ Improper tag nesting or missing closing tags.
 <details>
 <summary><strong>D4: Unmatched closing tag</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -229,7 +229,7 @@ Improper tag nesting or missing closing tags.
 <details>
 <summary><strong>D5: Unnecessary self-closing syntax</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** Yes
+**Fixable:** Yes | **Structural:** Yes
 
 Void elements don't need self-closing syntax in HTML5.
 
@@ -248,7 +248,7 @@ Void elements don't need self-closing syntax in HTML5.
 <details>
 <summary><strong>D6: Invalid self-closing of non-void element</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** Yes
+**Fixable:** Yes | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -265,7 +265,7 @@ Void elements don't need self-closing syntax in HTML5.
 <details>
 <summary><strong>D7: Malformed opening tag</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -277,7 +277,7 @@ Void elements don't need self-closing syntax in HTML5.
 <details>
 <summary><strong>D8: Malformed closing tag</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -289,7 +289,7 @@ Void elements don't need self-closing syntax in HTML5.
 <details>
 <summary><strong>D9: Missing final newline</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 Files should end with a newline character.
 
@@ -319,7 +319,7 @@ Files should end with a newline character.
 <details>
 <summary><strong>F1: Doctype should be lowercase</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -336,7 +336,7 @@ Files should end with a newline character.
 <details>
 <summary><strong>F2: Trailing whitespace</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 Lines shouldn't end with spaces or tabs.
 
@@ -357,7 +357,7 @@ Lines shouldn't end with spaces or tabs.
 <details>
 <summary><strong>F3: Incorrect indentation</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -378,7 +378,7 @@ Lines shouldn't end with spaces or tabs.
 <details>
 <summary><strong>F4: Too much vertical whitespace</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 Maximum one blank line between elements.
 
@@ -405,7 +405,7 @@ Maximum one blank line between elements.
 <details>
 <summary><strong>F5: Too much horizontal whitespace</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -424,7 +424,7 @@ Maximum one blank line between elements.
 <details>
 <summary><strong>F6: Incorrect attribute order</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 Attributes should follow a consistent order.
 
@@ -443,7 +443,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F7: Tags should be lowercase</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -460,7 +460,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F8: Attributes should be lowercase</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -477,7 +477,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F9: Attribute values need quotes</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -494,7 +494,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F10: Attribute using wrong quote type</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -513,7 +513,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F11: Tag contains extra whitespace</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -530,7 +530,7 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F12: Long tag should start on new line</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 Tags with many attributes should start on a new line.
 
@@ -550,7 +550,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F13: Non-standard whitespace in tag</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -569,7 +569,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F14: Long attributes should wrap to new lines</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -597,7 +597,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F15: Short attributes should stay on one line</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -619,7 +619,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F16: Attribute contains unescaped quotes</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -636,7 +636,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F17: Attribute value formatting</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -659,7 +659,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>E1: Non-HTML5 doctype</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 Only HTML5 doctype is supported.
 
@@ -680,7 +680,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E2: Unescaped ampersand</strong></summary>
 
-**🔧 Fixable:** Yes | **🏗️ Structural:** No
+**Fixable:** Yes | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -699,7 +699,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E3: Unescaped left angle bracket</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -716,7 +716,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E4: Unescaped right angle bracket</strong></summary>
 
-**🔧 Fixable:** No | **🏗️ Structural:** Yes
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
@@ -783,24 +783,6 @@ Only HTML5 doctype is supported.
 2. **Want to ignore a rule?** Use `--ignore=RULE_CODE` (e.g., `--ignore=F1`)
 3. **Structural issues?** These need manual fixing - Cutesy can't auto-fix them
 4. **Template issues?** Make sure you're using `--extras=django` for Django templates
-
-### For Teams
-1. **Set project standards** by configuring which rules to ignore
-2. **Use in CI/CD** to enforce consistent code style
-3. **Document exceptions** when you need to ignore specific rules for your project
-
-### Quick Fixes
-Most common fixes you can do automatically:
-```bash
-# Fix all auto-fixable issues
-cutesy "*.html" --fix
-
-# Fix but ignore some style rules
-cutesy "*.html" --fix --ignore=[F1,F6]
-
-# Fix with template support
-cutesy "*.html" --fix --extras=[django,tailwind]
-```
 
 ---
 
