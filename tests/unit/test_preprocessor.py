@@ -43,7 +43,7 @@ class MockPreprocessor(BasePreprocessor):
             if braces[0] == "{#":
                 return "…", InstructionType.IGNORED
             error_message = ERROR_CODE_P4
-            raise self._make_fatal_error(error_message)
+            raise self.make_fatal_error(error_message)
 
         parts = body.split()
         instruction = parts[0] if parts else ""

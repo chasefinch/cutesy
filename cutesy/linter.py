@@ -1001,10 +1001,13 @@ class HTMLLinter(HTMLParser):
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
                         )
-                        fix_f17 = self.fix and not self.is_rule_ignored("F17")
                         if processing_errors:
                             self._errors.extend(processing_errors)
-                        elif not fix_f17 and value != processed_value and final_pass:
+                            # Report F17 if there were unfixable processing errors
+                            if final_pass and not self.is_rule_ignored("F17"):
+                                self._handle_error("F17", attr=name)
+                        elif not self.fix and value != processed_value and final_pass and not self.is_rule_ignored("F17"):
+                            # In non-fix mode, report formatting issues that would be fixed
                             self._handle_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))

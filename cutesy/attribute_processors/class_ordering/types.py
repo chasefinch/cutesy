@@ -123,14 +123,14 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
                     elif instruction_type.continues_block:
                         if not stack:
-                            error_message = f"Continuation outside a block at index {index}"
-                            raise ValueError(error_message)
+                            error_code = "P3"
+                            raise preprocessor.make_fatal_error(error_code, attr=attr_name)
                         stack[-1].append(index)  # continuation marker
 
                     elif instruction_type.ends_block:
                         if not stack:
-                            error_message = f"Unbalanced block ending at index {index}"
-                            raise ValueError(error_message)
+                            error_code = "P3"
+                            raise preprocessor.make_fatal_error(error_code, attr=attr_name)
                         stack[-1].append(index + 1)  # end index (exclusive)
                         stack.pop()
 

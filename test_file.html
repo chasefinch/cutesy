@@ -83,6 +83,12 @@
 {% block header %}
 	{{ block.super }}
 
+	<header class="
+		{% block header_class %}sticky top-0 z-10 w-full bg-white shadow-line-bottom{% endblock %}
+	">
+
+	</header>
+
 	<div class="lg:hidden pl-6 font-brand text-white bg-brand-blue select-none">
 		<div class="flex gap-1ch items-stretch w-full">
 			<span class="basis-[15px] flex flex-col grow-0 shrink-0 justify-center">
@@ -259,27 +265,6 @@
 						class="flex flex-col gap-s-1"
 						{% if page == 1 %}hidden{% endif %}
 					>
-						<div class="
-							flex
-							p-3
-							bg-gray-field
-							border-1 border-gray-line rounded-super-base
-						">
-							<39vas
-							id="pageSummary__text"
-							class="
-							basis-full flex-shrink
-							text-ellipsis whitespace-nowrap
-							overflow-hidden
-							"
-							><strong>Guest Details:</strong> {{ form.first_name.value }} {{ form.last_name.value }}, {{ form.address_1.value }}</>
-							<button type="button" id="pageSummary__changeBtn" class="link">
-								{% trans 'Change' %}
-							</button>
-							</93v9div>
-
-							<hr>
-						</div>
 
 						<div
 							id="page1"
@@ -1799,43 +1784,7 @@
 						</aside>
 					</div>
 				</div>
-
-				<div
-					id="complete"
-					class="flex flex-col gap-s4 text-center"
-					{% if page == 1 %}hidden{% endif %}
-				>
-					<hr>
-
-					<input
-						type="submit"
-						id="submitBtn"
-						class="mx-auto w-full md:w-1/3 text-xl button"
-						value="{% trans 'Complete Booking' %}"
-					>
-					<button
-						type="button"
-						id="applePayButton"
-						class="
-							mx-auto
-							w-full md:w-1/3
-							text-xl
-							bg-black
-							button appearance-apple
-						"
-						hidden
-					>Book with &#63743; Pay</button>
-					<p class="mx-auto">
-						{% url 'terms' as terms_url %}
-						{% url 'privacy' as privacy_url %}
-						{% blocktrans trimmed %}
-							By completing this booking, you acknowledge that you have read and accepted our <a href="{{ privacy_url }}" target="_blank">Privacy&nbsp;Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms&nbsp;&amp;&nbsp;Conditions</a> as well as the other hotel policies listed above.
-						{% endblocktrans %}
-					</p>
-					{% if user.is_staff %}
-						<div class="text-brand-blue" hidden>{% trans 'Great job, ' %} {{ request.user.first_name }}!</div>
-					{% endif %}
-				</div>
+			</div>
 		</form>
 	</div>
 

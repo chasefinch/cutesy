@@ -416,7 +416,7 @@ class TestDjangoPreprocessor:
         preprocessor = Preprocessor()
         html = "{% %}"
 
-        # Initialize the attributes that _make_fatal_error expects
+        # Initialize the attributes that make_fatal_error expects
         preprocessor.line = 1
         preprocessor.offset = 0
 
