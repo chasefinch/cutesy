@@ -2,7 +2,7 @@
 
 A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕̰͐̅͘͘n̶̦̣͙̑̌̆̄ǵ̷̗̗̀͝r̷̭̈́͂͘ẙ̶͔̟̞̊̈…̴̢͘
 
-![Build Status](https://github.com/BringFido/bringfido-web/actions/workflows/build.yml/badge.svg?branch=main) ![PyPI - Version](https://img.shields.io/pypi/v/cutesy)
+![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) ![PyPI - Version](https://img.shields.io/pypi/v/cutesy)
 
 **Cutesy reformats & lints HTML documents**, including HTML templates. It ensures consistent indentation, line breaks, and formatting while automatically fixing most issues.
 
