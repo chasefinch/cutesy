@@ -11,21 +11,14 @@
 		<p class="leading-[1.8] text-[theme(colors.gray.600)] [&:nth-child(odd)]:bg-gray-100">
 			Paragraph with arbitrary values
 		</p>
-		<button
-			class="
-				px-[calc(1rem+2px)] py-[0.75rem]
-				text-white [@media(max-width:640px)]:text-sm
-				bg-blue-500
-			"
-		>
+		<button class="
+			px-[calc(1rem+2px)] py-[0.75rem]
+			text-white [@media(max-width:640px)]:text-sm
+			bg-blue-500
+		">
 			Custom Button
 		</button>
-		<div
-			class="
-				grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))]
-				gap-[clamp(1rem,4vw,2rem)]
-			"
-		>
+		<div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-[clamp(1rem,4vw,2rem)]">
 			<div class="p-4 bg-white [&>svg]:h-6 [&>svg]:w-6">Card 1</div>
 			<div class="p-4 bg-slate-100 dark:[&>*]:text-white">Card 2</div>
 		</div>
