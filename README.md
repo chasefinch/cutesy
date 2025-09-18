@@ -18,7 +18,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 ## Table of Contents
 
-- [🚀 Quick Start](#-quick-start)
+- [Quick Start](#-quick-start)
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
 - [Configuration](#configuration)
