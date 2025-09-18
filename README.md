@@ -18,7 +18,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 ## Status
 
-![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) [![PyPI - Version](https://img.shields.io/pypi/v/cutesy)](https://pypi.org/project/cutesy/) ![Coverage: 91%](https://img.shields.io/badge/coverage-91%25-66ff66.svg?style=flat)
+![Build Status](https://github.com/chasefinch/cutesy/actions/workflows/build.yml/badge.svg?branch=main) [![PyPI - Version](https://img.shields.io/pypi/v/cutesy)](https://pypi.org/project/cutesy/) ![Coverage: 91%](https://img.shields.io/badge/coverage-91%25-66dd66.svg?style=flat)
 
 ## Table of Contents
 
