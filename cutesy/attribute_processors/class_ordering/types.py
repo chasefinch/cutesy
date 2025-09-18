@@ -471,9 +471,23 @@ def expand_class_names(
             continue
 
         parts = pattern.split(class_name)  # keeps the delimited chunks in the result
-        if not keep_empty:
-            parts = [part for part in parts if part != ""]
 
-        out.extend(parts)
+        # Process parts: strip whitespace from non-delimited parts, keep delimited parts as-is
+        processed_parts = []
+        for index, part in enumerate(parts):
+            if part.startswith(left) and part.endswith(right):
+                # This is a delimited part - keep as-is
+                processed_parts.append(part)
+            else:
+                # This is a non-delimited part - strip whitespace and handle empty
+                stripped = part.strip()
+                # Skip empty strings at beginning/end, keep middle ones if keep_empty=True
+                is_first = index == 0
+                is_last = index == len(parts) - 1
+                keep_middle_empty = keep_empty and not (is_first or is_last) and stripped == ""
+                if stripped or keep_middle_empty:
+                    processed_parts.append(stripped)
+
+        out.extend(processed_parts)
 
     return out

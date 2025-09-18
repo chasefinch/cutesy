@@ -194,7 +194,7 @@ def main(
 
     # Check for structural rules being ignored in fix mode
     if fix and ignore_rules:
-        structural_rules = {rule.code for rule in Rule.__members__.values() if rule.structural}
+        structural_rules = {rule.code for rule in Rule.members if rule.structural}
         ignored_structural_rules = []
 
         for ignored_rule in ignore_rules:
@@ -216,7 +216,7 @@ def main(
             maybe_s = "" if len(ignored_structural_rules) == 1 else "s"
             rules_list = ", ".join(ignored_structural_rules)
             click.echo(
-                f"🔪 \033[91m\033[1mCan’t ignore structural rule{maybe_s} {rules_list} in "
+                f"🔪 \033[91m\033[1mCan't ignore structural rule{maybe_s} {rules_list} in "
                 "fix mode\033[0m",
             )
             sys.exit(1)
@@ -239,10 +239,19 @@ def main(
     if code:
         html_paths_and_strings = [(None, pattern)]
     else:
-        for glob_path in Path().glob(pattern):
-            with glob_path.open("r") as html_file:
+        # Handle both absolute paths and glob patterns
+        pattern_path = Path(pattern)
+        if pattern_path.is_absolute() and pattern_path.exists():
+            # Absolute path to a specific file
+            with pattern_path.open("r") as html_file:
                 html = html_file.read()
-                html_paths_and_strings.append((glob_path, html))
+                html_paths_and_strings.append((pattern_path, html))
+        else:
+            # Relative glob pattern
+            for glob_path in Path().glob(pattern):
+                with glob_path.open("r") as html_file:
+                    html = html_file.read()
+                    html_paths_and_strings.append((glob_path, html))
 
     result = None  # For passed-in-code mode
     for path, html in html_paths_and_strings:

@@ -65,7 +65,7 @@ class TestExpandClassNames:
             "{%else%}",
             "btn--sm",
             "{%endif%}",
-            " shadow",
+            "shadow",
             "card",
         ]
         assert result == expected
@@ -74,7 +74,7 @@ class TestExpandClassNames:
         """Test keep_empty=True preserves empty strings."""
         class_names = ["{%if x%}{%endif%}"]
         result = expand_class_names(class_names, "{", "}", keep_empty=True)
-        expected = ["", "{%if x%}", "", "{%endif%}", ""]
+        expected = ["{%if x%}", "", "{%endif%}"]
         assert result == expected
 
     def test_keep_empty_false(self) -> None:
@@ -100,7 +100,7 @@ class TestExpandClassNames:
         """Test complex content within delimiters."""
         class_names = ["{%if user.is_admin%}admin-panel{%endif%} base-class"]
         result = expand_class_names(class_names, "{", "}")
-        expected = ["{%if user.is_admin%}", "admin-panel", "{%endif%}", " base-class"]
+        expected = ["{%if user.is_admin%}", "admin-panel", "{%endif%}", "base-class"]
         assert result == expected
 
 

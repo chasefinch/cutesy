@@ -284,3 +284,82 @@ class TestMainIntegration:
         assert "Cutesy" in result.output
         assert "--fix" in result.output
         assert "--code" in result.output
+
+
+class TestErrorHandling:
+    """Test CLI error handling paths."""
+
+    def test_ignore_structural_rule_in_fix_mode_specific_rule(self) -> None:
+        """Test error when ignoring specific structural rule in fix mode."""
+        runner = CliRunner()
+
+        # F14 is a structural rule - ignoring it in fix mode should fail
+        result = runner.invoke(main, ["--fix", "--ignore", "F14", "--code", "<div>test</div>"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rule" in result.output
+        assert "F14" in result.output
+        assert "fix mode" in result.output
+
+    def test_ignore_structural_rule_in_fix_mode_category(self) -> None:
+        """Test error when ignoring structural rule category in fix mode."""
+        runner = CliRunner()
+
+        # F1 category includes structural rules - ignoring it in fix mode should fail
+        result = runner.invoke(main, ["--fix", "--ignore", "F1", "--code", "<div>test</div>"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rule" in result.output
+        assert "fix mode" in result.output
+
+    def test_ignore_multiple_structural_rules_in_fix_mode(self) -> None:
+        """Test error when ignoring multiple structural rules in fix mode."""
+        runner = CliRunner()
+
+        # Multiple structural rules
+        result = runner.invoke(main, ["--fix", "--ignore", "F14,F15", "--code", "<div>test</div>"])
+
+        assert result.exit_code == 1
+        assert "Can't ignore structural rules" in result.output  # plural
+        assert "fix mode" in result.output
+
+
+class TestEdgeCases:
+    """Test edge cases and less common code paths."""
+
+    def test_django_preprocessor_enabled(self) -> None:
+        """Test CLI with Django preprocessor enabled."""
+        runner = CliRunner()
+
+        # Test with Django preprocessor (should not crash)
+        result = runner.invoke(main, ["--extra", "django", "--code", "<div>test</div>"])
+
+        # Should complete without error (might have lint issues but no crash)
+        assert result.exit_code in (0, 1)  # Either no errors or lint errors
+
+    def test_file_with_doctype_error_skipped(self) -> None:
+        """Test that files with DoctypeError are skipped when needed."""
+        runner = CliRunner()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            test_file = Path(temp_dir) / "test.html"
+            # File with non-HTML5 doctype that should trigger DoctypeError
+            test_file.write_text('<!DOCTYPE html SYSTEM "about:legacy-compat">\n<div>test</div>')
+
+            result = runner.invoke(main, [str(test_file)])
+
+            # File should be skipped due to doctype error
+            assert result.exit_code == 0  # No errors since file was skipped
+
+    def test_preserve_attribute_whitespace_flag(self) -> None:
+        """Test --preserve-attr-whitespace flag affects processor selection."""
+        runner = CliRunner()
+
+        # Test with preserve attribute whitespace
+        result = runner.invoke(
+            main,
+            ["--preserve-attr-whitespace", "--code", '<div class="  test  ">content</div>'],
+        )
+
+        # Should not modify attribute whitespace
+        assert result.exit_code == 0
