@@ -76,13 +76,14 @@ See the [full list of rules](docs/rules.md) for more information.
 
 ## Benefits
 
+- Validate AI code output.
+- Format & lint Django templates or plain HTML5 documents.
+- Sort & format TailwindCSS classes.
 - Catch accidental errors.
 - Enforce best practices.
 - Code without worrying about formatting. Cutesy formats automatically.
 - Improve code readability.
 - Small diffs for easier code review.
-- Format & lint Django templates or plain HTML5 documents
-- Sort & format TailwindCSS classes
 
 ## Installation
 
