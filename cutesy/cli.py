@@ -515,6 +515,21 @@ def _parse_list(item: object) -> list[str] | None:
             parsed = json.loads(string)
             if isinstance(parsed, list):
                 return [str(entry).strip() for entry in parsed if str(entry).strip()]
+
+        # Handle bracket syntax like [django,tailwind] by converting to proper JSON
+        if string.startswith("[") and string.endswith("]"):
+            inner = string[1:-1].strip()
+            if inner:
+                # Split by comma and quote each item for JSON parsing
+                items = [f'"{item.strip()}"' for item in inner.split(",") if item.strip()]
+                json_string = f"[{','.join(items)}]"
+                with contextlib.suppress(Exception):
+                    parsed = json.loads(json_string)
+                    if isinstance(parsed, list):
+                        return [str(entry).strip() for entry in parsed if str(entry).strip()]
+            else:
+                return []  # Handle empty [] case
+
         # Fallback: comma/space separated tokens
         parts = [part.strip() for part in string.replace(",", " ").split()]
         return [part for part in parts if part]

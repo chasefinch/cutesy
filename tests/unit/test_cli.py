@@ -96,6 +96,15 @@ class TestParseHelpers:
         """Test _parse_list with invalid JSON falls back to splitting."""
         assert _parse_list("[invalid json") == ["[invalid", "json"]
 
+    def test_parse_list_with_unquoted_bracket_syntax(self) -> None:
+        """Test _parse_list with unquoted bracket syntax."""
+        assert _parse_list("[django,tailwind]") == ["django", "tailwind"]
+        assert _parse_list("[django, tailwind]") == ["django", "tailwind"]
+        assert _parse_list("[ django , tailwind ]") == ["django", "tailwind"]
+        assert _parse_list("[django]") == ["django"]
+        assert _parse_list("[]") == []
+        assert _parse_list("[ ]") == []
+
 
 class TestConfigLoading:
     """Test configuration loading functions."""
