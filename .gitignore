@@ -6,12 +6,21 @@ bin/*
 # PyPI
 build/*
 dist/*
+cutesy.egg-info
 
 # Pyenv
 .python-version
 
 # Ruff
 .ruff-cache
+
+# coverage
+.coverage
+.coverage*
+coverage
+
+# Tests
+test_file*
 
 # Other
 .cache
@@ -20,8 +29,3 @@ __pycache__
 *.py[co]
 *.bak
 *.DS_Store
-.coverage
-.coverage*
-coverage
-
-cutesy.egg-info
