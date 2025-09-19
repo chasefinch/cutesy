@@ -228,6 +228,30 @@ class BasePreprocessor(ABC):
         """Return the appropriate instruction text and InstructionType."""
         raise NotImplementedError
 
+    def make_fatal_error(
+        self,
+        rule_code: str,
+        line: int | None = None,
+        column: int | None = None,
+        **replacements: str,
+    ) -> StructuralError:
+        """Create a StructuralError based on the given details."""
+        if line is None:
+            line = self.line
+        if column is None:
+            column = self.offset
+
+        error = Error(
+            line=line,
+            column=column,
+            rule=Rule.get(rule_code),
+            replacements=replacements,
+        )
+
+        # Return a StructuralError which wraps the associated error; These
+        # errors are fatal, and handled specially.
+        return StructuralError(errors=[error])
+
     def _handle_match(self, braces: tuple[str, str]) -> None:
         """Replace a matched instruction with a placeholder."""
         # The instruction can be collapsed to contain only single spaces
@@ -471,27 +495,3 @@ class BasePreprocessor(ABC):
                 replacements=replacements,
             ),
         )
-
-    def make_fatal_error(
-        self,
-        rule_code: str,
-        line: int | None = None,
-        column: int | None = None,
-        **replacements: str,
-    ) -> StructuralError:
-        """Create a StructuralError based on the given details."""
-        if line is None:
-            line = self.line
-        if column is None:
-            column = self.offset
-
-        error = Error(
-            line=line,
-            column=column,
-            rule=Rule.get(rule_code),
-            replacements=replacements,
-        )
-
-        # Return a StructuralError which wraps the associated error; These
-        # errors are fatal, and handled specially.
-        return StructuralError(errors=[error])

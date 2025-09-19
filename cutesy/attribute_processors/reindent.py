@@ -22,6 +22,8 @@ class AttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
+        *,
+        solo: bool = False,
     ) -> tuple[str, list[Error]]:
         """Reindent multiline attributes."""
         errors: list[Error] = []

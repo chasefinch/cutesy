@@ -58,6 +58,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
+        *,
+        solo: bool = False,
     ) -> tuple[str, list[Error]]:
         """Update the class attribute body with sorted classes."""
         errors: list[Error] = []

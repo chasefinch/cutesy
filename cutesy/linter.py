@@ -311,7 +311,10 @@ class HTMLLinter(HTMLParser):
 
         tag = tag.lower()
 
-        _, attr_strings = self._make_attr_strings(attrs, final_pass=False)
+        num_attrs = len(attrs)
+        solo = num_attrs == 1
+
+        _, attr_strings = self._make_attr_strings(attrs, solo=solo, final_pass=False)
 
         # Decide whether this should be kept on one line or should wrap
 
@@ -321,7 +324,7 @@ class HTMLLinter(HTMLParser):
 
         len_angle_brackets = 2
         len_attrs = sum(len(attr_string) for attr_string in attr_strings)
-        num_spaces = len(attr_strings)
+        num_spaces = num_attrs
         num_chars = (
             len_angle_brackets
             + len_attrs
@@ -329,9 +332,9 @@ class HTMLLinter(HTMLParser):
             + len(tag)
             + self.tab_width * self._indentation_level
         )
-        wrap = len(attr_strings) > 1 and any(
+        wrap = num_attrs > 1 and any(
             (
-                len(attr_strings) > self.max_items_per_line,
+                num_attrs > self.max_items_per_line,
                 num_chars > self.line_length,
                 has_breaking_attr,
             ),
@@ -342,7 +345,7 @@ class HTMLLinter(HTMLParser):
             self._indentation_level -= 1
 
         # Recalculate attr_stings at the new indentation level (the final pass)
-        _, attr_strings = self._make_attr_strings(attrs)
+        _, attr_strings = self._make_attr_strings(attrs, solo=solo)
 
         if single_attribute_wrap:
             self._indentation_level += 1
@@ -894,6 +897,7 @@ class HTMLLinter(HTMLParser):
         self,
         attrs: Sequence[tuple[str, Any]],
         *,
+        solo: bool = False,
         final_pass: bool = True,
     ) -> tuple[str | None, Sequence[str]]:
         """Return the prepared attribute strings.
@@ -959,7 +963,10 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_middle:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
+                    subgroup_key, subgroup = self._make_attr_strings(
+                        subgroup_attrs,
+                        final_pass=False,
+                    )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:
@@ -971,7 +978,10 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_end:
                 if group_level == 1:
-                    subgroup_key, subgroup = self._make_attr_strings(subgroup_attrs)
+                    subgroup_key, subgroup = self._make_attr_strings(
+                        subgroup_attrs,
+                        final_pass=False,
+                    )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
                     else:
@@ -1000,14 +1010,13 @@ class HTMLLinter(HTMLParser):
                             bounding_character=quote_char,
                             preprocessor=self.preprocessor,
                             attr_body=processed_value,
+                            solo=solo,
                         )
+                        fix_f17 = self.fix and not self.is_rule_ignored("F17")
                         if processing_errors:
-                            self._errors.extend(processing_errors)
-                            # Report F17 if there were unfixable processing errors
-                            if final_pass and not self.is_rule_ignored("F17"):
-                                self._handle_error("F17", attr=name)
-                        elif not self.fix and value != processed_value and final_pass and not self.is_rule_ignored("F17"):
-                            # In non-fix mode, report formatting issues that would be fixed
+                            for processing_error in processing_errors:
+                                self._handle_error(error=processing_error)
+                        elif not fix_f17 and value != processed_value and final_pass:
                             self._handle_error("F17", attr=name)
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
@@ -1053,17 +1062,23 @@ class HTMLLinter(HTMLParser):
 
     def _handle_error(
         self,
-        rule_code: str,
+        rule_code: str | None = None,
         line_offset: int = 0,
         column: int | None = None,
+        *,
+        error: Error | None = None,
         **replacements: str,
     ) -> None:
-        error = self._make_error(
-            rule_code=rule_code,
-            line_offset=line_offset,
-            column=column,
-            **replacements,
-        )
+        if error:
+            rule_code = error.rule.code
+        else:
+            assert rule_code is not None
+            error = self._make_error(
+                rule_code=rule_code,
+                line_offset=line_offset,
+                column=column,
+                **replacements,
+            )
 
         is_rule_ignored = self.is_rule_ignored(rule_code)
 

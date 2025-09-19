@@ -86,6 +86,8 @@ class AttributeProcessor(BaseAttributeProcessor):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
+        *,
+        solo: bool = False,
     ) -> tuple[str, list[Error]]:
         """Trim excess whitespace, and adjust starting & ending whitespace.
 
@@ -94,6 +96,13 @@ class AttributeProcessor(BaseAttributeProcessor):
         """
         self._errors: list[Error] = []
         self.position = position
+
+        if solo:
+            brackets_quotes_and_space_length = 5
+            extra_char_length = brackets_quotes_and_space_length
+            extra_char_length += len(attr_name)
+            extra_char_length += tab_width * current_indentation_level
+            max_first_line_length = line_length - extra_char_length
 
         # --- Safety check: bail if an inner raw quote matches the bounding char
         if has_inner_raw_bounding_quote(attr_body, bounding_character):
@@ -109,10 +118,15 @@ class AttributeProcessor(BaseAttributeProcessor):
             replacement = {'"': "&quot;", "'": "&apos;"}[bounding_character]
             attr_body = attr_body.replace(bounding_character, replacement)
 
-        adjusted_body = attr_body
+        # Collapse 2+ middle-of-line spaces/tabs *outside* strings
+        adjusted_body = collapse_whitespace_outside_strings(attr_body)
 
-        if "\n" in attr_body.strip():
+        must_wrap = len(adjusted_body.strip()) > max_first_line_length if solo else False
+        multiline = must_wrap or "\n" in adjusted_body.strip()
+
+        if multiline:
             if re.match(r"^[^\S\n]*\S", attr_body):
+                adjusted_body = adjusted_body.strip()
                 # The first line is on the same line as the opening quotes.
                 # Trim the leading whitespace:
                 adjusted_body = re.sub(r"^[^\S\n]*(\S)", r"\1", adjusted_body)
@@ -134,9 +148,6 @@ class AttributeProcessor(BaseAttributeProcessor):
 
             # Trim trailing whitespace on each line
             adjusted_body = re.sub(r"[^\S\n]+\n", r"\n", adjusted_body)
-
-            # Finally: collapse 2+ middle-of-line spaces/tabs *outside* strings
-            adjusted_body = collapse_whitespace_outside_strings(adjusted_body)
         else:
             # The only newlines were before or after all of the content. Trim them off.
             adjusted_body = re.sub(r"^\s*\n\s*", " ", adjusted_body)

@@ -156,8 +156,7 @@ class TestAttributeProcessor:
             attr_body="hello    world",
         )
 
-        # Single-line attributes are just stripped, not collapsed
-        assert result == "hello    world"
+        assert result == "hello world"
         assert errors == []
 
     def test_inner_raw_quote_generates_error(self) -> None:

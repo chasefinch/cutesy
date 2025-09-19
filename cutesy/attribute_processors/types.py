@@ -24,5 +24,7 @@ class BaseAttributeProcessor(ABC):
         bounding_character: str,
         preprocessor: BasePreprocessor | None,
         attr_body: str,
+        *,
+        solo: bool = False,
     ) -> tuple[str, list[Error]]:
         """Replace the dynamic parts of some dynamic HTML with placeholders."""
