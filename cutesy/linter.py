@@ -869,7 +869,7 @@ class HTMLLinter(HTMLParser):
 
     def _break_for_inline_tag(self) -> bool:
         """Remove the most recent space in preparation for a line break."""
-        if self._result and not self._result[-1].endswith((" ", ">")):
+        if not self._result or not self._result[-1].endswith((" ", ">")):
             return False
 
         self._result[-1] = self._result[-1][:-1]
