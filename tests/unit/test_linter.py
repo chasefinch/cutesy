@@ -532,3 +532,17 @@ asdf
 
         assert result == expected_result
         assert not errors
+
+    def test_break_for_inline_tag_empty_result_edge_case(self) -> None:
+        """Test _break_for_inline_tag handles empty _result."""
+        linter = HTMLLinter(fix=True)
+
+        # This HTML should trigger the edge case where _result might be empty
+        # when _break_for_inline_tag is called
+        html = "<span></span>"
+
+        result, errors = linter.lint(html)
+
+        # Should not crash and should return valid result
+        assert isinstance(result, str)
+        assert isinstance(errors, list)

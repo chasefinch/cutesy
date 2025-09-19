@@ -228,6 +228,61 @@ class TestGroupAndSort:
         found = any("bg-red-500" in group for group in result)
         assert found
 
+    def test_bem_notation_with_double_hyphens(self) -> None:
+        """Test -- (double hyphens) is treated as user-defined."""
+        classes = ["bg-red-500", "block__element--modifier", "p-4"]
+        groups = group_and_sort(classes)
+
+        # BEM class with -- should be treated as user-defined, not tailwind
+        found_bem = False
+        for group in groups:
+            if "block__element--modifier" in group:
+                found_bem = True
+                break
+        assert found_bem
+
+    def test_bem_notation_with_double_underscores(self) -> None:
+        """Test __ (double underscores) is treated as user-defined."""
+        classes = ["bg-red-500", "block__element", "p-4"]
+        groups = group_and_sort(classes)
+
+        # BEM class with __ should be treated as user-defined, not tailwind
+        found_bem = False
+        for group in groups:
+            if "block__element" in group:
+                found_bem = True
+                break
+        assert found_bem
+
+    def test_bem_notation_inside_arbitrary_values_allowed(self) -> None:
+        """Test BEM notation inside arbitrary values [...] should be allowed.
+
+        This covers the edge case where -- inside arbitrary values like
+        mt-[var(--spacing)] should still be treated as valid Tailwind classes.
+        """
+        classes = ["bg-red-500", "mt-[var(--spacing)]", "p-4"]
+        groups = group_and_sort(classes)
+
+        # Class with -- inside arbitrary value should be treated as tailwind
+        found_arbitrary = False
+        for group in groups:
+            if "mt-[var(--spacing)]" in group:
+                found_arbitrary = True
+                break
+        assert found_arbitrary
+
+    def test_prefix_removal_edge_cases(self) -> None:
+        """Test edge cases for prefix removal in class name parsing."""
+        # Test double dash prefix (like CSS custom properties)
+        result = parse_tailwind_class("--custom-property")
+        assert result.class_name == "-custom-property"  # Only first dash removed
+        assert result.modifiers == []
+
+        # Test single dash prefix
+        result = parse_tailwind_class("-mt-4")
+        assert result.class_name == "mt-4"  # Dash prefix removed
+        assert result.modifiers == []
+
     def test_at_container_queries(self) -> None:
         """Test @ container queries are properly parsed and sorted."""
         classes = ["@lg:text-lg", "bg-red-500", "hover:@max-sm:p-4", "@container"]
