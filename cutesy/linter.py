@@ -776,7 +776,7 @@ class HTMLLinter(HTMLParser):
                 attrvalue = attrvalue[1:-1]
             elif attrvalue[:1] == "'" == attrvalue[-1:]:
                 attrvalue = attrvalue[1:-1]
-                if '"' not in attrvalue:
+                if '"' not in attrvalue and not self.fix:
                     self._handle_error("F10", attr=attrname)
             elif not self.fix:
                 self._handle_error("F9", attr=attrname)
@@ -1113,6 +1113,8 @@ class HTMLLinter(HTMLParser):
                 column=column,
                 **replacements,
             )
+
+        assert error.rule.structural
 
         # Return a StructuralError which wraps the associated error; These
         # errors are fatal, and handled specially.

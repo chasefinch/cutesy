@@ -236,6 +236,9 @@ class BasePreprocessor(ABC):
         **replacements: str,
     ) -> StructuralError:
         """Create a StructuralError based on the given details."""
+        rule = Rule.get(rule_code)
+        assert rule.structural
+
         if line is None:
             line = self.line
         if column is None:
@@ -244,7 +247,7 @@ class BasePreprocessor(ABC):
         error = Error(
             line=line,
             column=column,
-            rule=Rule.get(rule_code),
+            rule=rule,
             replacements=replacements,
         )
 

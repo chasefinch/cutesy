@@ -32,6 +32,7 @@ Each rule has two key attributes:
 
 **Fixable**
 - ✅ **Yes**: Cutesy can automatically fix this issue
+- 🟡 **Sometimes**: Cutesy can fix this issue in some cases
 - ❌ **No**: Requires manual correction
 
 **Structural**
@@ -52,7 +53,7 @@ Each rule has two key attributes:
 <details>
 <summary><strong>T1: Instruction not long enough to generate a placeholder</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 Internal rule used when template instructions are too short for processing placeholders.
 
@@ -135,7 +136,7 @@ Invalid template syntax.
 <details>
 <summary><strong>P5: Extra whitespace in template instruction</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -152,7 +153,7 @@ Invalid template syntax.
 <details>
 <summary><strong>P6: Missing padding in template instruction</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -175,7 +176,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D1: Doctype must come first</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -190,7 +191,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D2: Multiple doctype declarations</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -203,7 +204,7 @@ Invalid template syntax.
 <details>
 <summary><strong>D3: Missing closing tag</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 Improper tag nesting or missing closing tags.
 
@@ -217,7 +218,7 @@ Improper tag nesting or missing closing tags.
 <details>
 <summary><strong>D4: Unmatched closing tag</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -336,7 +337,7 @@ Files should end with a newline character.
 <details>
 <summary><strong>F2: Trailing whitespace</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** Yes | **Structural:** Yes
 
 Lines shouldn't end with spaces or tabs.
 
@@ -494,16 +495,16 @@ Attributes should follow a consistent order.
 <details>
 <summary><strong>F10: Attribute using wrong quote type</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** No | **Structural:** Yes
 
 **❌ Problem:**
 ```html
 <div title='He said "hello"'>
 ```
 
-**✅ Fixed:**
+**✅ Correct:**
 ```html
-<div title="He said &quot;hello&quot;">
+<div title="He said 'hello'">
 ```
 
 </details>
@@ -619,7 +620,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>F16: Attribute contains unescaped quotes</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -659,7 +660,7 @@ Tags with many attributes should start on a new line.
 <details>
 <summary><strong>E1: Non-HTML5 doctype</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 Only HTML5 doctype is supported.
 
@@ -680,7 +681,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E2: Unescaped ampersand</strong></summary>
 
-**Fixable:** Yes | **Structural:** No
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -699,7 +700,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E3: Unescaped left angle bracket</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -716,7 +717,7 @@ Only HTML5 doctype is supported.
 <details>
 <summary><strong>E4: Unescaped right angle bracket</strong></summary>
 
-**Fixable:** No | **Structural:** Yes
+**Fixable:** No | **Structural:** No
 
 **❌ Problem:**
 ```html
@@ -741,38 +742,39 @@ Only HTML5 doctype is supported.
 | P2 | Missing closing template instruction | ❌ | ✅ | Template |
 | P3 | Unmatched closing template instruction | ❌ | ✅ | Template |
 | P4 | Malformed template instruction | ❌ | ✅ | Template |
-| P5 | Extra whitespace in template | ✅ | ❌ | Template |
-| P6 | Missing template padding | ✅ | ❌ | Template |
-| D1 | Doctype must come first | ❌ | ✅ | Structure |
-| D2 | Multiple doctype declarations | ❌ | ✅ | Structure |
-| D3 | Missing closing tag | ❌ | ✅ | Structure |
-| D4 | Unmatched closing tag | ❌ | ✅ | Structure |
+| P5 | Extra whitespace in template | ❌ | ❌ | Template |
+| P6 | Missing template padding | ❌ | ❌ | Template |
+| D1 | Doctype must come first | ❌ | ❌ | Structure |
+| D2 | Multiple doctype declarations | ❌ | ❌ | Structure |
+| D3 | Missing closing tag | ❌ | ❌ | Structure |
+| D4 | Unmatched closing tag | ❌ | ❌ | Structure |
 | D5 | Unnecessary self-closing | ✅ | ✅ | Structure |
 | D6 | Invalid self-closing | ✅ | ✅ | Structure |
-| D7 | Malformed opening tag | ❌ | ✅ | Structure |
-| D8 | Malformed closing tag | ❌ | ✅ | Structure |
+| D7 | Malformed opening tag | ❌ | ❌ | Structure |
+| D8 | Malformed closing tag | ❌ | ❌ | Structure |
 | D9 | Missing final newline | ✅ | ❌ | Structure |
 | F1 | Doctype case | ✅ | ❌ | Format |
-| F2 | Trailing whitespace | ✅ | ❌ | Format |
-| F3 | Incorrect indentation | ✅ | ❌ | Format |
-| F4 | Extra vertical whitespace | ✅ | ❌ | Format |
-| F5 | Extra horizontal whitespace | ✅ | ❌ | Format |
+| F2 | Trailing whitespace | ✅ | ✅ | Format |
+| F3 | Incorrect indentation | ✅ | ✅ | Format |
+| F4 | Extra vertical whitespace | ✅ | ✅ | Format |
+| F5 | Extra horizontal whitespace | ✅ | ✅ | Format |
 | F6 | Attribute order | ✅ | ❌ | Format |
-| F7 | Tag case | ✅ | ❌ | Format |
-| F8 | Attribute case | ✅ | ❌ | Format |
-| F9 | Missing attribute quotes | ✅ | ❌ | Format |
-| F10 | Wrong quote type | ✅ | ❌ | Format |
-| F11 | Tag whitespace | ✅ | ❌ | Format |
+| F7 | Tag case | ✅ | ✅ | Format |
+| F8 | Attribute case | ✅ | ✅ | Format |
+| F9 | Missing attribute quotes | ✅ | ✅ | Format |
+| F10 | Wrong quote type | ❌ | ✅ | Format |
+| F11 | Tag whitespace | ✅ | ✅ | Format |
 | F12 | Long tag line break | ✅ | ❌ | Format |
-| F13 | Non-standard tag whitespace | ✅ | ❌ | Format |
-| F14 | Attributes need wrapping | ✅ | ❌ | Format |
-| F15 | Attributes should not wrap | ✅ | ❌ | Format |
-| F16 | Unescaped quotes in attributes | ✅ | ❌ | Format |
+| F13 | Non-standard tag whitespace | ✅ | ✅ | Format |
+| F14 | Attributes need wrapping | ✅ | ✅ | Format |
+| F15 | Attributes should not wrap | ✅ | ✅ | Format |
+| F16 | Unescaped quotes in attributes | ❌ | ❌ | Format |
 | F17 | Attribute value formatting | ✅ | ❌ | Format |
-| E1 | Non-HTML5 doctype | ❌ | ✅ | Encoding |
-| E2 | Unescaped ampersand | ✅ | ❌ | Encoding |
-| E3 | Unescaped left angle bracket | ❌ | ✅ | Encoding |
-| E4 | Unescaped right angle bracket | ❌ | ✅ | Encoding |
+| E1 | Non-HTML5 doctype | ❌ | ❌ | Encoding |
+| E2 | Unescaped ampersand | ❌ | ❌ | Encoding |
+| E3 | Unescaped left angle bracket | ❌ | ❌ | Encoding |
+| E4 | Unescaped right angle bracket | ❌ | ❌ | Encoding |
+| TW1 | Control instruction overlaps class names | X | X | TailwindCSS |
 
 ---
 
