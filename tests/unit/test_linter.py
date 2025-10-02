@@ -163,6 +163,10 @@ class TestHTMLLinter:
         # Should have D9 error for missing final newline
         d9_errors = [error for error in errors if error.rule.code == "D9"]
         assert len(d9_errors) > 0
+        expected_line = 1
+        expected_column = 0
+        assert d9_errors[0].line == expected_line
+        assert d9_errors[0].column == expected_column
 
     def test_lint_ignores_final_newline_when_rule_ignored(self) -> None:
         """Test lint ignores final newline when D9 rule is ignored."""
@@ -226,6 +230,10 @@ class TestHTMLLinter:
         # Should have E1 error for invalid doctype
         e1_errors = [error for error in errors if error.rule.code == "E1"]
         assert len(e1_errors) > 0
+        expected_line = 1
+        expected_column = 0
+        assert e1_errors[0].line == expected_line
+        assert e1_errors[0].column == expected_column
 
     def test_lint_without_doctype_checking_invalid_doctype(self) -> None:
         """Test linting without doctype checking raises DoctypeError."""
@@ -244,8 +252,25 @@ class TestHTMLLinter:
 
         _result, errors = linter.lint(html)
 
-        # Should detect structural issues
-        assert len(errors) > 0
+        # Should detect structural issues (D3 and D4 errors)
+        expected_error_count = 2
+        assert len(errors) == expected_error_count
+
+        # D3 error: Expected <span> closing tag
+        d3_errors = [error for error in errors if error.rule.code == "D3"]
+        assert len(d3_errors) == 1
+        expected_line = 1
+        expected_column = 11
+        assert d3_errors[0].line == expected_line
+        assert d3_errors[0].column == expected_column
+
+        # D4 error: </span> doesn't have a matching opening tag
+        d4_errors = [error for error in errors if error.rule.code == "D4"]
+        assert len(d4_errors) == 1
+        expected_line = 1
+        expected_column = 17
+        assert d4_errors[0].line == expected_line
+        assert d4_errors[0].column == expected_column
 
     def test_lint_with_fix_mode(self) -> None:
         """Test linting in fix mode modifies the HTML."""
@@ -416,6 +441,11 @@ class TestHTMLLinter:
         # Should report F8 error for case mismatch in attribute name
         f8_errors = [error for error in errors if error.rule.code == "F8"]
         assert len(f8_errors) > 0 or not errors  # Either F8 error found or no errors
+        if f8_errors:
+            expected_line = 1
+            expected_column_min = 0
+            assert f8_errors[0].line == expected_line
+            assert f8_errors[0].column >= expected_column_min
 
     def test_attribute_processing_quote_character_selection(self) -> None:
         """Test quote character selection based on attribute content."""
@@ -546,3 +576,130 @@ asdf
         # Should not crash and should return valid result
         assert isinstance(result, str)
         assert isinstance(errors, list)
+
+    def test_line_number_tracking_multiline_html(self) -> None:
+        """Test that line numbers are correctly tracked in multi-line HTML."""
+        linter = HTMLLinter(fix=False)
+        html = """<div>
+    <SPAN>Line 2</SPAN>
+    <P>Line 3</P>
+    <A HREF="test">Line 4</A>
+</div>"""
+
+        _result, errors = linter.lint(html)
+
+        # Check F7 errors (tag case) for SPAN on line 2
+        span_line = 2
+        span_open_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F7"
+            and error.line == span_line
+            and "<SPAN>" in error.replacements.get("tag", "")
+        ]
+        assert len(span_open_errors) == 1
+        expected_column = 4
+        assert span_open_errors[0].column == expected_column
+
+        span_close_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F7"
+            and error.line == span_line
+            and "</SPAN>" in error.replacements.get("tag", "")
+        ]
+        assert len(span_close_errors) == 1
+        expected_column = 16
+        assert span_close_errors[0].column == expected_column
+
+        # Check F7 errors (tag case) for P on line 3
+        p_line = 3
+        p_open_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F7"
+            and error.line == p_line
+            and "<P>" in error.replacements.get("tag", "")
+        ]
+        assert len(p_open_errors) == 1
+        expected_column = 4
+        assert p_open_errors[0].column == expected_column
+
+        p_close_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F7"
+            and error.line == p_line
+            and "</P>" in error.replacements.get("tag", "")
+        ]
+        assert len(p_close_errors) == 1
+        expected_column = 13
+        assert p_close_errors[0].column == expected_column
+
+        # Check F7 and F8 errors for A on line 4
+        a_line = 4
+        a_open_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F7"
+            and error.line == a_line
+            and "<A>" in error.replacements.get("tag", "")
+        ]
+        assert len(a_open_errors) == 1
+        expected_column = 4
+        assert a_open_errors[0].column == expected_column
+
+        # F8 error for HREF attribute
+        href_errors = [
+            error for error in errors if error.rule.code == "F8" and error.line == a_line
+        ]
+        assert len(href_errors) == 1
+        expected_column = 4
+        assert href_errors[0].column == expected_column
+
+        # Check F3 errors (indentation) on lines 2, 3, 4
+        f3_line2 = [
+            error for error in errors if error.rule.code == "F3" and error.line == span_line
+        ]
+        assert len(f3_line2) == 1
+        expected_column = 0
+        assert f3_line2[0].column == expected_column
+
+        f3_line3 = [error for error in errors if error.rule.code == "F3" and error.line == p_line]
+        assert len(f3_line3) == 1
+        expected_column = 0
+        assert f3_line3[0].column == expected_column
+
+        f3_line4 = [error for error in errors if error.rule.code == "F3" and error.line == a_line]
+        assert len(f3_line4) == 1
+        expected_column = 0
+        assert f3_line4[0].column == expected_column
+
+    def test_line_number_tracking_with_attributes(self) -> None:
+        """Test line number tracking for attribute-related errors."""
+        linter = HTMLLinter(fix=False)
+        html = """<div CLASS="test">
+    <span ID="item">content</span>
+</div>"""
+
+        _result, errors = linter.lint(html)
+
+        # Look for case errors in attributes (F8)
+        class_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F8" and error.replacements.get("attr") == "class"
+        ]
+        id_errors = [
+            error
+            for error in errors
+            if error.rule.code == "F8" and error.replacements.get("attr") == "id"
+        ]
+
+        # Verify errors are on correct lines
+        if class_errors:
+            expected_line = 1
+            assert class_errors[0].line == expected_line, "CLASS error should be on line 1"
+        if id_errors:
+            expected_line = 2
+            assert id_errors[0].line == expected_line, "ID error should be on line 2"

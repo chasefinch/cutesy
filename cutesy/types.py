@@ -29,10 +29,20 @@ class IndentationType(Enum):
 class Error:
     """An issue to be reported by the linter."""
 
-    line: int
-    column: int
+    line: int  # 0-based line index
+    column: int  # 0-based column index
     rule: Rule
     replacements: dict[str, str]
+
+    @property
+    def line_number(self) -> int:
+        """Return the human-usable line number."""
+        return self.line + 1
+
+    @property
+    def column_number(self) -> int:
+        """Return the human-usable column number."""
+        return self.column + 1
 
 
 class DoctypeError(Exception):

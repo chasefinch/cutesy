@@ -376,7 +376,9 @@ def main(
 
                     len_error_line = len(str(error.line))
                     location_width = 4 + max((len_error_line, 3))
-                    location_display = f"{error.line}:{error.column}".ljust(location_width)
+                    location_display = f"{error.line_number}:{error.column_number}".ljust(
+                        location_width,
+                    )
 
                     message = rule.message
                     if error.replacements:
