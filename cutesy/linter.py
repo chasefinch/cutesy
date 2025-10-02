@@ -171,6 +171,8 @@ class HTMLLinter(HTMLParser):
         self._tag_stack = []
         # Possible values: {None, True} if self.fix else {None, str}
         self._expected_indentation = None
+        # Track last data to detect blank lines before closing tags
+        self._last_data = None
         # Line & column numbers in the modified HTML
         self._line = 0
         self._column = 0
@@ -302,6 +304,7 @@ class HTMLLinter(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Process a start tag."""
         self._handle_encountered_data()
+        self._last_data = None  # Clear last data when we encounter a tag
 
         is_new_line = self._expected_indentation is not None
 
@@ -419,6 +422,9 @@ class HTMLLinter(HTMLParser):
 
         tag = tag.lower()
 
+        # Store the current indentation level before we pop the stack
+        old_indentation_level = self._indentation_level
+
         if tag in {tag_info[0] for tag_info in self._tag_stack}:
             # Pop self._tag_stack until we find the matching opening tag
             while self._tag_stack:
@@ -430,6 +436,21 @@ class HTMLLinter(HTMLParser):
         else:
             self._handle_error("D4", tag=f"</{tag}>")
 
+        # Check for blank lines before closing tag that decreases indentation
+        if self._indentation_level < old_indentation_level and self._last_data:
+            match = re.search(r"\n\s*\n\s*$", self._last_data)
+            if match:
+                if self.fix:
+                    # Remove blank lines from the end of the result buffer
+                    if self._result:
+                        last_chunk = self._result[-1]
+                        # Replace multiple trailing newlines with single newline + indentation
+                        self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
+                else:
+                    # Report F4 error for extra vertical whitespace
+                    line_offset = self._last_data[:match.start()].count("\n")
+                    self._handle_error("F4", line_offset=line_offset, column=0)
+
         if tag != self.cdata_elem:
             self._reconcile_indentation()
 
@@ -438,6 +459,9 @@ class HTMLLinter(HTMLParser):
 
     def handle_data(self, html_data: str) -> None:
         """Process HTML data."""
+        # Store the raw data for checking in handle_endtag
+        self._last_data = html_data
+        
         self._handle_encountered_data()
         self._reconcile_indentation()
 
