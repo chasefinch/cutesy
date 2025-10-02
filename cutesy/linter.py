@@ -171,8 +171,10 @@ class HTMLLinter(HTMLParser):
         self._tag_stack = []
         # Possible values: {None, True} if self.fix else {None, str}
         self._expected_indentation = None
-        # Track last data to detect blank lines before closing tags
+        # Track last data to detect blank lines before closing tags/instructions
         self._last_data = None
+        # Track indentation level before last tag/instruction (for detecting blank lines after opening)
+        self._prev_indentation_level = 0
         # Line & column numbers in the modified HTML
         self._line = 0
         self._column = 0
@@ -305,6 +307,7 @@ class HTMLLinter(HTMLParser):
         """Process a start tag."""
         self._handle_encountered_data()
         self._last_data = None  # Clear last data when we encounter a tag
+        self._prev_indentation_level = self._indentation_level  # Track indentation before tag
 
         is_new_line = self._expected_indentation is not None
 
@@ -470,6 +473,20 @@ class HTMLLinter(HTMLParser):
                 self._process(html_data)
             return
 
+        # Check for blank lines after opening tag/instruction that increased indentation
+        if self._indentation_level > self._prev_indentation_level:
+            # Match: newline followed by any blank lines at the start
+            match = re.search(r"^\n[ \t]*\n", html_data)
+            if match:
+                if self.fix:
+                    # Remove ALL leading blank lines, keeping just one newline
+                    html_data = re.sub(r"^(\n[ \t]*)+\n", "\n", html_data)
+                else:
+                    # Only report if there's NOT 3+ consecutive newlines (that's reported elsewhere)
+                    if not re.search(r"\n{3,}", html_data):
+                        # Report F4 error for extra vertical whitespace
+                        self._handle_error("F4", line_offset=0, column=0)
+
         indentation = self.indentation * self._indentation_level
 
         # Check for & fix trailing whitespace
@@ -578,10 +595,31 @@ class HTMLLinter(HTMLParser):
         elif instruction_type == InstructionType.END_FREEFORM:
             self._freeform_level -= 1
 
+        # Store the current indentation level before we change it
+        old_indentation_level = self._indentation_level
+
         if instruction_type.ends_block or instruction_type.continues_block:
             self._indentation_level -= 1
 
+        # Check for blank lines before instruction that decreases indentation
+        if self._indentation_level < old_indentation_level and self._last_data:
+            match = re.search(r"\n\s*\n\s*$", self._last_data)
+            if match:
+                if self.fix:
+                    # Remove blank lines from the end of the result buffer
+                    if self._result:
+                        last_chunk = self._result[-1]
+                        # Replace multiple trailing newlines with single newline + indentation
+                        self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
+                else:
+                    # Report F4 error for extra vertical whitespace
+                    line_offset = self._last_data[:match.start()].count("\n")
+                    self._handle_error("F4", line_offset=line_offset, column=0)
+
         self._reconcile_indentation()  # Between the indentation change
+
+        # Track indentation before we change it (for detecting blank lines after opening)
+        self._prev_indentation_level = self._indentation_level
 
         if instruction_type.starts_block or instruction_type.continues_block:
             self._indentation_level += 1
