@@ -3,8 +3,9 @@
 import re
 import string
 from collections.abc import Sequence
+from enum import Enum, auto
 from html.parser import HTMLParser
-from typing import Any, Final, Never, TypeGuard
+from typing import Any, Final, NamedTuple, Never, TypeGuard
 
 from .attribute_processors import BaseAttributeProcessor
 from .preprocessors import BasePreprocessor
@@ -18,6 +19,21 @@ from .types import (
     Mode,
     StructuralError,
 )
+
+
+class StackItemType(Enum):
+    """Type of item on the tag/instruction stack."""
+
+    TAG = auto()  # noqa: WPS115 (Enum caps)
+    INSTRUCTION = auto()  # noqa: WPS115 (Enum caps)
+
+
+class StackItem(NamedTuple):
+    """An item on the tag/instruction stack."""
+
+    item_type: StackItemType
+    name: str | InstructionType  # tag name or instruction type
+    indentation: int
 
 
 def is_whitespace(char: str) -> TypeGuard[Never]:
@@ -123,6 +139,7 @@ class HTMLLinter(HTMLParser):
     max_items_per_line: Final[int]
     line_length: Final[int]
 
+    _last_data: str | None
     _expected_indentation: Any = None
 
     def __init__(
@@ -168,12 +185,15 @@ class HTMLLinter(HTMLParser):
         self._did_report_expected_doctype = False
         self._freeform_level = 0
         self._indentation_level = 0
-        self._tag_stack = []
+        # Stack of StackItem for tracking tags and instructions
+        self._tag_stack: list[StackItem] = []
         # Possible values: {None, True} if self.fix else {None, str}
         self._expected_indentation = None
-        # Track last data to detect blank lines before closing tags/instructions
+        # Track last data to detect blank lines before closing
+        # tags/instructions
         self._last_data = None
-        # Track indentation level before last tag/instruction (for detecting blank lines after opening)
+        # Track indentation level before last tag/instruction (for detecting
+        # blank lines after opening)
         self._prev_indentation_level = 0
         # Line & column numbers in the modified HTML
         self._line = 0
@@ -408,7 +428,7 @@ class HTMLLinter(HTMLParser):
 
         if tag not in VOID_ELEMENTS:
             # Tag should be closed, add it to the stack.
-            self._tag_stack.append((tag, self._indentation_level))
+            self._tag_stack.append(StackItem(StackItemType.TAG, tag, self._indentation_level))
 
             if tag != "html":
                 # All non-void elements increase the expected indentation level
@@ -428,14 +448,19 @@ class HTMLLinter(HTMLParser):
         # Store the current indentation level before we pop the stack
         old_indentation_level = self._indentation_level
 
-        if tag in {tag_info[0] for tag_info in self._tag_stack}:
+        if tag in {item.name for item in self._tag_stack if item.item_type == StackItemType.TAG}:
             # Pop self._tag_stack until we find the matching opening tag
             while self._tag_stack:
-                expected_tag = self._tag_stack.pop()
-                if expected_tag[0] == tag:
-                    self._indentation_level = expected_tag[1]
+                stack_item = self._tag_stack.pop()
+
+                if stack_item.item_type == StackItemType.TAG and stack_item.name == tag:
+                    self._indentation_level = stack_item.indentation
                     break
-                self._handle_error("D3", tag=f"</{expected_tag[0]}>")
+                if stack_item.item_type == StackItemType.TAG:
+                    self._handle_error("D3", tag=f"</{stack_item.name}>")
+                else:
+                    # Found an unclosed instruction before the matching tag
+                    self._handle_error("P2", tag=f"{{{stack_item.name}}}")
         else:
             self._handle_error("D4", tag=f"</{tag}>")
 
@@ -451,7 +476,7 @@ class HTMLLinter(HTMLParser):
                         self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
                 else:
                     # Report F4 error for extra vertical whitespace
-                    line_offset = self._last_data[:match.start()].count("\n")
+                    line_offset = self._last_data[: match.start()].count("\n")
                     self._handle_error("F4", line_offset=line_offset, column=0)
 
         if tag != self.cdata_elem:
@@ -464,7 +489,7 @@ class HTMLLinter(HTMLParser):
         """Process HTML data."""
         # Store the raw data for checking in handle_endtag
         self._last_data = html_data
-        
+
         self._handle_encountered_data()
         self._reconcile_indentation()
 
@@ -481,11 +506,10 @@ class HTMLLinter(HTMLParser):
                 if self.fix:
                     # Remove ALL leading blank lines, keeping just one newline
                     html_data = re.sub(r"^(\n[ \t]*)+\n", "\n", html_data)
-                else:
-                    # Only report if there's NOT 3+ consecutive newlines (that's reported elsewhere)
-                    if not re.search(r"\n{3,}", html_data):
-                        # Report F4 error for extra vertical whitespace
-                        self._handle_error("F4", line_offset=0, column=0)
+                # Only report if there's NOT 3+ consecutive newlines (that's reported elsewhere)
+                elif not re.search(r"\n{3,}", html_data):
+                    # Report F4 error for extra vertical whitespace
+                    self._handle_error("F4", line_offset=0, column=0)
 
         indentation = self.indentation * self._indentation_level
 
@@ -598,8 +622,35 @@ class HTMLLinter(HTMLParser):
         # Store the current indentation level before we change it
         old_indentation_level = self._indentation_level
 
+        # Handle block ending/continuation - restore correct indentation from stack
         if instruction_type.ends_block or instruction_type.continues_block:
-            self._indentation_level -= 1
+            found_match = False
+            while self._tag_stack:
+                # Pop to find the matching opening instruction
+                stack_item = self._tag_stack.pop()
+
+                if stack_item.item_type == StackItemType.INSTRUCTION:
+                    self._indentation_level = stack_item.indentation
+
+                    # For continuations (else, elif), validate the match
+                    if instruction_type.continues_block:
+                        # Continuation should match a block start or another continuation
+                        # stack_item.name is an InstructionType
+                        assert isinstance(stack_item.name, InstructionType)
+                        if not (stack_item.name.starts_block or stack_item.name.continues_block):
+                            self._handle_error("P2", tag=f"{{{instruction_text}}}")
+
+                    found_match = True
+                    break
+                # Found an unclosed tag before the matching instruction
+                self._handle_error("D3", tag=f"</{stack_item.name}>")
+
+            if not found_match:
+                # No matching opening instruction found
+                self._handle_error("P3", tag=f"{{{instruction_text}}}")
+                # Decrement anyway to try to recover
+                if self._indentation_level > 0:
+                    self._indentation_level -= 1
 
         # Check for blank lines before instruction that decreases indentation
         if self._indentation_level < old_indentation_level and self._last_data:
@@ -613,7 +664,7 @@ class HTMLLinter(HTMLParser):
                         self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
                 else:
                     # Report F4 error for extra vertical whitespace
-                    line_offset = self._last_data[:match.start()].count("\n")
+                    line_offset = self._last_data[: match.start()].count("\n")
                     self._handle_error("F4", line_offset=line_offset, column=0)
 
         self._reconcile_indentation()  # Between the indentation change
@@ -621,7 +672,18 @@ class HTMLLinter(HTMLParser):
         # Track indentation before we change it (for detecting blank lines after opening)
         self._prev_indentation_level = self._indentation_level
 
-        if instruction_type.starts_block or instruction_type.continues_block:
+        # Handle block starting/continuation - push onto stack and increase indentation
+        if instruction_type.starts_block:
+            # Push the opening instruction type and current indentation level
+            self._tag_stack.append(
+                StackItem(StackItemType.INSTRUCTION, instruction_type, self._indentation_level),
+            )
+            self._indentation_level += 1
+        elif instruction_type.continues_block:
+            # For continuations, push back with the continuation type
+            self._tag_stack.append(
+                StackItem(StackItemType.INSTRUCTION, instruction_type, self._indentation_level),
+            )
             self._indentation_level += 1
 
         if self.fix:
