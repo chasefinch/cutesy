@@ -7,14 +7,15 @@ import setuptools
 
 from settings import VERSION
 
-# Modules to skip for mypyc compilation
+# Modules to skip for mypyc compilation (use Path for cross-platform compatibility)
 MYPYC_SKIP = frozenset(
-    (
+    str(Path(path))
+    for path in (
         "cutesy/__init__.py",  # Imports Rust module which doesn't exist during build
         "cutesy/__main__.py",  # Entry point, doesn't need compilation
         "cutesy/types.py",  # Uses DataEnum metaclass
         "cutesy/rules.py",  # Uses DataEnum metaclass
-    ),
+    )
 )
 
 # Build configuration
