@@ -30,16 +30,35 @@ make             # Run everything
 
 ## Rust Extensions
 
-Build optional Rust extensions for performance:
+Cutesy includes optional Rust extensions for performance-critical code paths. Users installing from PyPI or Homebrew automatically get pre-compiled wheels with extensions included.
 
+**Development commands:**
 ```bash
 make build-extensions              # Dev mode (fast)
-make build-extensions release=true # Release mode (optimized + wheels)
+make build-extensions release=true # Release mode (wheels + sdist)
 make test-extensions               # Test extension loads
 make clean-extensions              # Clean build artifacts
 ```
 
-See [rust-extensions.md](rust-extensions.md) for details.
+**Project structure:**
+```
+rust/
+├── Cargo.toml       # Rust dependencies
+└── src/
+    └── lib.rs       # Extension implementation
+```
+
+**Optimization targets** (from profiling):
+- `handle_data()` - 23ms (15% of runtime)
+- `goahead()` - 9ms (6% of runtime)  
+- `attr_sort()` - 7ms (5% of runtime)
+
+Expected speedup: 5-10x overall
+
+**Resources:**
+- [PyO3 Documentation](https://pyo3.rs/)
+- [Maturin Guide](https://www.maturin.rs/)
+- [Profiling Analysis](../PROFILING_ANALYSIS.md)
 
 ## Testing Strategy
 

@@ -268,9 +268,8 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 | **[Installation Guide](docs/installation.md)** | Complete installation instructions, editor integration, CI/CD setup |
 | **[Configuration Guide](docs/configuration.md)** | All configuration options, file formats, project examples |
 | **[Rules Reference](docs/rules.md)** | Complete list of all rules with examples and fixes |
-| **[Development Guide](docs/development.md)** | Contributing, testing, and development setup |
+| **[Development Guide](docs/development.md)** | Contributing, testing, development setup, Rust extensions |
 | **[Distribution Guide](docs/distribution.md)** | PyPI publishing, Homebrew formula, package management |
-| **[Rust Extensions](docs/rust-extensions.md)** | Optional performance extensions |
 
 ## Benefits
 
