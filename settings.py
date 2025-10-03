@@ -1,3 +1,3 @@
 """Settings for Cutesy."""
 
-VERSION = "1.0b13"
+VERSION = "1.0b14"
