@@ -8,5 +8,4 @@ add-trailing-comma==3.2.0
 docformatter==1.7.7
 wemake-python-styleguide==1.4.0
 ruff==0.13.3
-wemake-python-styleguide==1.0.0
 mypy==1.18.2
