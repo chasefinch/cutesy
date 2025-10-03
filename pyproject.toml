@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "cutesy"
-version = "1.0b11"
+dynamic = ["version"]
 description = "A linter & formatter for consistent HTML code, or else."
 readme = "README.md"
 authors = [

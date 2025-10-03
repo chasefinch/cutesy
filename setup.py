@@ -4,13 +4,16 @@ from pathlib import Path
 
 import setuptools
 
+# Import version from package
+from cutesy import __version__
+
 readme_path = Path("README.md")
 with readme_path.open() as readme_file:
     long_description = readme_file.read()
 
 setuptools.setup(
     name="cutesy",
-    version="1.0b11",
+    version=__version__,
     author="Chase Finch",
     author_email="chase@finch.email",
     description="A linter & formatter for consistent HTML code, or else.",

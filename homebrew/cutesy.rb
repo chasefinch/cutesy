@@ -8,8 +8,9 @@ class Cutesy < Formula
   desc "A linter & formatter for consistent HTML code, or else."
   homepage "https://github.com/chasefinch/cutesy"
   url "https://github.com/chasefinch/cutesy/archive/refs/tags/v1.0b11.tar.gz"
-  sha256 "REPLACE_WITH_ACTUAL_SHA256"  # Get via: shasum -a 256 cutesy-1.0b11.tar.gz
+  sha256 "REPLACE_WITH_ACTUAL_SHA256"  # Get via: shasum -a 256 cutesy-VERSION.tar.gz
   license "Apache-2.0"
+  # NOTE: Version is defined in cutesy/__init__.py - update URL and SHA256 manually here
 
   depends_on "python@3.12"
   depends_on "rust" => :build  # Only needed for building from source
