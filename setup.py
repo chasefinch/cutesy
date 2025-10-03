@@ -82,6 +82,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/chasefinch/cutesy",
     packages=setuptools.find_packages(),
+    py_modules=["settings"],
     ext_modules=ext_modules,
     rust_extensions=rust_extensions,
     classifiers=[
