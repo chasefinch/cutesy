@@ -137,7 +137,7 @@ cutesy "*.html" --max-items-per-line=10
 ### Attribute Processing
 
 #### `--preserve-attr-whitespace`
-Disable the default whitespace normalization and re-indentation of attributes. Use this if you have specific whitespace requirements.
+Disable the default whitespace normalization and re-indentation of attributes. Use this if you have unique whitespace requirements. Note that the default normalization is aware of which attribute it's modifying, and is generally safe.
 
 ```bash
 cutesy "*.html" --preserve-attr-whitespace
