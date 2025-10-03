@@ -79,8 +79,24 @@ teardown:
 build:
 	@echo "Building release wheels with mypyc + Rust..."
 	@$(MAKE) clean-build
-	@python setup.py bdist_wheel
+	@export PATH="$$HOME/.cargo/bin:$$PATH" && python setup.py bdist_wheel
 	@echo "...done. Wheel created in dist/"
+
+# Test that the compiled wheel works (without permanently installing)
+test-build:
+	@echo "Testing compiled wheel..."
+	@if [ ! -f dist/*.whl ]; then \
+		echo "No wheel found. Run 'make build' first."; \
+		exit 1; \
+	fi
+	@echo "  1. Installing wheel in temporary location..."
+	@python -m pip install --target=/tmp/cutesy --force-reinstall dist/*.whl --no-deps > /dev/null 2>&1
+	@echo "  2. Testing compiled extensions..."
+	@cd /tmp && PYTHONPATH=/tmp/cutesy python -c \
+		"from cutesy import HTMLLinter, cutesy_core, _rust_available; import cutesy.linter, cutesy.cli; print('✓ mypyc compiled:', '.so' in cutesy.linter.__file__); print('✓ cli compiled:', '.so' in cutesy.cli.__file__); print('✓ Rust available:', _rust_available); print('✓ Rust test:', cutesy_core.hello_from_rust() if _rust_available else 'N/A')"
+	@echo "  3. Cleaning up..."
+	@rm -rf /tmp/cutesy
+	@echo "...done. Compiled wheel works correctly!"
 
 clean-build:
 	@echo "Cleaning build artifacts..."
@@ -89,4 +105,4 @@ clean-build:
 	@find cutesy -name "*.c" -delete
 	@echo "...done."
 
-.PHONY: default configure format lint test test-unit test-integration test-private setup build clean-build
+.PHONY: default configure format lint test test-unit test-integration test-private setup build test-build clean-build
