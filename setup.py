@@ -59,7 +59,7 @@ if USE_RUST:
         ]
 
 readme_path = Path("README.md")
-with readme_path.open() as readme_file:
+with readme_path.open(encoding="utf-8") as readme_file:
     long_description = readme_file.read()
 
 setuptools.setup(
