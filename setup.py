@@ -9,12 +9,12 @@ from settings import VERSION
 
 # Modules to skip for mypyc compilation
 MYPYC_SKIP = frozenset(
-    {
+    (
         "cutesy/__init__.py",  # Imports Rust module which doesn't exist during build
         "cutesy/__main__.py",  # Entry point, doesn't need compilation
         "cutesy/types.py",  # Uses DataEnum metaclass
         "cutesy/rules.py",  # Uses DataEnum metaclass
-    },
+    ),
 )
 
 # Build configuration
@@ -28,7 +28,9 @@ rust_extensions = []
 if USE_MYPYC:
     try:
         from mypyc.build import mypycify
-
+    except ImportError:
+        """Mypyc not available, build without compilation."""
+    else:
         # Compile all modules in cutesy/ except those in MYPYC_SKIP
         all_modules = [str(path) for path in Path("cutesy").rglob("*.py")]
         compile_modules = [module for module in all_modules if module not in MYPYC_SKIP]
@@ -38,15 +40,14 @@ if USE_MYPYC:
             only_compile_paths=compile_modules,  # But only compile these
             opt_level="3",
         )
-    except ImportError:
-        # mypyc not available, build without compilation
-        pass
 
 # Add Rust extensions
 if USE_RUST:
     try:
         from setuptools_rust import Binding, RustExtension
-
+    except ImportError:
+        """Setuptools-rust not available, build without Rust extensions."""
+    else:
         rust_extensions = [
             RustExtension(
                 "cutesy.cutesy_core",
@@ -55,9 +56,6 @@ if USE_RUST:
                 debug=False,
             ),
         ]
-    except ImportError:
-        # setuptools-rust not available, build without Rust extensions
-        pass
 
 readme_path = Path("README.md")
 with readme_path.open() as readme_file:

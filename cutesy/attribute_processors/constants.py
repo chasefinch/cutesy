@@ -1,7 +1,7 @@
 """Constants related to attribute processing."""
 
 TOKEN_ATTRIBUTES = frozenset(
-    {
+    (
         "class",
         "rel",
         "accept",
@@ -13,12 +13,12 @@ TOKEN_ATTRIBUTES = frozenset(
         "allow",
         "aria-describedby",
         "aria-labelledby",
-    },
+    ),
 )
 
 
 NUMERIC_ATTRIBUTES = frozenset(
-    {
+    (
         "width",
         "height",
         "rowspan",
@@ -29,17 +29,17 @@ NUMERIC_ATTRIBUTES = frozenset(
         "min",
         "max",
         "step",
-    },
+    ),
 )  # Also "value" when on an input of type number
 
 
 ENUMERATED_ATTRIBUTES = frozenset(
-    {"type", "kind", "scope", "wrap", "method", "shape", "crossorigin", "preload"},
+    ("type", "kind", "scope", "wrap", "method", "shape", "crossorigin", "preload"),
 )
 
 
 PRESENCE_ATTRIBUTES = frozenset(
-    {
+    (
         "disabled",
         "checked",
         "required",
@@ -51,12 +51,12 @@ PRESENCE_ATTRIBUTES = frozenset(
         "novalidate",
         "async",
         "defer",
-    },
+    ),
 )
 
 
 URI_ATTRIBUTES = frozenset(
-    {
+    (
         "href",
         "src",
         "action",
@@ -66,7 +66,7 @@ URI_ATTRIBUTES = frozenset(
         "background",
         "usemap",
         "longdesc",
-    },
+    ),
 )
 
-JS_ATTRIBUTE_PREFIXES = frozenset({"on"})
+JS_ATTRIBUTE_PREFIXES = frozenset(("on",))
