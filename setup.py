@@ -5,7 +5,7 @@ from pathlib import Path
 
 import setuptools
 
-from settings import VERSION
+VERSION = "1.0b17"
 
 # Modules to skip for mypyc compilation (use Path for cross-platform compatibility)
 MYPYC_SKIP = frozenset(
@@ -82,7 +82,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/chasefinch/cutesy",
     packages=setuptools.find_packages(),
-    py_modules=["settings"],
     ext_modules=ext_modules,
     rust_extensions=rust_extensions,
     classifiers=[
