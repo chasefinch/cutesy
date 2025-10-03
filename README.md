@@ -14,7 +14,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 - **Auto-fix**: Automatically corrects most formatting issues
 - **Configurable**: Extensive configuration options for your project's needs
-- **Fast**: Processes large codebases quickly
+- **Fast**: Rust-accelerated core for high performance
 
 ## Status
 
@@ -269,6 +269,8 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 | **[Configuration Guide](docs/configuration.md)** | All configuration options, file formats, project examples |
 | **[Rules Reference](docs/rules.md)** | Complete list of all rules with examples and fixes |
 | **[Development Guide](docs/development.md)** | Contributing, testing, and development setup |
+| **[Distribution Guide](docs/distribution.md)** | PyPI publishing, Homebrew formula, package management |
+| **[Rust Extensions](docs/rust-extensions.md)** | Optional performance extensions |
 
 ## Benefits
 

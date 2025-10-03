@@ -1,0 +1,54 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "cutesy"
+version = "1.0b11"
+description = "A linter & formatter for consistent HTML code, or else."
+readme = "README.md"
+authors = [
+    {name = "Chase Finch", email = "chase@finch.email"}
+]
+license = {text = "Apache-2.0"}
+keywords = [
+    "Cutesy",
+    "HTML",
+    "lint",
+    "linter",
+    "format",
+    "formatter",
+    "autoformat",
+    "autoformatter",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "data-enum>=2.0.1,<3",
+    "click>=8.1.8,<9",
+]
+
+[project.urls]
+Homepage = "https://github.com/chasefinch/cutesy"
+Repository = "https://github.com/chasefinch/cutesy"
+
+[project.scripts]
+cutesy = "cutesy.cli:main"
+
+[tool.maturin]
+# The Rust extension module
+module-name = "cutesy.cutesy_core"
+# Python source directory
+python-source = "."
+# Include Python files in the wheel
+include = ["cutesy/**/*.py"]
+# Build target
+features = ["pyo3/extension-module"]

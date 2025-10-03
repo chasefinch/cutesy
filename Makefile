@@ -75,4 +75,29 @@ teardown:
 	-rm -r bin/*
 	-rm pyvenv.cfg
 
-.PHONY: default configure format lint test test-unit test-integration test-private setup
+# Rust extension targets
+build-extensions:
+	@echo "Building Rust extensions..."
+	@if [ "$(release)" = "true" ]; then \
+		echo "  → Release mode (optimized + wheels for distribution)"; \
+		maturin build --release --out dist; \
+		maturin sdist --out dist; \
+		echo "...done. Wheels and source distribution created in dist/"; \
+	else \
+		echo "  → Dev mode (fast compilation)"; \
+		maturin develop; \
+		echo "...done."; \
+	fi
+
+test-extensions:
+	@echo "Testing Rust extensions..."
+	@python -c "from cutesy import cutesy_core; print('✓ Rust extension loaded:', cutesy_core.hello_from_rust())"
+
+clean-extensions:
+	@echo "Cleaning Rust build artifacts..."
+	@cd rust && cargo clean
+	@rm -f cutesy/cutesy_core*.so
+	@rm -rf dist/*.whl dist/*.tar.gz
+	@echo "...done."
+
+.PHONY: default configure format lint test test-unit test-integration test-private setup build-extensions test-extensions clean-extensions

@@ -25,6 +25,21 @@ make             # Run everything
 **Project requirements:**
 - **Python 3.11+** for development
 - **uv** for dependency management - `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **Rust 1.70+** (optional, for extensions) - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+- **maturin** (optional, for extensions) - `pip install maturin`
+
+## Rust Extensions
+
+Build optional Rust extensions for performance:
+
+```bash
+make build-extensions              # Dev mode (fast)
+make build-extensions release=true # Release mode (optimized + wheels)
+make test-extensions               # Test extension loads
+make clean-extensions              # Clean build artifacts
+```
+
+See [rust-extensions.md](rust-extensions.md) for details.
 
 ## Testing Strategy
 

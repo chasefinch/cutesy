@@ -1,31 +1,53 @@
-# Venv
-pyvenv.cfg
-lib/*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
 bin/*
+lib/*
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# PyPI
-build/*
-dist/*
-cutesy.egg-info
+# Virtual environments
+venv/
+ENV/
+env/
 
-# Pyenv
-.python-version
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Ruff
-.ruff-cache
-
-# coverage
+# Testing
+.pytest_cache/
 .coverage
-.coverage*
-coverage
+htmlcov/
+.tox/
 
-# Tests
-test_file*
+# Rust
+rust/target/
+rust/Cargo.lock
+**/*.rs.bk
 
-# Other
-.cache
-__pycache__
-*.sw[po]
-*.py[co]
-*.bak
-*.DS_Store
+# macOS
+.DS_Store
+
+# Profiling
+*.prof
+profile_cutesy.py

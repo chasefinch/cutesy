@@ -1,5 +1,14 @@
-"""Lint & format an HTML document in Python."""
+"""Cutesy - A linter & formatter for consistent HTML code."""
 
-from .linter import HTMLLinter
+__version__ = "1.0b11"
 
-__all__ = ["HTMLLinter"]
+# Try to import the Rust extension if available
+# Falls back gracefully if not compiled yet
+try:
+    from . import cutesy_core
+    _rust_available = True
+except ImportError:
+    _rust_available = False
+    cutesy_core = None
+
+__all__ = ["__version__", "cutesy_core"]
