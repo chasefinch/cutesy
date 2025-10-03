@@ -75,28 +75,12 @@ teardown:
 	-rm -r bin/*
 	-rm pyvenv.cfg
 
-# Build with mypyc + Rust compilation
+# Build release wheels with mypyc + Rust compilation
 build:
-	@echo "Building with mypyc + Rust compilation..."
-	@echo "  1. Cleaning previous build..."
-	@$(MAKE) clean-build
-	@echo "  2. Uninstalling previous version..."
-	@pip uninstall -y cutesy 2>/dev/null || true
-	@echo "  3. Building and installing with compilation..."
-	@pip install --no-deps .
-	@echo "...done. Extensions compiled."
-	@$(MAKE) test-compiled
-
-# Build release wheels
-build-release:
-	@echo "Building release wheels..."
+	@echo "Building release wheels with mypyc + Rust..."
 	@$(MAKE) clean-build
 	@python setup.py bdist_wheel
 	@echo "...done. Wheel created in dist/"
-
-test-compiled:
-	@echo "Testing mypyc compilation..."
-	@python -c "import sys; import cutesy.linter; compiled = [m for m in sys.modules if 'cutesy' in m and hasattr(sys.modules.get(m), '__file__') and (sys.modules.get(m).__file__ or '').endswith('.so')]; print('✓ mypyc compiled modules:', compiled) if compiled else print('⚠ No compiled modules found (running pure Python)')"
 
 clean-build:
 	@echo "Cleaning build artifacts..."
@@ -105,4 +89,4 @@ clean-build:
 	@find cutesy -name "*.c" -delete
 	@echo "...done."
 
-.PHONY: default configure format lint test test-unit test-integration test-private setup build build-release test-compiled clean-build
+.PHONY: default configure format lint test test-unit test-integration test-private setup build clean-build
