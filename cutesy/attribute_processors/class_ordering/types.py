@@ -220,11 +220,11 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         """Extract a span of class names and replace it with a sentinel.
 
         Returns (new_class_names, stash), where new_class_names has
-        class_names[start:end] replaced by the sentinel, and stash is a nested
-        structure of the removed items.
+        class_names[start:end] replaced by the sentinel, and stash is a
+        nested structure of the removed items.
 
-        In the stash, plain strings are class names, and lists represent nested
-        blocks.
+        In the stash, plain strings are class names, and lists represent
+        nested blocks.
         """
         start = index_tree[0]
         end = index_tree[-1]

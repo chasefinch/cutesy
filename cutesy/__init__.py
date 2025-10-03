@@ -1,14 +1,16 @@
 """Cutesy - A linter & formatter for consistent HTML code."""
 
-__version__ = "1.0b11"
+from .linter import HTMLLinter
 
-# Try to import the Rust extension if available
-# Falls back gracefully if not compiled yet
+# Try to import Rust extensions if available
+# The mypyc-compiled Python code can call these for maximum performance
 try:
-    from . import cutesy_core
+    from . import cutesy_core  # type: ignore[attr-defined]
+
     _rust_available = True
 except ImportError:
+    cutesy_core = None  # type: ignore[assignment]
     _rust_available = False
-    cutesy_core = None
 
-__all__ = ["__version__", "cutesy_core"]
+
+__all__ = ["HTMLLinter", "_rust_available", "cutesy_core"]

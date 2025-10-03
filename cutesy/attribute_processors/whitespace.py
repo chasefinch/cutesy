@@ -31,9 +31,9 @@ def has_inner_raw_bounding_quote(attr_body: str, bounding_character: str) -> boo
     r"""Return True if attr_body contains a quote matching bounding_character.
 
     We first remove known *safe* encodings of that quote (entities, %XX,
-    \uXXXX, \xXX) and then look for the literal quote. Backslash-escape (e.g.
-    \") is NOT considered safe in HTML and will still contain a raw quote, so
-    it will trigger a bail.
+    \uXXXX, \xXX) and then look for the literal quote. Backslash-escape
+    (e.g. \") is NOT considered safe in HTML and will still contain a
+    raw quote, so it will trigger a bail.
     """
     if bounding_character == '"':
         # Strip safe representations of double quotes so they don't confuse the check.
@@ -91,8 +91,9 @@ class AttributeProcessor(BaseAttributeProcessor):
     ) -> tuple[str, list[Error]]:
         """Trim excess whitespace, and adjust starting & ending whitespace.
 
-        If we detect a raw inner quote that matches the bounding_character, we
-        bail (return the original body unchanged) to avoid breaking the HTML.
+        If we detect a raw inner quote that matches the
+        bounding_character, we bail (return the original body unchanged)
+        to avoid breaking the HTML.
         """
         self._errors: list[Error] = []
         self.position = position

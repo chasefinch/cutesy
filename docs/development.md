@@ -25,19 +25,53 @@ make             # Run everything
 **Project requirements:**
 - **Python 3.11+** for development
 - **uv** for dependency management - `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- **Rust 1.70+** (optional, for extensions) - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-- **maturin** (optional, for extensions) - `pip install maturin`
+- **mypy** (includes mypyc) - `pip install mypy`
+- **Rust 1.70+** (optional, for Rust extensions) - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+- **maturin** (optional, for Rust extensions) - `pip install maturin`
 
-## Rust Extensions
+## Performance Extensions
 
-Cutesy includes optional Rust extensions for performance-critical code paths. Users installing from PyPI or Homebrew automatically get pre-compiled wheels with extensions included.
+Cutesy uses a two-tier performance optimization strategy:
+
+### Tier 1: mypyc Compilation (Current - 3-5x speedup)
+
+**All Python code** is compiled to C extensions using mypyc. This is what PyPI and Homebrew users get automatically.
+
+**Development commands:**
+```bash
+make build                  # Dev mode (install with mypyc)
+make build release=true     # Release mode (build wheel)
+make build-compiled         # Install with mypyc
+make test-compiled          # Check if mypyc modules loaded
+make clean-build            # Clean build artifacts
+```
+
+**What gets compiled:**
+- All Python modules in the `cutesy/` package
+- Exception: `rules.py` (uses DataEnum metaclass - incompatible with mypyc)
+
+Expected speedup: **3-5x overall** (based on mypy benchmarks)
+
+The mypyc-compiled code can call Rust extensions when available for additional performance.
+
+**Disabling mypyc:**
+```bash
+CUTESY_USE_MYPYC=0 pip install -e .
+# Or: make build-no-compile
+```
+
+### Tier 2: Rust Extensions (Future - Additional 3-6x on top of mypyc)
+
+For maximum performance, critical hotspot functions can be rewritten in Rust. The mypyc-compiled Python code calls these when available. Infrastructure is in place but not yet implemented.
+
+**Combined performance:** mypyc (3-5x) + Rust hotspots (3-6x) = **10-20x total speedup**
 
 **Development commands:**
 ```bash
 make build-extensions              # Dev mode (fast)
 make build-extensions release=true # Release mode (wheels + sdist)
 make test-extensions               # Test extension loads
-make clean-extensions              # Clean build artifacts
+make clean-extensions              # Clean artifacts
 ```
 
 **Project structure:**
@@ -45,17 +79,18 @@ make clean-extensions              # Clean build artifacts
 rust/
 ├── Cargo.toml       # Rust dependencies
 └── src/
-    └── lib.rs       # Extension implementation
+    └── lib.rs       # Extension implementation (stub)
 ```
 
 **Optimization targets** (from profiling):
 - `handle_data()` - 23ms (15% of runtime)
-- `goahead()` - 9ms (6% of runtime)  
+- `goahead()` - 9ms (6% of runtime)
 - `attr_sort()` - 7ms (5% of runtime)
 
-Expected speedup: 5-10x overall
+Expected speedup: 10-20x for rewritten functions, 5-10x overall
 
 **Resources:**
+- [mypyc Documentation](https://mypyc.readthedocs.io/)
 - [PyO3 Documentation](https://pyo3.rs/)
 - [Maturin Guide](https://www.maturin.rs/)
 - [Profiling Analysis](../PROFILING_ANALYSIS.md)

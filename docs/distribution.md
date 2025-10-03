@@ -11,7 +11,7 @@ Install from PyPI:
 pip install cutesy
 ```
 
-Users automatically get pre-compiled Rust extensions for their platform.
+Users automatically get pre-compiled mypyc extensions (3-5x faster) for their platform.
 
 ### For Maintainers
 
@@ -31,15 +31,17 @@ This triggers `.github/workflows/publish-to-pypi.yml` which:
 4. Publishes to PyPI using trusted publishing
 
 **Platforms Supported:**
-- Linux: x86_64, aarch64 (manylinux)
+- Linux: x86_64
 - macOS: x86_64 (Intel), arm64 (Apple Silicon)
 - Windows: x64
+
+All wheels include mypyc-compiled extensions for 3-5x performance boost.
 
 **Manual Build (for testing):**
 
 ```bash
-# Build wheels + sdist for distribution
-make build-extensions release=true
+# Build wheel with mypyc
+make build release=true
 
 # Output will be in dist/
 ls dist/

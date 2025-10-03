@@ -258,7 +258,8 @@ class TestGroupAndSort:
         """Test BEM notation inside arbitrary values [...] should be allowed.
 
         This covers the edge case where -- inside arbitrary values like
-        mt-[var(--spacing)] should still be treated as valid Tailwind classes.
+        mt-[var(--spacing)] should still be treated as valid Tailwind
+        classes.
         """
         classes = ["bg-red-500", "mt-[var(--spacing)]", "p-4"]
         groups = group_and_sort(classes)

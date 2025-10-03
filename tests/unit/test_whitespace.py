@@ -12,8 +12,8 @@ MAX_CHARS_PER_LINE = 80
 class TestHasInnerRawBoundingQuote:
     """Test has_inner_raw_bounding_quote function.
 
-    This class tests the has_inner_raw_bounding_quote function which detects
-    raw quotes within attribute values.
+    This class tests the has_inner_raw_bounding_quote function which
+    detects raw quotes within attribute values.
     """
 
     def test_double_quote_with_raw_quote(self) -> None:
@@ -63,7 +63,8 @@ class TestHasInnerRawBoundingQuote:
 class TestCollapseWhitespaceOutsideStrings:
     """Test collapse_whitespace_outside_strings function.
 
-    This class tests the collapse_whitespace_outside_strings function behavior.
+    This class tests the collapse_whitespace_outside_strings function
+    behavior.
     """
 
     def test_collapse_multiple_spaces(self) -> None:
@@ -121,7 +122,8 @@ class TestCollapseWhitespaceOutsideStrings:
     def test_escaped_quotes_in_strings(self) -> None:
         """Test strings with escaped quotes.
 
-        Verify that strings containing escaped quotes are handled correctly.
+        Verify that strings containing escaped quotes are handled
+        correctly.
         """
         input_str = r'hello "string with \" quote"   end'
         # The spaces at the end don't have non-whitespace after, so no collapse

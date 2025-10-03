@@ -67,8 +67,8 @@ class StructuralError(Exception):
 class InstructionType(Enum):
     """A single letter to represent each type of dynamic instruction.
 
-    For regex performance reasons, these characters form a complete character
-    range, [a-k].
+    For regex performance reasons, these characters form a complete
+    character range, [a-k].
     """
 
     # Increase indentation

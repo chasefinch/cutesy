@@ -354,8 +354,8 @@ class TestAttributeProcessor:
     def test_process_single_newline_only(self) -> None:
         """Test processing attribute that is just a single newline.
 
-        This tests the case where the attribute contains only a single newline
-        character.
+        This tests the case where the attribute contains only a single
+        newline character.
         """
         processor = AttributeProcessor()
 

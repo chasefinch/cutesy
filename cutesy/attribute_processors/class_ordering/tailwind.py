@@ -226,20 +226,22 @@ STATE_ORDER = (
 def group_and_sort(class_names: list[str]) -> list[list[str]]:
     """Return groups of tailwind class strings in fixed order.
 
-    All user-defined classes will be collected into one final bucket at the
-    bottom (preserving original order).
+    All user-defined classes will be collected into one final bucket at
+    the bottom (preserving original order).
 
-    Real Tailwind groups appear in REAL_GROUPS_ORDER, then "other (tailwind)",
-    sorted by _intragroup_sort_key.
+    Real Tailwind groups appear in REAL_GROUPS_ORDER, then "other
+    (tailwind)", sorted by _intragroup_sort_key.
 
-    Arbitrary selector variants (e.g., "[&>*]") each get their own bucket,
-    keyed by the exact modifier string, and are emitted after the above groups.
+    Arbitrary selector variants (e.g., "[&>*]") each get their own
+    bucket, keyed by the exact modifier string, and are emitted after
+    the above groups.
 
-    Arbitrary selectors that still target the same element (e.g., "[&]" with
-    any underscores) are treated normally (not split out).
+    Arbitrary selectors that still target the same element (e.g., "[&]"
+    with any underscores) are treated normally (not split out).
 
     User-defined classes (not recognized as Tailwind) are not mixed into
-    groups; they are emitted as one final list at the end, in original order.
+    groups; they are emitted as one final list at the end, in original
+    order.
     """
     # Buckets for real groups (track original index for stable sort)
     group_items: dict[str, list[tuple[int, TailwindClass]]] = {
@@ -382,8 +384,8 @@ def _group_sort_key(pair: tuple[int, TailwindClass], group_name: str) -> tuple:
 def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: int) -> tuple:
     """Sort within a group.
 
-    Unmodified first, then modifiers in consistent order, then name, then
-    stable index.
+    Unmodified first, then modifiers in consistent order, then name,
+    then stable index.
     """
     has_modifiers = bool(item.modifiers)
     base = item.class_name

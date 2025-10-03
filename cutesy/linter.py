@@ -1029,8 +1029,8 @@ class HTMLLinter(HTMLParser):
         Recursively handles dynamic attributes, prepending them with the
         indentation characters.
 
-        The first return value is a key for sorting the whole set in a higher-
-        level set. The second is a list of attribute strings.
+        The first return value is a key for sorting the whole set in a
+        higher- level set. The second is a list of attribute strings.
         """
         all_attrs = []
         for incoming_attr in attrs:
@@ -1081,7 +1081,7 @@ class HTMLLinter(HTMLParser):
                 group_level += 1
                 if group_level == 1:
                     group.append(name)
-                    group_key = None
+                    group_key: str | None = None
                     subgroup_attrs = []
                 else:
                     subgroup_attrs.append(attr)

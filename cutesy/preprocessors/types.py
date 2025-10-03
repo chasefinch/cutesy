@@ -64,9 +64,9 @@ class SetupError(Exception):
 class BasePreprocessor(ABC):
     """A base class for preprocessors.
 
-    A preprocessor will replace dynamic instructions that it recognizes with
-    placeholder stubs that can later be understood correctly by the HTML
-    parser.
+    A preprocessor will replace dynamic instructions that it recognizes
+    with placeholder stubs that can later be understood correctly by the
+    HTML parser.
     """
 
     braces: ClassVar[set[tuple[str, str]]]
