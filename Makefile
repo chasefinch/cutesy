@@ -7,7 +7,7 @@ configure:
 
 format:
 	@echo "Formatting Python docstrings..."
-	@docformatter . -r --in-place --exclude bin lib .git || true
+	@docformatter . -r --in-place --exclude .venv .git || true
 	@echo "...done."
 	@echo "Formatting Python files..."
 	@echo "  1. Ruff Format"
@@ -16,7 +16,7 @@ format:
 	@ruff check --fix-only . --quiet
 	@echo "  3. Add trailing commas"
 	@# Add trailing commas to dangling lines and function calls
-	@find . \( -path ./lib -o -path ./bin \) -prune -o -name '*.py' -print0 | xargs -P 16 -0 -I{} sh -c 'add-trailing-comma "{}" || true'
+	@find . -path ./.venv -prune -o -name '*.py' -print0 | xargs -P 16 -0 -I{} sh -c 'add-trailing-comma "{}" || true'
 	@echo "  4. Ruff Format (again)"
 	@# Format again after adding trailing commas
 	@ruff format . --quiet
@@ -53,27 +53,27 @@ test-unit:
 	@echo "Running unit tests..."
 	find . -name "*.pyc" -delete
 	coverage erase
-	coverage run --source=cutesy --data-file=.coverage.unit -m pytest tests/unit --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
+	coverage run --source=cutesy --data-file=.coverage.unit -m pytest tests/unit --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 test-integration:
 	@echo "Running integration tests..."
 	find . -name "*.pyc" -delete
-	coverage run --source=cutesy --data-file=.coverage.integration -m pytest tests/integration --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
+	coverage run --source=cutesy --data-file=.coverage.integration -m pytest tests/integration --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 test-private:
 	@echo "Running private tests..."
 	find . -name "*.pyc" -delete
-	coverage run --source=cutesy --data-file=.coverage.private -m pytest tests/private --ignore=bin --ignore=lib --ignore=dist --ignore=prof --ignore=build -vv
+	coverage run --source=cutesy --data-file=.coverage.private -m pytest tests/private --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 setup:
-	python3 -m venv .
-	chmod +x ./bin/activate
-	uv pip install -r requirements/develop.txt
+	python3 -m venv .venv
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install uv
+	.venv/bin/uv pip install -r requirements/develop.txt
+	@echo "Virtual environment created. Activate with: source .venv/bin/activate"
 
 teardown:
-	-rm -r lib/*
-	-rm -r bin/*
-	-rm pyvenv.cfg
+	rm -rf .venv
 
 # Build release wheels with mypyc + Rust compilation
 build:

@@ -7,7 +7,7 @@
 git clone https://github.com/chasefinch/cutesy.git
 cd cutesy
 make setup
-source bin/activate
+source .venv/bin/activate
 ```
 
 **Run tests:**

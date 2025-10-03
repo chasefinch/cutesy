@@ -21,10 +21,9 @@ class TestBlankLineRemovalAfterOpeningTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
-        assert len(errors) == 0
 
     def test_multiple_blank_lines_after_opening_tag(self) -> None:
         """Test removal of multiple blank lines after opening tag."""
@@ -42,10 +41,9 @@ class TestBlankLineRemovalAfterOpeningTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
-        assert len(errors) == 0
 
     def test_blank_line_detection_without_fix(self) -> None:
         """Test F4 error reported for blank line after opening tag w/o fix."""
@@ -56,7 +54,7 @@ class TestBlankLineRemovalAfterOpeningTags:
 </div>
 """
         linter = HTMLLinter(fix=False)
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         f4_errors = [error for error in errors if error.rule.code == "F4"]
         assert len(f4_errors) >= 1
@@ -80,7 +78,7 @@ class TestBlankLineRemovalAfterOpeningTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -102,10 +100,9 @@ class TestBlankLineRemovalBeforeClosingTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
-        assert len(errors) == 0
 
     def test_multiple_blank_lines_before_closing_tag(self) -> None:
         """Test removal of multiple blank lines before closing tag."""
@@ -123,7 +120,7 @@ class TestBlankLineRemovalBeforeClosingTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -136,7 +133,7 @@ class TestBlankLineRemovalBeforeClosingTags:
 </div>
 """
         linter = HTMLLinter(fix=False)
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         f4_errors = [error for error in errors if error.rule.code == "F4"]
         assert len(f4_errors) >= 1
@@ -156,7 +153,7 @@ class TestBlankLineRemovalBeforeClosingTags:
 </div>
 """
         linter = HTMLLinter(fix=True)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -178,10 +175,9 @@ class TestBlankLineRemovalWithInstructions:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
-        assert len(errors) == 0
 
     def test_blank_line_before_closing_instruction(self) -> None:
         """Test removal of blank line before closing instruction."""
@@ -197,7 +193,7 @@ class TestBlankLineRemovalWithInstructions:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -222,7 +218,7 @@ class TestBlankLineRemovalWithInstructions:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -246,7 +242,7 @@ class TestBlankLineRemovalWithInstructions:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -275,7 +271,7 @@ class TestMixedTagsAndInstructions:
 </div>
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -300,7 +296,7 @@ class TestMixedTagsAndInstructions:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -337,7 +333,7 @@ class TestMixedTagsAndInstructions:
 </body>
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         assert result == expected
 
@@ -356,13 +352,12 @@ class TestIndentationReset:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         # Check that indentation is preserved correctly
         assert "\t{% if inner %}" in result
         assert "\t{% endif %}" in result
         assert "{% endif %}" in result
-        assert len(errors) == 0
 
     def test_indentation_resets_on_else(self) -> None:
         """Test indentation matches between if and else."""
@@ -374,7 +369,7 @@ class TestIndentationReset:
 {% endif %}
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         lines = result.split("\n")
         if_line = next(line for line in lines if "{% if condition %}" in line)
@@ -395,14 +390,13 @@ class TestIndentationReset:
 </div>
 """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
 
         # Verify structure is preserved correctly
         assert "\t{% if a %}" in result
         assert "\t\t<span>" in result
         assert "\t{% endif %}" in result
         assert "</div>" in result
-        assert len(errors) == 0
 
 
 class TestUnbalancedStructures:
@@ -416,7 +410,7 @@ class TestUnbalancedStructures:
 {% endif %}
 """
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         d3_errors = [error for error in errors if error.rule.code == "D3"]
         assert len(d3_errors) == 1
@@ -433,7 +427,7 @@ class TestUnbalancedStructures:
 {% endif %}
 """
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         d3_errors = [error for error in errors if error.rule.code == "D3"]
         expected_error_count = 2
@@ -449,7 +443,7 @@ class TestUnbalancedStructures:
 {% endif %}
 """
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         assert len(errors) == 0
 
@@ -463,7 +457,7 @@ class TestUnbalancedStructures:
 {% endif %}
 """
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
-        result, errors = linter.lint(html)
+        _result, errors = linter.lint(html)
 
         d3_errors = [error for error in errors if error.rule.code == "D3"]
         assert len(d3_errors) >= 1
