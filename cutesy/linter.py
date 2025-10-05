@@ -5,7 +5,7 @@ import string
 from collections.abc import Sequence
 from enum import Enum, auto
 from html.parser import HTMLParser
-from typing import Any, Final, NamedTuple, Never, TypeGuard
+from typing import Any, Final, Literal, NamedTuple, Never, TypeGuard
 
 from .attribute_processors import BaseAttributeProcessor
 from .preprocessors import BasePreprocessor
@@ -141,9 +141,7 @@ class HTMLLinter(HTMLParser):
 
     _mode: Mode | None
     _errors: list[Error]
-
-    _last_data: str | None
-    _expected_indentation: Any
+    _result: list[str]
 
     def __init__(
         self,
@@ -191,10 +189,10 @@ class HTMLLinter(HTMLParser):
         # Stack of StackItem for tracking tags and instructions
         self._tag_stack: list[StackItem] = []
         # Possible values: {None, True} if self.fix else {None, str}
-        self._expected_indentation = None
+        self._expected_indentation: str | Literal[True] | None = None
         # Track last data to detect blank lines before closing
         # tags/instructions
-        self._last_data = None
+        self._last_data: str | None = None
         # Track indentation level before last tag/instruction (for detecting
         # blank lines after opening)
         self._prev_indentation_level = 0

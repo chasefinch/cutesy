@@ -1,6 +1,6 @@
 default: clean configure format lint check test
 
-full: default build test-build
+all: default build test-build
 
 configure:
 	@echo "Checking configuration against global spec..."

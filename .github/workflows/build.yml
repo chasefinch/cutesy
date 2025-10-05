@@ -64,3 +64,16 @@ jobs:
         run: |
           . .venv/bin/activate
           make test
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build wheel
+        run: |
+          . .venv/bin/activate
+          make build
+
+      - name: Test built wheel
+        run: |
+          . .venv/bin/activate
+          make test-build
