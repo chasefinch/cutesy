@@ -255,28 +255,28 @@ def main(
     # Check for structural rules being ignored in fix mode
     if fix and ignore_rules_list:
         structural_rules = {rule.code for rule in Rule.members if rule.structural}
-        ignored_structural_rules = []
+        ignored_structural_rule_codes = []
 
-        for ignored_rule in ignore_rules_list:
-            rule = ignored_rule.strip().upper()
-            if rule in structural_rules:
+        for ignored_rule_code in ignore_rules_list:
+            rule_code = ignored_rule_code.strip().upper()
+            if rule_code in structural_rules:
                 # It's a specific structural rule
-                ignored_structural_rules.append(rule)
+                ignored_structural_rule_codes.append(rule_code)
             else:
                 # It's a category that includes structural rules
                 # Extract prefix from ignore_rule (letters before digits)
-                prefix_match = re.match(r"^([A-Z]+)", rule)
+                prefix_match = re.match(r"^([A-Z]+)", rule_code)
                 if prefix_match:
                     prefix = prefix_match.group(1)
-                    rules = [code for code in structural_rules if code.startswith(prefix)]
-                    ignored_structural_rules.extend(rules)
+                    rule_codes = [code for code in structural_rules if code.startswith(prefix)]
+                    ignored_structural_rule_codes.extend(rule_codes)
 
-        if ignored_structural_rules:
-            ignored_structural_rules = sorted(set(ignored_structural_rules))
-            maybe_s = "" if len(ignored_structural_rules) == 1 else "s"
-            rules_list = ", ".join(ignored_structural_rules)
+        if ignored_structural_rule_codes:
+            ignored_structural_rule_codes = sorted(set(ignored_structural_rule_codes))
+            maybe_s = "" if len(ignored_structural_rule_codes) == 1 else "s"
+            rule_codes_list = ", ".join(ignored_structural_rule_codes)
             click.echo(
-                f"🔪 \033[91m\033[1mCan't ignore structural rule{maybe_s} {rules_list} in "
+                f"🔪 \033[91m\033[1mCan't ignore structural rule{maybe_s} {rule_codes_list} in "
                 "fix mode\033[0m",
             )
             sys.exit(1)
