@@ -4,7 +4,8 @@ from typing import ClassVar
 
 from cutesy.linter import HTMLLinter
 from cutesy.preprocessors.types import BasePreprocessor
-from cutesy.types import InstructionType, Mode
+from cutesy.rules import Rule
+from cutesy.types import Error, InstructionType, Mode
 
 
 class MockPreprocessor(BasePreprocessor):
@@ -40,7 +41,7 @@ class TestHTMLLinter:
 
         # Simulate some state
         linter._mode = Mode.DOCUMENT
-        linter._errors = ["error"]
+        linter._errors = [Error(line=1, column=0, rule=Rule.get("D1"))]
         linter._result = ["result"]
 
         linter.reset()

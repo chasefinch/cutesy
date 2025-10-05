@@ -32,7 +32,12 @@ class Error:
     line: int  # 0-based line index
     column: int  # 0-based column index
     rule: Rule
-    replacements: dict[str, str]
+    replacements: dict[str, str] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        """Set default for replacements if not provided."""
+        if self.replacements is None:
+            object.__setattr__(self, "replacements", {})
 
     @property
     def line_number(self) -> int:

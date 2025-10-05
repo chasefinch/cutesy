@@ -139,8 +139,11 @@ class HTMLLinter(HTMLParser):
     max_items_per_line: Final[int]
     line_length: Final[int]
 
+    _mode: Mode | None
+    _errors: list[Error]
+
     _last_data: str | None
-    _expected_indentation: Any = None
+    _expected_indentation: Any
 
     def __init__(
         self,

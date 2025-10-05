@@ -1,4 +1,6 @@
-default: configure format lint check test
+default: clean configure format lint check test
+
+full: default build test-build
 
 configure:
 	@echo "Checking configuration against global spec..."
@@ -43,33 +45,34 @@ check:
 	@mypy .
 	@echo "...done. No issues found."
 
-test: test-unit test-integration test-private
+test:
+	@$(MAKE) test-unit test-integration test-private
 	@echo "Combining coverage reports..."
-	coverage combine
-	coverage report -m --fail-under 91
+	@coverage combine
+	@coverage report -m --fail-under 91
 	@echo "All tests completed successfully!"
 
 test-unit:
 	@echo "Running unit tests..."
-	find . -name "*.pyc" -delete
-	coverage erase
-	coverage run --source=cutesy --data-file=.coverage.unit -m pytest tests/unit --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
+	@find . -name "*.pyc" -delete
+	@coverage erase
+	@coverage run --source=cutesy --data-file=.coverage.unit -m pytest tests/unit --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 test-integration:
 	@echo "Running integration tests..."
-	find . -name "*.pyc" -delete
-	coverage run --source=cutesy --data-file=.coverage.integration -m pytest tests/integration --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
+	@find . -name "*.pyc" -delete
+	@coverage run --source=cutesy --data-file=.coverage.integration -m pytest tests/integration --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 test-private:
 	@echo "Running private tests..."
-	find . -name "*.pyc" -delete
-	coverage run --source=cutesy --data-file=.coverage.private -m pytest tests/private --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
+	@find . -name "*.pyc" -delete
+	@coverage run --source=cutesy --data-file=.coverage.private -m pytest tests/private --ignore=.venv --ignore=dist --ignore=prof --ignore=build -vv
 
 setup:
 	python3 -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install uv
-	.venv/bin/uv pip install -r requirements/develop.txt
+	.venv/bin/uv pip install -r requirements/development.txt
 	@echo "Virtual environment created. Activate with: source .venv/bin/activate"
 
 teardown:
@@ -78,7 +81,7 @@ teardown:
 # Build release wheels with mypyc + Rust compilation
 build:
 	@echo "Building release wheels with mypyc + Rust..."
-	@$(MAKE) clean-build
+	@$(MAKE) clean
 	@export PATH="$$HOME/.cargo/bin:$$PATH" && python setup.py bdist_wheel
 	@echo "...done. Wheel created in dist/"
 
@@ -89,16 +92,22 @@ test-build:
 		echo "No wheel found. Run 'make build' first."; \
 		exit 1; \
 	fi
-	@echo "  1. Installing wheel in temporary location..."
-	@python -m pip install --target=/tmp/cutesy --force-reinstall dist/*.whl --no-deps > /dev/null 2>&1
+	@echo "  1. Installing wheel in temporary venv..."
+	@rm -rf /tmp/cutesy/.venv
+	@python -m venv /tmp/cutesy/.venv
+	@/tmp/cutesy/.venv/bin/pip install --quiet --upgrade pip
+	@/tmp/cutesy/.venv/bin/pip install --quiet dist/*.whl
+	@/tmp/cutesy/.venv/bin/pip install --quiet pytest coverage
 	@echo "  2. Testing compiled extensions..."
-	@cd /tmp && PYTHONPATH=/tmp/cutesy python -c \
+	@cd /tmp && /tmp/cutesy/.venv/bin/python -c \
 		"from cutesy import HTMLLinter, cutesy_core, _rust_available; import cutesy.linter, cutesy.cli; print('✓ mypyc compiled:', '.so' in cutesy.linter.__file__); print('✓ cli compiled:', '.so' in cutesy.cli.__file__); print('✓ Rust available:', _rust_available); print('✓ Rust test:', cutesy_core.hello_from_rust() if _rust_available else 'N/A')"
-	@echo "  3. Cleaning up..."
-	@rm -rf /tmp/cutesy
+	@echo "  3. Running test suite against installed build..."
+	@cd $(CURDIR) && /tmp/cutesy/.venv/bin/pytest tests/unit tests/integration tests/private --ignore=.venv --ignore=dist --ignore=prof --ignore=build -v
+	@echo "  4. Cleaning up..."
+	@rm -rf /tmp/cutesy/.venv
 	@echo "...done. Compiled wheel works correctly!"
 
-clean-build:
+clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf build/ dist/ *.egg-info
 	@find cutesy -name "*.so" -delete
