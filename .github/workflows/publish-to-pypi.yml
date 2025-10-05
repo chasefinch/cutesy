@@ -6,9 +6,9 @@ on:
       - "*"
 
 jobs:
-  # Build wheels with mypyc compilation
+  # Build wheels with mypyc compilation & Rust extensions
   build-wheels:
-    name: Build mypyc wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
