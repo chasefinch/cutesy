@@ -307,6 +307,6 @@ See our [Development Guide](docs/development.md) for getting started.
 
 ---
 
-**Keep your HTML cute and tidy with Cutesy! 🥰**
+**Keep your HTML tidy with Cutesy! 🥰**
 
 or els̴͔e
