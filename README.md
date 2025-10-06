@@ -309,4 +309,4 @@ See our [Development Guide](docs/development.md) for getting started.
 
 **Keep your HTML cute and tidy with Cutesy! 🥰**
 
-Or els̴͔e.
+or els̴͔e
