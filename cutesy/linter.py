@@ -34,6 +34,7 @@ class StackItem(NamedTuple):
     item_type: StackItemType
     name: str | InstructionType  # tag name or instruction type
     indentation: int
+    line: int  # line number where this item was opened
 
 
 def is_whitespace(char: str) -> TypeGuard[Never]:
@@ -429,7 +430,9 @@ class HTMLLinter(HTMLParser):
 
         if tag not in VOID_ELEMENTS:
             # Tag should be closed, add it to the stack.
-            self._tag_stack.append(StackItem(StackItemType.TAG, tag, self._indentation_level))
+            self._tag_stack.append(
+                StackItem(StackItemType.TAG, tag, self._indentation_level, self.getpos()[0]),
+            )
 
             if tag != "html":
                 # All non-void elements increase the expected indentation level
@@ -448,6 +451,7 @@ class HTMLLinter(HTMLParser):
 
         # Store the current indentation level before we pop the stack
         old_indentation_level = self._indentation_level
+        opening_line = None  # Track line where opening tag was found
 
         if tag in {item.name for item in self._tag_stack if item.item_type == StackItemType.TAG}:
             # Pop self._tag_stack until we find the matching opening tag
@@ -456,6 +460,7 @@ class HTMLLinter(HTMLParser):
 
                 if stack_item.item_type == StackItemType.TAG and stack_item.name == tag:
                     self._indentation_level = stack_item.indentation
+                    opening_line = stack_item.line
                     break
                 if stack_item.item_type == StackItemType.TAG:
                     self._handle_error("D3", tag=f"</{stack_item.name}>")
@@ -466,7 +471,12 @@ class HTMLLinter(HTMLParser):
             self._handle_error("D4", tag=f"</{tag}>")
 
         # Check for blank lines before closing tag that decreases indentation
-        if self._indentation_level < old_indentation_level and self._last_data:
+        # Skip this check if the closing tag is on the same line as the opening tag
+        if (
+            self._indentation_level < old_indentation_level
+            and self._last_data
+            and opening_line != self.getpos()[0]
+        ):
             match = re.search(r"\n\s*\n\s*$", self._last_data)
             if match:
                 if self.fix:
@@ -622,6 +632,7 @@ class HTMLLinter(HTMLParser):
 
         # Store the current indentation level before we change it
         old_indentation_level = self._indentation_level
+        opening_line = None  # Track line where opening instruction was found
 
         # Handle block ending/continuation - restore correct indentation from stack
         if instruction_type.ends_block or instruction_type.continues_block:
@@ -632,6 +643,7 @@ class HTMLLinter(HTMLParser):
 
                 if stack_item.item_type == StackItemType.INSTRUCTION:
                     self._indentation_level = stack_item.indentation
+                    opening_line = stack_item.line
 
                     # For continuations (else, elif), validate the match
                     if instruction_type.continues_block:
@@ -654,7 +666,12 @@ class HTMLLinter(HTMLParser):
                     self._indentation_level -= 1
 
         # Check for blank lines before instruction that decreases indentation
-        if self._indentation_level < old_indentation_level and self._last_data:
+        # Skip this check if the closing instruction is on the same line as the opening instruction
+        if (
+            self._indentation_level < old_indentation_level
+            and self._last_data
+            and opening_line != self.getpos()[0]
+        ):
             match = re.search(r"\n\s*\n\s*$", self._last_data)
             if match:
                 if self.fix:
@@ -677,13 +694,23 @@ class HTMLLinter(HTMLParser):
         if instruction_type.starts_block:
             # Push the opening instruction type and current indentation level
             self._tag_stack.append(
-                StackItem(StackItemType.INSTRUCTION, instruction_type, self._indentation_level),
+                StackItem(
+                    StackItemType.INSTRUCTION,
+                    instruction_type,
+                    self._indentation_level,
+                    self.getpos()[0],
+                ),
             )
             self._indentation_level += 1
         elif instruction_type.continues_block:
             # For continuations, push back with the continuation type
             self._tag_stack.append(
-                StackItem(StackItemType.INSTRUCTION, instruction_type, self._indentation_level),
+                StackItem(
+                    StackItemType.INSTRUCTION,
+                    instruction_type,
+                    self._indentation_level,
+                    self.getpos()[0],
+                ),
             )
             self._indentation_level += 1
 

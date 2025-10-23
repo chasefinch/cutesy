@@ -518,3 +518,122 @@ class TestIdempotency:
         result2, _ = linter2.lint(result1)
 
         assert result1 == result2
+
+
+class TestInlineConstructsWithBlankLines:
+    """Test that F4 is not raised for inline constructs."""
+
+    def test_inline_instruction_block_no_f4_error(self) -> None:
+        """Test inline instruction block doesn't raise F4."""
+        html = """<!doctype html>
+{% block extra_head %}
+\t{{ block.super }}
+
+\t<script></script>
+{% endblock %}
+
+{% block page_styles %}{% include 'styles.css' %}{% endblock %}
+"""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+        _result, errors = linter.lint(html)
+
+        # F4 should not be raised for the inline block on the last line
+        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        assert len(f4_errors) == 0, f"Expected no F4 errors, got {len(f4_errors)}"
+
+    def test_inline_tag_no_f4_error(self) -> None:
+        """Test inline HTML tag doesn't raise F4 with preceding blank line."""
+        html = """<!doctype html>
+<div>
+\t<p>content</p>
+
+\t<br>
+</div>
+
+<span>inline content</span>
+"""
+        linter = HTMLLinter(fix=False)
+        _result, errors = linter.lint(html)
+
+        # F4 should not be raised for the inline span on the last line
+        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        assert len(f4_errors) == 0
+
+    def test_multiline_block_with_blank_line_raises_f4(self) -> None:
+        """Test multiline block with blank line before close raises F4."""
+        html = """<!doctype html>
+{% block content %}
+\t<p>content</p>
+
+{% endblock %}
+"""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+        _result, errors = linter.lint(html)
+
+        # F4 SHOULD be raised for multiline block with blank line before close
+        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        assert len(f4_errors) == 1, f"Expected 1 F4 error, got {len(f4_errors)}"
+
+    def test_complex_inline_blocks_no_f4(self) -> None:
+        """Test template with multiple inline blocks doesn't raise F4."""
+        html = """<!doctype html>
+{% block extra_head %}
+\t{{ block.super }}
+
+\t<script src="https://example.com/script.js"></script>
+\t<link rel="stylesheet" href="https://example.com/style.css">
+{% endblock %}
+
+{% block page_styles %}{% include '_elements/styles/book.css' only %}{% endblock %}
+
+{% block title %}
+\t{% blocktrans trimmed with hotel_name=hotel.name %}
+\t\tMake a Reservation at {{ hotel_name }}
+\t{% endblocktrans %}
+{% endblock %}
+"""
+        linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
+        _result, errors = linter.lint(html)
+
+        # The inline block (page_styles) should not raise F4
+        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        assert len(f4_errors) == 0
+
+    def test_inline_block_fix_mode_preserves_structure(self) -> None:
+        """Test inline blocks are preserved correctly in fix mode."""
+        html = """<!doctype html>
+{% block a %}
+
+\tcontent_a
+{% endblock %}
+
+{% block b %}inline{% endblock %}
+"""
+        expected = """<!doctype html>
+{% block a %}
+\tcontent_a
+{% endblock %}
+
+{% block b %}inline{% endblock %}
+"""
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+        result, _errors = linter.lint(html)
+
+        assert result == expected
+
+    def test_inline_tag_with_void_element(self) -> None:
+        """Test inline constructs with void elements don't raise F4."""
+        html = """<!doctype html>
+<div>
+\t<p>paragraph</p>
+
+\t<img src="test.jpg" alt="test">
+</div>
+
+<p>next paragraph</p>
+"""
+        linter = HTMLLinter(fix=False)
+        _result, errors = linter.lint(html)
+
+        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        assert len(f4_errors) == 0
