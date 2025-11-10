@@ -1,7 +1,7 @@
 -r base.txt
 
 coverage==7.11.0
-pytest==8.4.2
+pytest==9.0.0
 
 nitpick==0.38.0
 add-trailing-comma==4.0.0
