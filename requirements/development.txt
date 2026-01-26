@@ -1,6 +1,6 @@
 -r base.txt
 
-coverage==7.11.0
+coverage==7.13.2
 pytest==8.4.2
 
 nitpick==0.38.0
