@@ -627,9 +627,7 @@ class TestSuperGroupRendering:
         assert "gap-4" in layout_line
 
     def test_layout_super_group_splits_when_too_long(self) -> None:
-        """Test layout groups split into sub-groups when combined is too
-        long.
-        """
+        """Test layout groups split into sub-groups when combined is long."""
         # Many layout classes — line_length=60 allows sub-groups on their own
         # lines but the combined super-group is too long to collapse
         result = self._render(
@@ -680,9 +678,7 @@ class TestSuperGroupRendering:
         assert "gap-4" in result
 
     def test_grid_layout_collapses_with_flex(self) -> None:
-        """Test grid + flex classes collapse together in the same super-
-        group.
-        """
+        """Test grid + flex classes collapse together in a super-group."""
         result = self._render(
             "grid grid-cols-3 gap-4 p-4 text-white font-bold"
             " bg-red-500 border-2 rounded-lg shadow-lg cursor-pointer",
