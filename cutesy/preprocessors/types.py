@@ -413,8 +413,9 @@ class BasePreprocessor(ABC):
 
             middle_parts.append(current_part)
             for possible_middle_part in middle_parts:
-                if possible_middle_part:  # Skip blank strings, we allowed those
-                    formatted_instruction_parts.append(possible_middle_part)  # noqa: PERF401
+                stripped_part = possible_middle_part.strip()
+                if stripped_part:  # Skip blank strings, we allowed those
+                    formatted_instruction_parts.append(stripped_part)  # noqa: PERF401
         else:
             formatted_instruction_parts.append(middle_part.strip())
 
