@@ -1111,7 +1111,7 @@ class HTMLLinter(HTMLParser):
             if instruction_type and instruction_type.is_group_start:
                 group_level += 1
                 if group_level == 1:
-                    group.append(name)
+                    group = [name]
                     group_key: str | None = None
                     subgroup_attrs = []
                 else:

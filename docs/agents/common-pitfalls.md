@@ -60,6 +60,18 @@ make test-private
 
 **Guideline**: Treat user corrections as high-value learning opportunities. Update the agent notes system immediately when you receive them.
 
+## Code Bugs Found
+
+### Bug: `_make_attr_strings` reuses `group` list across multiple attribute groups
+
+**Context**: `linter.py` — `_make_attr_strings()` method, around the `is_group_start` branch.
+
+**Problem**: The `group` list was initialized once before the loop (`group = []`) and then new groups were added via `group.append(name)`. Since `attr_keys_and_groups.append((group_key, group))` stores a **reference** to the same list, every subsequent group start (`group.append(name)`) mutated all previously-appended groups. This caused inline conditionals like `{% if x %}attr{% endif %}` to appear duplicated in the output when multiple such groups existed in the same tag.
+
+**Solution**: Changed `group.append(name)` to `group = [name]` in the `is_group_start` branch so each group gets a fresh list.
+
+**Example trigger**: A tag with 2+ inline conditional attribute groups (e.g., `{% if disabled %}disabled{% endif %}` plus `{% if autocomplete %}autocomplete="..."{% endif %}`).
+
 ## Notes to Add
 
 - Common HTML linting rule edge cases
