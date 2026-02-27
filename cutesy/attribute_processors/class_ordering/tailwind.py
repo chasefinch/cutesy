@@ -10,7 +10,7 @@ from functools import partial
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, NamedTuple, TypeAlias
 
-from .types import BaseClassOrderingAttributeProcessor
+from .types import BaseClassOrderingAttributeProcessor, SuperGroup
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -41,7 +41,7 @@ class AttributeProcessor(BaseClassOrderingAttributeProcessor):
         grouped: bool = False,
     ) -> list[str] | list[list[str]]:
         """Sort the given list of class names."""
-        groups = group_and_sort(class_names)
+        groups = group_and_sort(class_names, with_super_groups=grouped)
         if grouped:
             return groups
         return [class_name for group in groups for class_name in group]
@@ -112,23 +112,39 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
         ),
     ),
     (
-        "flex/grid core",
+        "display",
         (
-            r"(?:container|block|inline|inline-block|inline-flex|flex|grid|contents|hidden)",
-            r"(?:order-)",
-            r"(?:flex-|grow|shrink|basis-)",
-            r"(?:grid-cols-|grid-rows-|col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",
+            r"(?:container|block|inline-flex|inline-block|inline|flex(?!-)|grid(?!-)|contents|hidden)",
         ),
     ),
     (
-        "flex/grid alignment",
+        "flex container",
         (
-            r"(?:place-content-|place-items-|place-self-)",
+            r"(?:flex-(?:row|col|wrap|nowrap))",
+            r"(?:place-content-|place-items-)",
             r"(?:justify-|content-)",
-            r"(?:items-|self-)",
-            r"(?:columns-)",
-            r"(?:gap-|space-[xy]-)",
+            r"(?:items-)",
         ),
+    ),
+    (
+        "flex item",
+        (
+            r"(?:order-)",
+            r"(?:flex-|grow|shrink|basis-)",
+            r"(?:place-self-)",
+            r"(?:self-)",
+        ),
+    ),
+    (
+        "grid",
+        (
+            r"(?:grid-cols-|grid-rows-|col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",
+            r"(?:columns-)",
+        ),
+    ),
+    (
+        "gap/space",
+        (r"(?:gap-|space-[xy]-)",),
     ),
     (
         "spacing (margin/padding)",
@@ -187,6 +203,15 @@ _group_rank_dict: dict[str, int] = {name: rank for rank, name in enumerate(REAL_
 _group_rank_dict["other (tailwind)"] = len(REAL_GROUPS_ORDER)
 _GROUP_RANK: Final[Mapping[str, int]] = MappingProxyType(_group_rank_dict)
 
+# Collapsible super-groups: adjacent groups that collapse onto one line if they fit
+COLLAPSIBLE_SUPER_GROUPS: Final[tuple[tuple[str, ...], ...]] = (
+    ("display", "flex container", "flex item", "grid", "gap/space"),
+)
+
+_COLLAPSIBLE_LOOKUP: Final[Mapping[str, int]] = MappingProxyType(
+    {name: idx for idx, group in enumerate(COLLAPSIBLE_SUPER_GROUPS) for name in group},
+)
+
 # Modifier ordering (relative lists) ------------------------------------------
 
 RESPONSIVE_ORDER = ("xs", "sm", "md", "lg", "xl", "2xl")
@@ -223,7 +248,11 @@ STATE_ORDER = (
 # Group finder & user-class placement -----------------------------------------
 
 
-def group_and_sort(class_names: list[str]) -> list[list[str]]:
+def group_and_sort(
+    class_names: list[str],
+    *,
+    with_super_groups: bool = False,
+) -> list[list[str]]:
     """Return groups of tailwind class strings in fixed order.
 
     All user-defined classes will be collected into one final bucket at
@@ -242,6 +271,10 @@ def group_and_sort(class_names: list[str]) -> list[list[str]]:
     User-defined classes (not recognized as Tailwind) are not mixed into
     groups; they are emitted as one final list at the end, in original
     order.
+
+    When with_super_groups is True, adjacent groups in
+    COLLAPSIBLE_SUPER_GROUPS are wrapped in a SuperGroup that the
+    renderer can try to collapse onto one line.
     """
     # Buckets for real groups (track original index for stable sort)
     group_items: dict[str, list[tuple[int, TailwindClass]]] = {
@@ -283,8 +316,8 @@ def group_and_sort(class_names: list[str]) -> list[list[str]]:
         else:
             group_items[group].append((index, tailwind_class))
 
-    # Emit results as a list of lists (group contents only)
-    out: list[list[str]] = []
+    # Emit results as tagged pairs (name, classes) for super-group merging
+    tagged: list[tuple[str | None, list[str]]] = []
 
     # Real groups in fixed order, then "other (tailwind)"
     for group_name in (*REAL_GROUPS_ORDER, "other (tailwind)"):
@@ -292,18 +325,55 @@ def group_and_sort(class_names: list[str]) -> list[list[str]]:
             continue
         key_function = partial(_group_sort_key, group_name=group_name)
         sorted_group = sorted(group_items[group_name], key=key_function)
-        out.append([item[1].full_string for item in sorted_group])
+        tagged.append((group_name, [item[1].full_string for item in sorted_group]))
 
     # Then each arbitrary selector group (in first-seen order)
     for items in arbitrary_selector_groups.values():
         sorted_group = sorted(items, key=_arbitrary_selector_key)
-        out.append([item[1].full_string for item in sorted_group])
+        tagged.append((None, [item[1].full_string for item in sorted_group]))
 
     # Finally, all user-defined classes at the bottom (original order)
     if user_defined:
-        out.append(user_defined)
+        tagged.append((None, user_defined))
 
-    return out
+    if not with_super_groups:
+        return [classes for _, classes in tagged]
+
+    return _merge_collapsible_groups(tagged)
+
+
+def _merge_collapsible_groups(
+    tagged: list[tuple[str | None, list[str]]],
+) -> list[list[str]]:
+    """Merge adjacent collapsible groups into SuperGroups."""
+    result: list[list[str]] = []
+    i = 0
+    while i < len(tagged):
+        name, classes = tagged[i]
+        super_group_id = _COLLAPSIBLE_LOOKUP.get(name) if name else None
+
+        if super_group_id is not None:
+            # Collect consecutive groups in the same collapsible super-group
+            sub_groups: list[list[str]] = [classes]
+            j = i + 1
+            while j < len(tagged):
+                next_name = tagged[j][0]
+                if next_name and _COLLAPSIBLE_LOOKUP.get(next_name) == super_group_id:
+                    sub_groups.append(tagged[j][1])
+                    j += 1
+                else:
+                    break
+
+            if len(sub_groups) == 1:
+                result.append(sub_groups[0])
+            else:
+                result.append(SuperGroup(sub_groups))
+            i = j
+        else:
+            result.append(classes)
+            i += 1
+
+    return result
 
 
 # Loop, sort, and parse helpers -----------------------------------------------

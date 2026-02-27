@@ -13,6 +13,7 @@ class MockPreprocessor(BasePreprocessor):
 
     braces: ClassVar[set[tuple[str, str]]] = {("{%", "%}"), ("{{", "}}")}
     closing_tag_string_map: ClassVar[dict[str, str]] = {}
+    expected_closing_instructions: ClassVar[dict[str, str]] = {}
 
     def parse_instruction_tag(
         self,
