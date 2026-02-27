@@ -11,7 +11,7 @@ ignore = [
 	# General configuration (see https://www.chasefinch.com/nitpick-style.toml)
 	"D203", "D213", "TID252", "S101", "INT001",  # Rule conflicts
 	"COM812", "ISC001", "Q000", "Q003",  # Recommended when using formatter
-	"RUF100",  # Conflicts with WPS
+	"RUF100", "RUF102",  # Conflicts with WPS
 	"ARG",  # Unused arguments often required in heirarchy
 	"ERA",  # Commented-out code is OK
 	"S105", "S106",  # Don't sniff for secrets
