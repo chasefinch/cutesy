@@ -71,6 +71,7 @@ class BasePreprocessor(ABC):
 
     braces: ClassVar[set[tuple[str, str]]]
     closing_tag_string_map: ClassVar[dict[str, str]]
+    expected_closing_instructions: ClassVar[dict[str, str]]
 
     def reset(self, dynamic_html: str, *, fix: bool = False) -> None:
         """Prepare the preprocessor for processing."""
@@ -104,7 +105,7 @@ class BasePreprocessor(ABC):
 
     def process(self) -> str:
         """Replace the dynamic parts of some dynamic HTML with placeholders."""
-        self.line = 1
+        self.line = 0
         self.offset = 0
 
         # Dynamic instructions which have been replaced
@@ -160,17 +161,7 @@ class BasePreprocessor(ABC):
         if self._block_instruction_stack:
             # Handle dangling open instructions
             _, last_instruction, braces = self._block_instruction_stack.pop()
-            expected_instruction = {
-                "block": "endblock",
-                "if": "endif",
-                "for": "endfor",
-                "while": "endwhile",
-                "with": "endwith",
-                "blocktrans": "endblocktrans",
-                "freeform": "endfreeform",
-                "spaceless": "endspaceless",
-                "spaceless_json": "endspaceless_json",
-            }[last_instruction]
+            expected_instruction = self.expected_closing_instructions[last_instruction]
             tag_string = f"{braces[0]} {expected_instruction} {braces[1]}"
             error_code = "P2"
             raise self.make_fatal_error(error_code, tag=tag_string)
@@ -422,8 +413,9 @@ class BasePreprocessor(ABC):
 
             middle_parts.append(current_part)
             for possible_middle_part in middle_parts:
-                if possible_middle_part:  # Skip blank strings, we allowed those
-                    formatted_instruction_parts.append(possible_middle_part)  # noqa: PERF401
+                stripped_part = possible_middle_part.strip()
+                if stripped_part:  # Skip blank strings, we allowed those
+                    formatted_instruction_parts.append(stripped_part)  # noqa: PERF401
         else:
             formatted_instruction_parts.append(middle_part.strip())
 
