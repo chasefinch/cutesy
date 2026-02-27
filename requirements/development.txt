@@ -3,7 +3,7 @@
 coverage==7.13.2
 pytest==9.0.2
 
-nitpick==0.38.0
+nitpick==0.38.1
 add-trailing-comma==4.0.0
 docformatter==1.7.7
 wemake-python-styleguide==1.5.0
