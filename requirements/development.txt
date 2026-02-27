@@ -10,6 +10,6 @@ wemake-python-styleguide==1.4.0
 ruff==0.14.14
 
 mypy==1.18.2
-setuptools==80.9.0
+setuptools==80.10.2
 setuptools-rust==1.12.0
 wheel==0.46.3
