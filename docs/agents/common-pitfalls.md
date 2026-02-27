@@ -72,8 +72,37 @@ make test-private
 
 **Example trigger**: A tag with 2+ inline conditional attribute groups (e.g., `{% if disabled %}disabled{% endif %}` plus `{% if autocomplete %}autocomplete="..."{% endif %}`).
 
-## Notes to Add
+## WPS Lint Rules — Common Traps
 
-- Common HTML linting rule edge cases
-- Common test failures and their fixes
-- mypy type error patterns
+### WPS110 (wrong variable name)
+Banned names include: `val`, `vals`, `var`, `vars`, `data`, `result`, `results`, `item`, `items`, `klass`, `idx`, `index`, `object`, `objects`, `node`, `nodes`, `element`, `elements`, `value`, `values`, `handler`. Also `i`, `j`, `g` (too short via WPS111).
+
+### WPS117 (reserved first argument)
+`cls` triggers this even as a comprehension loop variable. Rename to something domain-specific (e.g., `css_class`).
+
+### WPS441 (control variable used after block)
+Fires when the same variable name is reused as a comprehension loop variable multiple times in the same scope. Fix by using `map()` to eliminate variables entirely, or using unique names per comprehension.
+
+### WPS504 (negated condition)
+When you have `if x is not None: ... else: ...`, invert to `if x is None: ... else: ...` (swap branches).
+
+### WPS600 (subclassing builtin)
+Cannot subclass `list`, `dict`, etc. directly. Use `collections.UserList`, `collections.UserDict` instead. Note: `UserList` is NOT a `list` instance at runtime — `isinstance(obj, list)` returns `False`. Update any tests that check `isinstance(sg, list)`.
+
+### WPS338 (incorrect method order)
+In a class, public methods must come before private (`_`-prefixed) methods. In test classes, `setup_method` first, then `test_*` methods, then `_helper` methods last.
+
+## mypy Type Patterns
+
+### list invariance with SuperGroup / UserList
+`list[list[str]]` is NOT a subtype of `list[list[str] | SuperGroup]` due to list invariance. Explicit type annotation needed:
+```python
+sorted_groups: list[list[str] | SuperGroup] = [sorted(class_names)]
+return sorted_groups
+```
+
+### list[tuple[str, X]] vs list[tuple[str | None, X]]
+Tests passing all-string tuples to a function expecting `str | None` tuples will fail mypy because `list` is invariant. Fix: annotate the test variable explicitly:
+```python
+tagged: list[tuple[str | None, list[str]]] = [("display", ["flex"]), ...]
+```

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import setuptools
 
-VERSION = "1.0b22"
+VERSION = "1.0b23"
 
 # Modules to skip for mypyc compilation (use Path for cross-platform compatibility)
 MYPYC_SKIP = frozenset(

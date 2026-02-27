@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from abc import abstractmethod
+from collections import UserList
 
 # add at top with your other imports
 from typing import TYPE_CHECKING, TypeAlias, cast
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 DYNAMIC_LIST_ITEM_SENTINEL = "__LIST_ITEM_SENTINEL_A3VJ3FL__"
 
 
-class SuperGroup(list):
+class SuperGroup(UserList):
     """A group of sub-groups that can collapse onto one line if they fit."""
 
 
@@ -47,7 +48,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         class_names: list[str],
         *,
         grouped: bool = False,
-    ) -> list[str] | list[list[str]]:
+    ) -> list[str] | list[list[str] | SuperGroup]:
         """Sort the given list of class names."""
 
     def process(
@@ -203,19 +204,21 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             for group in sorted_class_group_tree:
                 if isinstance(group, SuperGroup):
                     # Super-group: try to collapse all sub-groups onto one line
-                    all_classes = [str(cls) for sub in group for cls in sub]
+                    all_classes = list(map(str, (css_class for sub in group for css_class in sub)))
                     combined_line = f"{line_indentation}{' '.join(all_classes)}"
                     if len(combined_line) <= self.max_length:
                         attribute_lines.append(combined_line)
                     else:
                         # Fall back to one line per sub-group
                         for sub_group in group:
-                            sub_line = " ".join(str(cls) for cls in sub_group)
+                            sub_line = " ".join(map(str, sub_group))
                             sub_line = f"{line_indentation}{sub_line}"
                             if len(sub_line) <= self.max_length:
                                 attribute_lines.append(sub_line)
                             else:
-                                sub_lines = [f"{line_indentation}{cls!s}" for cls in sub_group]
+                                sub_lines = [
+                                    f"{line_indentation}{css_class!s}" for css_class in sub_group
+                                ]
                                 attribute_lines.extend(sub_lines)
                 elif all(isinstance(item, str) for item in group):
                     group_line = " ".join([str(item) for item in group])

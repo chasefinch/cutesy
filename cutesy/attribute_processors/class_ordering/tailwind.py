@@ -39,7 +39,7 @@ class AttributeProcessor(BaseClassOrderingAttributeProcessor):
         class_names: list[str],
         *,
         grouped: bool = False,
-    ) -> list[str] | list[list[str]]:
+    ) -> list[str] | list[list[str] | SuperGroup]:
         """Sort the given list of class names."""
         groups = group_and_sort(class_names, with_super_groups=grouped)
         if grouped:
@@ -209,7 +209,11 @@ COLLAPSIBLE_SUPER_GROUPS: Final[tuple[tuple[str, ...], ...]] = (
 )
 
 _COLLAPSIBLE_LOOKUP: Final[Mapping[str, int]] = MappingProxyType(
-    {name: idx for idx, group in enumerate(COLLAPSIBLE_SUPER_GROUPS) for name in group},
+    {
+        name: super_group_index
+        for super_group_index, group in enumerate(COLLAPSIBLE_SUPER_GROUPS)
+        for name in group
+    },
 )
 
 # Modifier ordering (relative lists) ------------------------------------------
@@ -252,7 +256,7 @@ def group_and_sort(
     class_names: list[str],
     *,
     with_super_groups: bool = False,
-) -> list[list[str]]:
+) -> list[list[str] | SuperGroup]:
     """Return groups of tailwind class strings in fixed order.
 
     All user-defined classes will be collected into one final bucket at
@@ -344,23 +348,26 @@ def group_and_sort(
 
 def _merge_collapsible_groups(
     tagged: list[tuple[str | None, list[str]]],
-) -> list[list[str]]:
+) -> list[list[str] | SuperGroup]:
     """Merge adjacent collapsible groups into SuperGroups."""
-    result: list[list[str]] = []
-    i = 0
-    while i < len(tagged):
-        name, classes = tagged[i]
+    result: list[list[str] | SuperGroup] = []
+    outer_index = 0
+    while outer_index < len(tagged):
+        name, classes = tagged[outer_index]
         super_group_id = _COLLAPSIBLE_LOOKUP.get(name) if name else None
 
-        if super_group_id is not None:
+        if super_group_id is None:
+            result.append(classes)
+            outer_index += 1
+        else:
             # Collect consecutive groups in the same collapsible super-group
             sub_groups: list[list[str]] = [classes]
-            j = i + 1
-            while j < len(tagged):
-                next_name = tagged[j][0]
+            inner_index = outer_index + 1
+            while inner_index < len(tagged):
+                next_name = tagged[inner_index][0]
                 if next_name and _COLLAPSIBLE_LOOKUP.get(next_name) == super_group_id:
-                    sub_groups.append(tagged[j][1])
-                    j += 1
+                    sub_groups.append(tagged[inner_index][1])
+                    inner_index += 1
                 else:
                     break
 
@@ -368,10 +375,7 @@ def _merge_collapsible_groups(
                 result.append(sub_groups[0])
             else:
                 result.append(SuperGroup(sub_groups))
-            i = j
-        else:
-            result.append(classes)
-            i += 1
+            outer_index = inner_index
 
     return result
 

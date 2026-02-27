@@ -3,6 +3,7 @@
 from cutesy.attribute_processors.class_ordering.types import (
     DYNAMIC_LIST_ITEM_SENTINEL,
     BaseClassOrderingAttributeProcessor,
+    SuperGroup,
     expand_class_names,
 )
 
@@ -20,10 +21,11 @@ class MockClassOrderingProcessor(BaseClassOrderingAttributeProcessor):
         class_names: list[str],
         *,
         grouped: bool = False,
-    ) -> list[str] | list[list[str]]:
+    ) -> list[str] | list[list[str] | SuperGroup]:
         """Sort class names for testing purposes."""
         if grouped:
-            return [sorted(class_names)]
+            sorted_groups: list[list[str] | SuperGroup] = [sorted(class_names)]
+            return sorted_groups
         return sorted(class_names)
 
 

@@ -377,10 +377,11 @@ class TestFlexGroupAssignment:
 class TestSuperGroup:
     """Test the SuperGroup class and collapsible group merging."""
 
-    def test_super_group_is_list_subclass(self) -> None:
-        """Test SuperGroup is a list subclass."""
+    def test_super_group_is_sequence(self) -> None:
+        """Test SuperGroup behaves as a sequence."""
         sg = SuperGroup([["a"], ["b"]])
-        assert isinstance(sg, list)
+        assert len(sg) == 2  # noqa: PLR2004
+        assert sg[0] == ["a"]
         assert isinstance(sg, SuperGroup)
 
     def test_super_group_isinstance_check(self) -> None:
@@ -403,7 +404,9 @@ class TestSuperGroup:
         groups = group_and_sort(classes, with_super_groups=True)
 
         # Should have a SuperGroup containing display, flex container, flex item, gap/space
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 1
 
         sg = super_groups[0]
@@ -411,7 +414,7 @@ class TestSuperGroup:
         assert len(sg) == expected_sub_group_count
 
         # Flatten and verify all layout classes are in the super-group
-        all_layout = [cls for sub in sg for cls in sub]
+        all_layout = [class_name for sub in sg for class_name in sub]
         assert "flex" in all_layout
         assert "items-center" in all_layout
         assert "order-1" in all_layout
@@ -427,14 +430,18 @@ class TestSuperGroup:
         groups = group_and_sort(classes, with_super_groups=True)
 
         # Only one layout group (display with 'flex'), so no wrapping
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 0
 
     def test_no_layout_classes_no_super_group(self) -> None:
         """Test no SuperGroup when there are no layout classes."""
         classes = ["p-4", "mt-8", "bg-red-500", "text-white"]
         groups = group_and_sort(classes, with_super_groups=True)
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 0
 
     def test_super_group_preserves_subgroup_order(self) -> None:
@@ -442,7 +449,9 @@ class TestSuperGroup:
         classes = ["gap-4", "order-1", "items-center", "flex"]
         groups = group_and_sort(classes, with_super_groups=True)
 
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 1
 
         sg = super_groups[0]
@@ -457,11 +466,13 @@ class TestSuperGroup:
         classes = ["grid", "grid-cols-3", "gap-4", "p-4"]
         groups = group_and_sort(classes, with_super_groups=True)
 
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 1
 
         sg = super_groups[0]
-        all_layout = [cls for sub in sg for cls in sub]
+        all_layout = [class_name for sub in sg for class_name in sub]
         assert "grid" in all_layout
         assert "grid-cols-3" in all_layout
         assert "gap-4" in all_layout
@@ -480,7 +491,9 @@ class TestSuperGroup:
         ]
         groups = group_and_sort(classes, with_super_groups=True)
 
-        super_groups = [g for g in groups if isinstance(g, SuperGroup)]
+        super_groups = [
+            super_group for super_group in groups if isinstance(super_group, SuperGroup)
+        ]
         assert len(super_groups) == 1
 
         sg = super_groups[0]
@@ -498,7 +511,7 @@ class TestSuperGroup:
 
         for group in groups:
             if isinstance(group, SuperGroup):
-                all_classes = [cls for sub in group for cls in sub]
+                all_classes = [class_name for sub in group for class_name in sub]
                 assert "my-custom" not in all_classes
 
     def test_arbitrary_selectors_not_in_super_group(self) -> None:
@@ -508,7 +521,7 @@ class TestSuperGroup:
 
         for group in groups:
             if isinstance(group, SuperGroup):
-                all_classes = [cls for sub in group for cls in sub]
+                all_classes = [class_name for sub in group for class_name in sub]
                 assert "[&>*]:text-center" not in all_classes
 
 
@@ -517,7 +530,7 @@ class TestMergeCollapsibleGroups:
 
     def test_merges_adjacent_collapsible_groups(self) -> None:
         """Test adjacent collapsible groups are merged."""
-        tagged = [
+        tagged: list[tuple[str | None, list[str]]] = [
             ("display", ["flex"]),
             ("flex container", ["items-center"]),
             ("flex item", ["order-1"]),
@@ -531,7 +544,7 @@ class TestMergeCollapsibleGroups:
 
     def test_single_collapsible_group_not_wrapped(self) -> None:
         """Test a single collapsible group stays flat."""
-        tagged = [
+        tagged: list[tuple[str | None, list[str]]] = [
             ("display", ["flex"]),
             ("spacing (margin/padding)", ["p-4"]),
         ]
@@ -542,7 +555,7 @@ class TestMergeCollapsibleGroups:
 
     def test_non_collapsible_groups_pass_through(self) -> None:
         """Test non-collapsible groups are not wrapped."""
-        tagged = [
+        tagged: list[tuple[str | None, list[str]]] = [
             ("spacing (margin/padding)", ["p-4"]),
             ("typography", ["text-white"]),
             ("backgrounds/gradients", ["bg-red-500"]),
@@ -577,27 +590,6 @@ class TestSuperGroupRendering:
     def setup_method(self) -> None:
         """Set up the Tailwind processor for rendering tests."""
         self.processor = AttributeProcessor()
-
-    def _render(
-        self,
-        attr_body: str,
-        line_length: int = 80,
-        current_indentation_level: int = 1,
-    ) -> str:
-        """Render class attribute through the processor."""
-        result, _errors = self.processor.process(
-            attr_name="class",
-            position=(1, 0),
-            indentation="\t",
-            current_indentation_level=current_indentation_level,
-            tab_width=4,
-            line_length=line_length,
-            max_items_per_line=5,
-            bounding_character='"',
-            preprocessor=None,
-            attr_body=attr_body,
-        )
-        return result
 
     def test_short_layout_classes_single_line(self) -> None:
         """Test short layout classes stay on one line."""
@@ -692,3 +684,24 @@ class TestSuperGroupRendering:
         assert grid_line is not None
         assert "grid-cols-3" in grid_line
         assert "gap-4" in grid_line
+
+    def _render(
+        self,
+        attr_body: str,
+        line_length: int = 80,
+        current_indentation_level: int = 1,
+    ) -> str:
+        """Render class attribute through the processor."""
+        result, _errors = self.processor.process(
+            attr_name="class",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=current_indentation_level,
+            tab_width=4,
+            line_length=line_length,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body=attr_body,
+        )
+        return result
