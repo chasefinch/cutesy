@@ -189,9 +189,9 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         line_indentation = (current_indentation_level + 1) * indentation
 
         # ...#1: One group (not a super-group), but long enough to merit multiple lines.
-        if (
-            len(sorted_class_group_tree) == 1
-            and not isinstance(sorted_class_group_tree[0], SuperGroup)
+        if len(sorted_class_group_tree) == 1 and not isinstance(
+            sorted_class_group_tree[0],
+            SuperGroup,
         ):
             for group_entry in sorted_class_group_tree[0]:
                 lines = self._extract_columns_and_lines(group_entry)
@@ -215,9 +215,7 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                             if len(sub_line) <= self.max_length:
                                 attribute_lines.append(sub_line)
                             else:
-                                sub_lines = [
-                                    f"{line_indentation}{cls!s}" for cls in sub_group
-                                ]
+                                sub_lines = [f"{line_indentation}{cls!s}" for cls in sub_group]
                                 attribute_lines.extend(sub_lines)
                 elif all(isinstance(item, str) for item in group):
                     group_line = " ".join([str(item) for item in group])
