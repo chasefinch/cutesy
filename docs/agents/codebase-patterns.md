@@ -67,6 +67,19 @@ make test     # all three test groups + combined coverage report
 
 **Rust extension availability**: `cutesy._rust_available` (bool) — code must gracefully handle when Rust is unavailable
 
+## Indentation Stack Logic
+
+**Context**: `linter.py` — how opening/closing tags manage indentation
+
+**Pattern**: Opening tags push a `StackItem` onto `_tag_stack` with the current `_indentation_level`, then increment. Closing tags pop the stack to find the match and restore the saved level.
+
+**Recovery on unmatched close**: Both `handle_endtag()` (HTML tags) and `handle_instruction()` (template instructions) decrement `_indentation_level` by 1 when no matching opening is found, to avoid cascading indentation errors downstream. Guard with `if self._indentation_level > 0`.
+
+**Key locations**:
+- `handle_starttag()` — increment at push
+- `handle_endtag()` — restore from stack, or decrement-by-1 on D4 error
+- `handle_instruction()` — same pattern, P3 error
+
 ## Notes to Add
 
 - HTML linting/formatting rule conventions

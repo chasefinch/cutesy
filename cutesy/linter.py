@@ -469,6 +469,9 @@ class HTMLLinter(HTMLParser):
                     self._handle_error("P2", tag=f"{{{stack_item.name}}}")
         else:
             self._handle_error("D4", tag=f"</{tag}>")
+            # Decrement anyway to try to recover
+            if self._indentation_level > 0:
+                self._indentation_level -= 1
 
         # Check for blank lines before closing tag that decreases indentation
         # Skip this check if the closing tag is on the same line as the opening tag
