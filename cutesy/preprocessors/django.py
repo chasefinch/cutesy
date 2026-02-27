@@ -23,6 +23,21 @@ class Preprocessor(BasePreprocessor):
         "spaceless_json": "endspaceless_json",
     }
 
+    expected_closing_instructions: ClassVar[dict[str, str]] = {
+        "block": "endblock",
+        "component": "endcomponent",
+        "fill": "endfill",
+        "slot": "endslot",
+        "if": "endif",
+        "for": "endfor",
+        "while": "endwhile",
+        "with": "endwith",
+        "blocktrans": "endblocktrans",
+        "freeform": "endfreeform",
+        "spaceless": "endspaceless",
+        "spaceless_json": "endspaceless_json",
+    }
+
     def parse_instruction_tag(
         self,
         braces: tuple[str, str],
@@ -76,6 +91,12 @@ class Preprocessor(BasePreprocessor):
                     "endwhile": InstructionType.END_REPEATABLE,
                     "with": InstructionType.PARTIAL,
                     "endwith": InstructionType.END_PARTIAL,
+                    "component": InstructionType.PARTIAL,
+                    "endcomponent": InstructionType.END_PARTIAL,
+                    "fill": InstructionType.PARTIAL,
+                    "endfill": InstructionType.END_PARTIAL,
+                    "slot": InstructionType.PARTIAL,
+                    "endslot": InstructionType.END_PARTIAL,
                     "blocktrans": InstructionType.CONDITIONAL,
                     "plural": InstructionType.LAST_CONDITIONAL,
                     "endblocktrans": InstructionType.END_CONDITIONAL,

@@ -20,8 +20,8 @@ Users automatically get pre-compiled mypyc extensions (3-5x faster) for their pl
 Publishing happens automatically via GitHub Actions when you push a tag:
 
 ```bash
-git tag v1.0b12
-git push origin v1.0b12
+git tag v1.0b21
+git push origin v1.0b21
 ```
 
 This triggers `.github/workflows/publish-to-pypi.yml` which:
@@ -69,7 +69,7 @@ When releasing a new version:
 2. Update SHA256 checksums:
    ```bash
    # Download release tarball
-   curl -L https://github.com/chasefinch/cutesy/archive/refs/tags/v1.0b12.tar.gz -o cutesy.tar.gz
+   curl -L https://github.com/chasefinch/cutesy/archive/refs/tags/v1.0b21.tar.gz -o cutesy.tar.gz
 
    # Get SHA256
    shasum -a 256 cutesy.tar.gz

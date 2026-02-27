@@ -22,6 +22,10 @@ if TYPE_CHECKING:
 DYNAMIC_LIST_ITEM_SENTINEL = "__LIST_ITEM_SENTINEL_A3VJ3FL__"
 
 
+class SuperGroup(list):
+    """A group of sub-groups that can collapse onto one line if they fit."""
+
+
 Rule("TW1", "Control instruction overlaps class names", structural=True)
 
 
@@ -164,8 +168,12 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         all_class_names_on_one_line = " ".join(all_class_names)
 
         # Check if any items were originally nested structures (i.e., came from block instructions)
+        # Skip SuperGroups — their nested lists are sub-groups, not template instructions
         has_originally_nested_content = any(
-            isinstance(item, list) for group in sorted_class_group_tree for item in group
+            isinstance(item, list)
+            for group in sorted_class_group_tree
+            if not isinstance(group, SuperGroup)
+            for item in group
         )
 
         max_attr_chars_per_line = self.max_length - len('class=""')
@@ -180,9 +188,11 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         attribute_lines = [""]
         line_indentation = (current_indentation_level + 1) * indentation
 
-        # ...#1: One group, but long enough to merit multiple lines.
-        if len(sorted_class_group_tree) == 1:
-            # Only one group, but long enough to merit multiple lines.
+        # ...#1: One group (not a super-group), but long enough to merit multiple lines.
+        if len(sorted_class_group_tree) == 1 and not isinstance(
+            sorted_class_group_tree[0],
+            SuperGroup,
+        ):
             for group_entry in sorted_class_group_tree[0]:
                 lines = self._extract_columns_and_lines(group_entry)
                 for column_index, line_value in lines:
@@ -191,7 +201,23 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
         else:
             for group in sorted_class_group_tree:
-                if all(isinstance(item, str) for item in group):
+                if isinstance(group, SuperGroup):
+                    # Super-group: try to collapse all sub-groups onto one line
+                    all_classes = [str(cls) for sub in group for cls in sub]
+                    combined_line = f"{line_indentation}{' '.join(all_classes)}"
+                    if len(combined_line) <= self.max_length:
+                        attribute_lines.append(combined_line)
+                    else:
+                        # Fall back to one line per sub-group
+                        for sub_group in group:
+                            sub_line = " ".join(str(cls) for cls in sub_group)
+                            sub_line = f"{line_indentation}{sub_line}"
+                            if len(sub_line) <= self.max_length:
+                                attribute_lines.append(sub_line)
+                            else:
+                                sub_lines = [f"{line_indentation}{cls!s}" for cls in sub_group]
+                                attribute_lines.extend(sub_lines)
+                elif all(isinstance(item, str) for item in group):
                     group_line = " ".join([str(item) for item in group])
                     group_line = f"{line_indentation}{group_line}"
                     if len(group_line) <= self.max_length:
@@ -344,18 +370,27 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         if not class_groups:
             return []
 
-        hydrated_class_groups: list[list[StashItem]] = [
-            [item for item in group] for group in class_groups[:-1]
-        ]
-        hydrated_class_entries: list[StashItem] = []
-        for user_defined_item in class_groups[-1]:
-            if user_defined_item.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
-                index = int(user_defined_item.split("_")[-1])
-                flattened = self._flatten_stash(self.stashed_class_names.pop(index))
-                hydrated_class_entries.append(flattened)
+        hydrated_class_groups: list[list[StashItem]] = []
+        for group in class_groups[:-1]:
+            if isinstance(group, SuperGroup):
+                hydrated_class_groups.append(group)
             else:
-                hydrated_class_entries.append(user_defined_item)
-        hydrated_class_groups.append(hydrated_class_entries)
+                hydrated_class_groups.append([item for item in group])
+
+        # Last group may contain sentinels (from preprocessor instructions)
+        last = class_groups[-1]
+        if isinstance(last, SuperGroup):
+            hydrated_class_groups.append(last)
+        else:
+            hydrated_class_entries: list[StashItem] = []
+            for user_defined_item in last:
+                if user_defined_item.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
+                    index = int(user_defined_item.split("_")[-1])
+                    flattened = self._flatten_stash(self.stashed_class_names.pop(index))
+                    hydrated_class_entries.append(flattened)
+                else:
+                    hydrated_class_entries.append(user_defined_item)
+            hydrated_class_groups.append(hydrated_class_entries)
         return hydrated_class_groups
 
     def _flatten_stash(self, stash: str | Sequence[StashItem]) -> str | list[StashItem]:

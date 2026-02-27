@@ -611,3 +611,43 @@ class TestIntegration:
         assert "final" in result[0]
         assert "{%if" in result[0]
         assert "{%endif%}" in result[0]
+
+    def test_branch_whitespace_hoisted_before_conditional(self) -> None:
+        """Spaces inside conditional branches are hoisted before the block.
+
+        e.g. {% if X %} someClass{% else %} someOtherClass{% endif %}
+          -> (space){% if X %}someClass{% else %}someOtherClass{% endif %}
+        """
+        processor = MockClassOrderingProcessor()
+        preprocessor = Preprocessor()
+        preprocessor.reset("test")
+        left, right = preprocessor.delimiters
+
+        # Build placeholders with correct InstructionType chars
+        if_tag = f"{left}c0--{right}"  # CONDITIONAL (starts block)
+        else_tag = f"{left}e0--{right}"  # LAST_CONDITIONAL (continues block)
+        endif_tag = f"{left}f0--{right}"  # END_CONDITIONAL (ends block)
+
+        # Input: spaces at the start of each branch
+        attr_body = f"base {if_tag} someClass{else_tag} someOtherClass{endif_tag}"
+
+        result, errors = processor.process(
+            attr_name="class",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            line_length=100,
+            max_items_per_line=10,
+            bounding_character='"',
+            preprocessor=preprocessor,
+            attr_body=attr_body,
+        )
+
+        assert not errors
+        # Spaces should be hoisted out: instructions tight against class names
+        assert f"{if_tag}someClass" in result
+        assert f"{else_tag}someOtherClass" in result
+        assert f"{endif_tag}" in result
+        # "base" separated by a space from the conditional block
+        assert " base" in result or "base " in result

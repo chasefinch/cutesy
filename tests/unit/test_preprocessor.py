@@ -28,6 +28,12 @@ class MockPreprocessor(BasePreprocessor):
         "block": "endblock",
         "comment": "endcomment",
     }
+    expected_closing_instructions: ClassVar[dict[str, str]] = {
+        "if": "endif",
+        "for": "endfor",
+        "block": "endblock",
+        "test": "endtest",
+    }
 
     def parse_instruction_tag(
         self,
