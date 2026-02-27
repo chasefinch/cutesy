@@ -1157,7 +1157,7 @@ class HTMLLinter(HTMLParser):
                         processed_value, processing_errors = processor.process(
                             attr_name=name,
                             indentation=self.indentation,
-                            position=self.getpos(),
+                            position=(self.getpos()[0] - 1, self.getpos()[1]),
                             current_indentation_level=self._indentation_level + 1,
                             tab_width=self.tab_width,
                             line_length=self.line_length,
@@ -1282,7 +1282,11 @@ class HTMLLinter(HTMLParser):
         column: int | None = None,
         **replacements: str,
     ) -> Error:
-        line, current_column = (self._line, self._column) if self.fix else self.getpos()
+        if self.fix:
+            line, current_column = self._line, self._column
+        else:
+            line, current_column = self.getpos()
+            line -= 1  # Convert from HTMLParser's 1-based to 0-based
         line += line_offset
         if column is None:
             column = current_column

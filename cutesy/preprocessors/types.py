@@ -105,7 +105,7 @@ class BasePreprocessor(ABC):
 
     def process(self) -> str:
         """Replace the dynamic parts of some dynamic HTML with placeholders."""
-        self.line = 1
+        self.line = 0
         self.offset = 0
 
         # Dynamic instructions which have been replaced

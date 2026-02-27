@@ -164,7 +164,7 @@ class TestHTMLLinter:
         # Should have D9 error for missing final newline
         d9_errors = [error for error in errors if error.rule.code == "D9"]
         assert len(d9_errors) > 0
-        expected_line = 1
+        expected_line = 0
         expected_column = 0
         assert d9_errors[0].line == expected_line
         assert d9_errors[0].column == expected_column
@@ -231,7 +231,7 @@ class TestHTMLLinter:
         # Should have E1 error for invalid doctype
         e1_errors = [error for error in errors if error.rule.code == "E1"]
         assert len(e1_errors) > 0
-        expected_line = 1
+        expected_line = 0
         expected_column = 0
         assert e1_errors[0].line == expected_line
         assert e1_errors[0].column == expected_column
@@ -260,7 +260,7 @@ class TestHTMLLinter:
         # D3 error: Expected <span> closing tag
         d3_errors = [error for error in errors if error.rule.code == "D3"]
         assert len(d3_errors) == 1
-        expected_line = 1
+        expected_line = 0
         expected_column = 11
         assert d3_errors[0].line == expected_line
         assert d3_errors[0].column == expected_column
@@ -268,7 +268,7 @@ class TestHTMLLinter:
         # D4 error: </span> doesn't have a matching opening tag
         d4_errors = [error for error in errors if error.rule.code == "D4"]
         assert len(d4_errors) == 1
-        expected_line = 1
+        expected_line = 0
         expected_column = 17
         assert d4_errors[0].line == expected_line
         assert d4_errors[0].column == expected_column
@@ -443,7 +443,7 @@ class TestHTMLLinter:
         f8_errors = [error for error in errors if error.rule.code == "F8"]
         assert len(f8_errors) > 0 or not errors  # Either F8 error found or no errors
         if f8_errors:
-            expected_line = 1
+            expected_line = 0
             expected_column_min = 0
             assert f8_errors[0].line == expected_line
             assert f8_errors[0].column >= expected_column_min
@@ -589,8 +589,8 @@ asdf
 
         _result, errors = linter.lint(html)
 
-        # Check F7 errors (tag case) for SPAN on line 2
-        span_line = 2
+        # Check F7 errors (tag case) for SPAN on line 2 (0-indexed: 1)
+        span_line = 1
         span_open_errors = [
             error
             for error in errors
@@ -613,8 +613,8 @@ asdf
         expected_column = 16
         assert span_close_errors[0].column == expected_column
 
-        # Check F7 errors (tag case) for P on line 3
-        p_line = 3
+        # Check F7 errors (tag case) for P on line 3 (0-indexed: 2)
+        p_line = 2
         p_open_errors = [
             error
             for error in errors
@@ -637,8 +637,8 @@ asdf
         expected_column = 13
         assert p_close_errors[0].column == expected_column
 
-        # Check F7 and F8 errors for A on line 4
-        a_line = 4
+        # Check F7 and F8 errors for A on line 4 (0-indexed: 3)
+        a_line = 3
         a_open_errors = [
             error
             for error in errors
@@ -699,8 +699,8 @@ asdf
 
         # Verify errors are on correct lines
         if class_errors:
-            expected_line = 1
+            expected_line = 0
             assert class_errors[0].line == expected_line, "CLASS error should be on line 1"
         if id_errors:
-            expected_line = 2
+            expected_line = 1
             assert id_errors[0].line == expected_line, "ID error should be on line 2"
