@@ -190,7 +190,7 @@ class HTMLLinter(HTMLParser):
         # Stack of StackItem for tracking tags and instructions
         self._tag_stack: list[StackItem] = []
         # Possible values: {None, True} if self.fix else {None, str}
-        self._expected_indentation: str | Literal[True] | None = None
+        self._expected_indentation: str | Literal[True] | None = ""
         # Track last data to detect blank lines before closing
         # tags/instructions
         self._last_data: str | None = None
