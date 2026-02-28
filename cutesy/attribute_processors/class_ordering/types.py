@@ -163,7 +163,10 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                 )
                 self.stashed_class_names.append(stash)
 
-        sorted_class_groups = cast("list[list[str] | SuperGroup]", self.sort(class_names, grouped=True))
+        sorted_class_groups = cast(
+            "list[list[str] | SuperGroup]",
+            self.sort(class_names, grouped=True),
+        )
         sorted_class_group_tree = self._hydrate_class_groups(sorted_class_groups)
         all_class_names = list(collapse(sorted_class_group_tree, base_type=str))
         all_class_names_on_one_line = " ".join(all_class_names)
@@ -368,7 +371,10 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
         buffer.clear()  # explicit; caller reuses the same list
 
-    def _hydrate_class_groups(self, class_groups: list[list[str] | SuperGroup]) -> list[list[StashItem] | SuperGroup]:
+    def _hydrate_class_groups(
+        self,
+        class_groups: Sequence[list[str] | SuperGroup],
+    ) -> list[list[StashItem] | SuperGroup]:
         """Hydrate a stash into a list of class groups."""
         if not class_groups:
             return []
