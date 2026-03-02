@@ -127,6 +127,17 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
         ),
     ),
     (
+        "grid container",
+        (
+            r"(?:grid-cols-|grid-rows-)",
+            r"(?:columns-)",
+        ),
+    ),
+    (
+        "gap/space",
+        (r"(?:gap-|space-[xy]-)",),
+    ),
+    (
         "flex item",
         (
             r"(?:order-)",
@@ -136,15 +147,8 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
         ),
     ),
     (
-        "grid",
-        (
-            r"(?:grid-cols-|grid-rows-|col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",
-            r"(?:columns-)",
-        ),
-    ),
-    (
-        "gap/space",
-        (r"(?:gap-|space-[xy]-)",),
+        "grid item",
+        (r"(?:col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",),
     ),
     (
         "spacing (margin/padding)",
@@ -205,7 +209,7 @@ _GROUP_RANK: Final[Mapping[str, int]] = MappingProxyType(_group_rank_dict)
 
 # Collapsible super-groups: adjacent groups that collapse onto one line if they fit
 COLLAPSIBLE_SUPER_GROUPS: Final[tuple[tuple[str, ...], ...]] = (
-    ("display", "flex container", "flex item", "grid", "gap/space"),
+    ("display", "flex container", "grid container", "gap/space", "flex item", "grid item"),
 )
 
 _COLLAPSIBLE_LOOKUP: Final[Mapping[str, int]] = MappingProxyType(

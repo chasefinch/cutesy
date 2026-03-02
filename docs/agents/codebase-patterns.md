@@ -87,13 +87,14 @@ make test     # all three test groups + combined coverage report
 **Flex/Grid groups** (split by container vs item responsibility):
 1. `display` — `flex`, `grid`, `block`, `inline`, `hidden`, etc. Uses `flex(?!-)` and `grid(?!-)` to avoid matching `flex-row`/`grid-cols-` prefixes.
 2. `flex container` — direction/wrap (`flex-row`, `flex-col`, `flex-wrap`, `flex-nowrap`), alignment (`justify-*`, `items-*`, `content-*`, `place-content-*`, `place-items-*`)
-3. `flex item` — `order-*`, flex shorthand (`flex-1`, `flex-auto`, etc. via `flex-`), `grow`, `shrink`, `basis-*`, `self-*`, `place-self-*`
-4. `grid` — `grid-cols-*`, `grid-rows-*`, `col-span-*`, `row-span-*`, `columns-*`
-5. `gap/space` — `gap-*`, `space-x-*`, `space-y-*` (shared by flex and grid, kept separate)
+3. `grid container` — template definitions (`grid-cols-*`, `grid-rows-*`, `columns-*`)
+4. `gap/space` — `gap-*`, `space-x-*`, `space-y-*` (container-level property, shared by flex and grid)
+5. `flex item` — `order-*`, flex shorthand (`flex-1`, `flex-auto`, etc. via `flex-`), `grow`, `shrink`, `basis-*`, `self-*`, `place-self-*`
+6. `grid item` — `col-span-*`, `col-start-*`, `col-end-*`, `row-span-*`, `row-start-*`, `row-end-*`
 
 **Important**: Groups are checked in order by `_find_group()`, which returns the first match. The `flex(?!-)` negative lookahead in "display" ensures `flex-*` classes fall through to "flex container" or "flex item".
 
-**Collapsible super-groups**: Adjacent groups in `COLLAPSIBLE_SUPER_GROUPS` are wrapped in a `SuperGroup` (defined in `types.py`) when `sort(grouped=True)` is called. In multi-line mode, the renderer tries to put all sub-groups on one line; if that exceeds the line length, each sub-group gets its own line. Currently, the layout groups (display, flex container, flex item, grid, gap/space) form one collapsible super-group. This pattern can be applied to other group sets by adding entries to `COLLAPSIBLE_SUPER_GROUPS` in `tailwind.py`.
+**Collapsible super-groups**: Adjacent groups in `COLLAPSIBLE_SUPER_GROUPS` are wrapped in a `SuperGroup` (defined in `types.py`) when `sort(grouped=True)` is called. In multi-line mode, the renderer tries to put all sub-groups on one line; if that exceeds the line length, each sub-group gets its own line. Currently, the layout groups (display, flex container, grid container, gap/space, flex item, grid item) form one collapsible super-group. This pattern can be applied to other group sets by adding entries to `COLLAPSIBLE_SUPER_GROUPS` in `tailwind.py`.
 
 ## Notes to Add
 

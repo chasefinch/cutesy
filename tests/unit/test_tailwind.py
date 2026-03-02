@@ -339,16 +339,17 @@ class TestFlexGroupAssignment:
             ("self-center", "flex item"),
             ("self-start", "flex item"),
             ("place-self-end", "flex item"),
-            # Grid group
-            ("grid-cols-3", "grid"),
-            ("grid-rows-2", "grid"),
-            ("col-span-2", "grid"),
-            ("row-span-full", "grid"),
-            ("col-start-1", "grid"),
-            ("col-end-3", "grid"),
-            ("row-start-2", "grid"),
-            ("row-end-4", "grid"),
-            ("columns-3", "grid"),
+            # Grid container group
+            ("grid-cols-3", "grid container"),
+            ("grid-rows-2", "grid container"),
+            ("columns-3", "grid container"),
+            # Grid item group
+            ("col-span-2", "grid item"),
+            ("row-span-full", "grid item"),
+            ("col-start-1", "grid item"),
+            ("col-end-3", "grid item"),
+            ("row-start-2", "grid item"),
+            ("row-end-4", "grid item"),
             # Gap/space group
             ("gap-4", "gap/space"),
             ("gap-x-2", "gap/space"),
@@ -370,8 +371,8 @@ class TestFlexGroupAssignment:
     def test_grid_negative_lookahead_prevents_prefix_match(self) -> None:
         """Test grid(?!-) in display doesn't capture grid-* classes."""
         assert _find_group("grid") == "display"
-        assert _find_group("grid-cols-3") == "grid"
-        assert _find_group("grid-rows-2") == "grid"
+        assert _find_group("grid-cols-3") == "grid container"
+        assert _find_group("grid-rows-2") == "grid container"
 
 
 class TestSuperGroup:
@@ -403,7 +404,7 @@ class TestSuperGroup:
         classes = ["flex", "items-center", "order-1", "gap-4", "p-4", "bg-red-500"]
         groups = group_and_sort(classes, with_super_groups=True)
 
-        # Should have a SuperGroup containing display, flex container, flex item, gap/space
+        # Should have a SuperGroup containing display, flex container, gap/space, flex item
         super_groups = [
             super_group for super_group in groups if isinstance(super_group, SuperGroup)
         ]
@@ -455,11 +456,11 @@ class TestSuperGroup:
         assert len(super_groups) == 1
 
         sg = super_groups[0]
-        # display comes first, then flex container, then flex item, then gap/space
+        # display comes first, then flex container, then gap/space, then flex item
         assert sg[0] == ["flex"]
         assert sg[1] == ["items-center"]
-        assert sg[2] == ["order-1"]
-        assert sg[3] == ["gap-4"]
+        assert sg[2] == ["gap-4"]
+        assert sg[3] == ["order-1"]
 
     def test_super_group_with_grid_classes(self) -> None:
         """Test grid classes are included in the layout super-group."""
@@ -477,8 +478,8 @@ class TestSuperGroup:
         assert "grid-cols-3" in all_layout
         assert "gap-4" in all_layout
 
-    def test_super_group_with_all_five_layout_groups(self) -> None:
-        """Test all five layout sub-groups appear in one SuperGroup."""
+    def test_super_group_with_all_six_layout_groups(self) -> None:
+        """Test all six layout sub-groups appear in one SuperGroup."""
         classes = [
             "flex",
             "items-center",
@@ -486,6 +487,7 @@ class TestSuperGroup:
             "order-2",
             "grow",
             "grid-cols-3",
+            "col-span-2",
             "gap-4",
             "space-x-2",
         ]
@@ -497,7 +499,7 @@ class TestSuperGroup:
         assert len(super_groups) == 1
 
         sg = super_groups[0]
-        expected_sub_group_count = 5
+        expected_sub_group_count = 6
         assert len(sg) == expected_sub_group_count
 
     def test_empty_input_with_super_groups(self) -> None:
