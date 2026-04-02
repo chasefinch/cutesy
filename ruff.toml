@@ -1,7 +1,7 @@
 # See https://www.chasefinch.com/nitpick-style.toml
 
 line-length = 99
-target-version = "py311"
+target-version = "py313"
 output-format = "grouped"
 
 [lint]
@@ -22,6 +22,8 @@ ignore = [
 	"B024",  # Allow ABCs without abstract methods
 	"BLE001",  # Allow catching bare exception explicitly
 	"FIX002", "TD003",  # Allow fully-formed TODOs
+	"G", "EM", "TRY",  # Log formatting
+	"PT",  # Test conventions (Use a regular `assert` instead of unittest-style `assertIn`)
 
 	# Specific opt-outs
 	"C", "PLR09"  # Complexity rules
@@ -42,6 +44,9 @@ order-by-type = true
 
 [lint.isort.sections]
 django = ["django"]
+
+[lint.pycodestyle]
+max-doc-length = 79
 
 [lint.per-file-ignores]
 # General configuration

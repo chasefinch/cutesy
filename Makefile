@@ -2,10 +2,29 @@ default: clean configure format lint check test
 
 all: default build test-build
 
-configure:
+configure-spec:
 	@echo "Checking configuration against global spec..."
 	@nitpick check
 	@printf "\e[1mConfiguration is in sync!\e[0m\n\n"
+
+configure-docs:
+	@echo "Checking docs..."
+	@tmp=$$(mktemp); \
+	python scripts/update_axioms_md.py $$tmp 2>&1 | grep -v "^✓" || true; \
+	if ! diff -q $$tmp docs/axioms.md >/dev/null 2>&1; then \
+		echo "Documentation is out of sync with Notion. Run 'make sync-docs' to update."; \
+		rm -f $$tmp; \
+		exit 1; \
+	fi; \
+	rm -f $$tmp; \
+	printf "\e[1mDocs are in sync!\e[0m\n\n"
+
+configure: configure-spec configure-docs
+
+sync-docs:
+	@echo "Syncing documentation from Notion..."
+	@python scripts/update_axioms_md.py docs/axioms.md
+	@echo "...done."
 
 format:
 	@echo "Formatting Python docstrings..."

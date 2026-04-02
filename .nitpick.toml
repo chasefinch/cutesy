@@ -1,3 +1,6 @@
 [tool.nitpick]
-style = 'https://www.chasefinch.com/nitpick-style.toml'
+style = [
+	"https://www.chasefinch.com/nitpick-style.toml",
+	"https://www.chasefinch.com/nitpick-style-agents.toml",
+]
 cache = 'never'

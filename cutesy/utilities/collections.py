@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
 
-def collapse(iterable: Iterable[Any], base_type: type | None = None) -> Generator[Any, None, None]:
+def collapse(iterable: Iterable[Any], base_type: type | None = None) -> Generator[Any]:
     """Flatten nested iterables, similar to more_itertools.collapse."""
     for item in iterable:
         if base_type and isinstance(item, base_type):

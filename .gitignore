@@ -1,47 +1,44 @@
 # Python
-__pycache__/
-*.py[cod]
+/__pycache__/
+*.pyc
+*.pyo
 *$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-.cache
-MANIFEST
+/.Python
+/build/
+/dist/
+/downloads/
+/eggs/
+/.eggs/
+/lib64/
+/parts/
+/sdist/
+/wheels/
+/*.egg-info/
+/.installed.cfg
+/*.egg
+/.cache
+/MANIFEST
 
 # Virtual environments
-.venv/
-venv/
-ENV/
-env/
+/.venv/*
 
 # IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+/.vscode/
+/.zed/
+/.idea/
+
+# Claude Code
+/.claude/worktrees/
 
 # Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
+/.pytest_cache/
+/.coverage
+/htmlcov/
+/.tox/
 
 # Rust
-rust/target/
+/rust/target/
 **/*.rs.bk
 
 # macOS
@@ -49,4 +46,4 @@ rust/target/
 
 # Profiling
 *.prof
-profile_cutesy.py
+/profile_cutesy.py
