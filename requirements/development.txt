@@ -1,15 +1,15 @@
 -r base.txt
 
-coverage==7.13.4
+coverage==7.13.5
 pytest==9.0.2
 
 nitpick==0.38.1
 add-trailing-comma==4.0.0
 docformatter==1.7.7
 wemake-python-styleguide==1.6.1
-ruff==0.15.4
+ruff==0.15.8
 
 mypy==1.19.1
-setuptools==82.0.0
-setuptools-rust==1.12.0
+setuptools==82.0.1
+setuptools-rust==1.12.1
 wheel==0.46.3
