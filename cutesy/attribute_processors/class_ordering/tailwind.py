@@ -8,7 +8,7 @@ import re
 from collections import OrderedDict
 from functools import partial
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 from .types import BaseClassOrderingAttributeProcessor, SuperGroup
 
@@ -16,11 +16,11 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
 
-StashItem: TypeAlias = "str | list[StashItem]"
+type StashItem = str | list[StashItem]
 
-StackNode: TypeAlias = list["int | StackNode"]
+type StackNode = list[int | StackNode]
 
-IndexRangeNode: TypeAlias = list["int | IndexRangeNode"]
+type IndexRangeNode = list[int | IndexRangeNode]
 
 
 class TailwindClass(NamedTuple):
@@ -84,11 +84,13 @@ def parse_tailwind_class(full: str) -> TailwindClass:
     index = 0
     while index < len(modifiers):
         if modifiers[index] == "" and index + 1 < len(modifiers):
-            # Empty string from @ at start - combine with next part (e.g., @lg, @max-sm)
+            # Empty string from @ at start - combine with next part
+            # (e.g., @lg, @max-sm)
             processed_modifiers.append(f"@{modifiers[index + 1]}")
             index += 2
         elif modifiers[index] == "" and index + 1 >= len(modifiers):
-            # Empty string at end from @ - means base should be @base (e.g., @container)
+            # Empty string at end from @ - means base should be @base
+            # (e.g., @container)
             base = f"@{base}"
             index += 1
         else:
@@ -207,7 +209,8 @@ _group_rank_dict: dict[str, int] = {name: rank for rank, name in enumerate(REAL_
 _group_rank_dict["other (tailwind)"] = len(REAL_GROUPS_ORDER)
 _GROUP_RANK: Final[Mapping[str, int]] = MappingProxyType(_group_rank_dict)
 
-# Collapsible super-groups: adjacent groups that collapse onto one line if they fit
+# Collapsible super-groups: adjacent groups that collapse onto one line if
+# they fit
 COLLAPSIBLE_SUPER_GROUPS: Final[tuple[tuple[str, ...], ...]] = (
     ("display", "flex container", "grid container", "gap/space", "flex item", "grid item"),
 )
@@ -431,7 +434,8 @@ def _spacing_specificity(name: str) -> int:
 
 
 def _border_specificity(name: str) -> int:
-    # border-* < border-x/y-* < border-t/r/b/l-* ; for rounded: rough by hyphen count
+    # border-* < border-x/y-* < border-t/r/b/l-* ; for rounded: rough by
+    # hyphen count
     if name.startswith("border-"):
         if any(name.startswith(f"border-{axis}-") for axis in _SPACING_AXIS):
             return 1
@@ -478,7 +482,8 @@ def _intragroup_sort_key(group_name: str, item: TailwindClass, original_index: i
 
 def _find_group(class_name: str) -> str | None:
     # BEM heuristic, but ignore arbitrary payloads inside [...] or (...)
-    # e.g., mt-[var(--x)] should NOT be rejected because of "--" inside brackets.
+    # e.g., mt-[var(--x)] should NOT be rejected because of "--" inside
+    # brackets.
     outside = re.sub(r"\[[^\]]*\]|\([^)]*\)", "", class_name)
     if "--" in outside or "__" in outside:
         return None  # user-defined
@@ -517,5 +522,6 @@ def _arbitrary_selector_key(pair: tuple[int, TailwindClass]) -> tuple:
     original_index, tailwind_class = pair
     base_group = _find_group(tailwind_class.class_name) or _OTHER_GROUP
     rank = _GROUP_RANK.get(base_group, _GROUP_RANK[_OTHER_GROUP])
-    # Use the base group's name so spacing/border heuristics match normal grouping.
+    # Use the base group's name so spacing/border heuristics match normal
+    # grouping.
     return (rank, _intragroup_sort_key(base_group, tailwind_class, original_index))

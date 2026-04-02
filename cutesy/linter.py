@@ -474,7 +474,8 @@ class HTMLLinter(HTMLParser):
                 self._indentation_level -= 1
 
         # Check for blank lines before closing tag that decreases indentation
-        # Skip this check if the closing tag is on the same line as the opening tag
+        # Skip this check if the closing tag is on the same line as the
+        # opening tag
         if (
             self._indentation_level < old_indentation_level
             and self._last_data
@@ -486,7 +487,8 @@ class HTMLLinter(HTMLParser):
                     # Remove blank lines from the end of the result buffer
                     if self._result:
                         last_chunk = self._result[-1]
-                        # Replace multiple trailing newlines with single newline + indentation
+                        # Replace multiple trailing newlines with single
+                        # newline + indentation
                         self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
                 else:
                     # Report F4 error for extra vertical whitespace
@@ -512,7 +514,8 @@ class HTMLLinter(HTMLParser):
                 self._process(html_data)
             return
 
-        # Check for blank lines after opening tag/instruction that increased indentation
+        # Check for blank lines after opening tag/instruction that increased
+        # indentation
         if self._indentation_level > self._prev_indentation_level:
             # Match: newline followed by any blank lines at the start
             match = re.search(r"^\n[ \t]*\n", html_data)
@@ -520,7 +523,8 @@ class HTMLLinter(HTMLParser):
                 if self.fix:
                     # Remove ALL leading blank lines, keeping just one newline
                     html_data = re.sub(r"^(\n[ \t]*)+\n", "\n", html_data)
-                # Only report if there's NOT 3+ consecutive newlines (that's reported elsewhere)
+                # Only report if there's NOT 3+ consecutive newlines (that's
+                # reported elsewhere)
                 elif not re.search(r"\n{3,}", html_data):
                     # Report F4 error for extra vertical whitespace
                     self._handle_error("F4", line_offset=0, column=0)
@@ -650,7 +654,8 @@ class HTMLLinter(HTMLParser):
 
                     # For continuations (else, elif), validate the match
                     if instruction_type.continues_block:
-                        # Continuation should match a block start or another continuation
+                        # Continuation should match a block start or another
+                        # continuation
                         # stack_item.name is an InstructionType
                         assert isinstance(stack_item.name, InstructionType)
                         if not (stack_item.name.starts_block or stack_item.name.continues_block):
@@ -669,7 +674,8 @@ class HTMLLinter(HTMLParser):
                     self._indentation_level -= 1
 
         # Check for blank lines before instruction that decreases indentation
-        # Skip this check if the closing instruction is on the same line as the opening instruction
+        # Skip this check if the closing instruction is on the same line as
+        # the opening instruction
         if (
             self._indentation_level < old_indentation_level
             and self._last_data

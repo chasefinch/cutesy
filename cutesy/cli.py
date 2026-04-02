@@ -23,8 +23,10 @@ CONFIGURATION
     extras = ["django", "tailwind", ...]  # OPTIONAL
     indentation_type = "spaces"|"tabs"  # OPTIONAL (default: "spaces")
     tab_width = 4  # OPTIONAL (default: 4, used for line length even with tabs)
-    max_items_per_line = 3  # OPTIONAL (default: 5, item = attribute/instruction/etc.)
-    line_length = 88  # OPTIONAL (default: 99, lines may exceed but tags wrap when possible)
+    max_items_per_line = 3  # OPTIONAL (default: 5, item = attribute/instruction/
+                           # etc.)
+    line_length = 88  # OPTIONAL (default: 99, lines may exceed but tags wrap
+                      # when possible)
       - NOTE: The internal attribute processors "whitespace" and "reindent" are
         always enabled by default (in that order). Disable both with
         --preserve-attr-whitespace.
@@ -48,7 +50,8 @@ Examples
   cutesy --fix --attribute-processors=tailwind "**/*.html"
 
   # Run on a string of HTML passed on the command line
-  cutesy --code --fix --attribute-processors=[tailwind,alpine] "<div class='...'>…</div>"
+  cutesy --code --fix --attribute-processors=[tailwind,alpine] \
+      "<div class='...'>…</div>"
 
   # Disable built-ins that touch attribute whitespace/reindent
   cutesy --preserve-attr-whitespace --attribute-processors=tailwind "**/*.html"
@@ -338,7 +341,8 @@ def main(
         try:
             result, errors = linter.lint(html)
         except DoctypeError:
-            # Ignore this file due to non-HTML5 doctype, when this feature has been enabled
+            # Ignore this file due to non-HTML5 doctype, when this feature
+            # has been enabled
             continue
         except StructuralError as structural_error:
             is_structural_error = True
@@ -518,7 +522,8 @@ def _parse_list(item: object) -> list[str] | None:
             if isinstance(parsed, list):
                 return [str(entry).strip() for entry in parsed if str(entry).strip()]
 
-        # Handle bracket syntax like [django,tailwind] by converting to proper JSON
+        # Handle bracket syntax like [django,tailwind] by converting to
+        # proper JSON
         if string.startswith("[") and string.endswith("]"):
             inner = string[1:-1].strip()
             if inner:

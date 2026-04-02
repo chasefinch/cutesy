@@ -23,7 +23,8 @@ MIDDLE_WS_RUN = re.compile(r"(?<=\S)[^\S\n]{2,}(?=\S)")
 # Safe encodings for a double quote (") that should NOT trigger a bail:
 DOUBLE_QUOTE_SAFE_RE = re.compile(r"&quot;;?|&#34;;?|&#x22;;?|%22|\\u0022|\\x22", re.IGNORECASE)
 
-# Safe encodings for a single quote / apostrophe (') that should NOT trigger a bail:
+# Safe encodings for a single quote / apostrophe (') that should NOT trigger
+# a bail:
 SINGLE_QUOTE_SAFE_RE = re.compile(r"&apos;;?|&#39;;?|&#x27;;?|%27|\\u0027|\\x27", re.IGNORECASE)
 
 
@@ -36,7 +37,8 @@ def has_inner_raw_bounding_quote(attr_body: str, bounding_character: str) -> boo
     raw quote, so it will trigger a bail.
     """
     if bounding_character == '"':
-        # Strip safe representations of double quotes so they don't confuse the check.
+        # Strip safe representations of double quotes so they don't confuse
+        # the check.
         stripped = DOUBLE_QUOTE_SAFE_RE.sub("", attr_body)
         return '"' in stripped
     if bounding_character == "'":
@@ -105,7 +107,8 @@ class AttributeProcessor(BaseAttributeProcessor):
             extra_char_length += tab_width * current_indentation_level
             max_first_line_length = line_length - extra_char_length
 
-        # --- Safety check: bail if an inner raw quote matches the bounding char
+        # --- Safety check: bail if an inner raw quote matches the bounding
+        # char
         if has_inner_raw_bounding_quote(attr_body, bounding_character):
             rule_code = "F16"
             error = Error(
@@ -150,7 +153,8 @@ class AttributeProcessor(BaseAttributeProcessor):
             # Trim trailing whitespace on each line
             adjusted_body = re.sub(r"[^\S\n]+\n", r"\n", adjusted_body)
         else:
-            # The only newlines were before or after all of the content. Trim them off.
+            # The only newlines were before or after all of the content.
+            # Trim them off.
             adjusted_body = re.sub(r"^\s*\n\s*", " ", adjusted_body)
             adjusted_body = re.sub(r"\s*\n\s*$", " ", adjusted_body)
             adjusted_body = adjusted_body.strip()

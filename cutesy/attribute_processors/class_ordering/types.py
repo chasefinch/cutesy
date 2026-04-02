@@ -7,7 +7,7 @@ from abc import abstractmethod
 from collections import UserList
 
 # add at top with your other imports
-from typing import TYPE_CHECKING, TypeAlias, cast
+from typing import TYPE_CHECKING, cast
 
 from ...rules import Rule
 from ...types import Error, InstructionType, StructuralError
@@ -30,11 +30,11 @@ class SuperGroup(UserList):
 Rule("TW1", "Control instruction overlaps class names", structural=True)
 
 
-StashItem: TypeAlias = "str | list[StashItem]"
+type StashItem = str | list[StashItem]
 
-StackNode: TypeAlias = list["int | StackNode"]
+type StackNode = list[int | StackNode]
 
-IndexRangeNode: TypeAlias = list["int | IndexRangeNode"]
+type IndexRangeNode = list[int | IndexRangeNode]
 
 
 class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
@@ -171,8 +171,10 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         all_class_names = list(collapse(sorted_class_group_tree, base_type=str))
         all_class_names_on_one_line = " ".join(all_class_names)
 
-        # Check if any items were originally nested structures (i.e., came from block instructions)
-        # Skip SuperGroups — their nested lists are sub-groups, not template instructions
+        # Check if any items were originally nested structures (i.e., came
+        # from block instructions)
+        # Skip SuperGroups — their nested lists are sub-groups, not template
+        # instructions
         has_originally_nested_content = any(
             isinstance(item, list)
             for group in sorted_class_group_tree
@@ -192,7 +194,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
         attribute_lines = [""]
         line_indentation = (current_indentation_level + 1) * indentation
 
-        # ...#1: One group (not a super-group), but long enough to merit multiple lines.
+        # ...#1: One group (not a super-group), but long enough to merit
+        # multiple lines.
         if len(sorted_class_group_tree) == 1 and not isinstance(
             sorted_class_group_tree[0],
             SuperGroup,
@@ -296,10 +299,12 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
 
                     # FIX #2: call the predicate
                     if instruction_type.continues_block:
-                        # FIX #1: capture the segment BEFORE this scalar control
+                        # FIX #1: capture the segment BEFORE this scalar
+                        # control
                         buffer.extend(class_names[cursor:child])
 
-                        # Flush preceding run, protecting head if nothing has been emitted yet
+                        # Flush preceding run, protecting head if nothing has
+                        # been emitted yet
                         self._emit_sorted_run(buffer, stash, protect_head=(len(stash) == 0))
 
                         # Emit the control itself
@@ -441,11 +446,13 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             left_raw, right_raw = self.preprocessor.delimiters
             left, right = re.escape(left_raw), re.escape(right_raw)
 
-            # Remove space immediately after left delimiter and before right delimiter
+            # Remove space immediately after left delimiter and before right
+            # delimiter
             candidate = re.sub(rf" {left}", left, candidate)
             candidate = re.sub(rf"{right} ", right, candidate)
 
-            # Allow flattening if it fits within length, even with block instructions
+            # Allow flattening if it fits within length, even with block
+            # instructions
             if len(candidate) <= self.max_length:
                 return candidate
 
@@ -492,21 +499,30 @@ def expand_class_names(
     *,
     keep_empty: bool = False,
 ) -> list[str]:
-    """Break up delimited strings in a list of class names.
+    “””Break up delimited strings in a list of class names.
 
-    For each string in `class_names`, find every occurrence of text delimited by
-    `left` ... `right`, and expand that string into a sequence of alternating
-    outside-text and delimited-chunk entries. Returns the flattened list.
+    For each string in `class_names`, find every occurrence of text delimited
+    by `left` ... `right`, and expand that string into a sequence of
+    alternating outside-text and delimited-chunk entries. Returns the flattened
+    list.
 
     Example:
-        class_names = ["{% if tuna %}btn--lg{% else %}btn--sm{% endif %} shadow", "card"]
-        left, right = "{", "}"
-        -> ["{% if tuna %}", "btn--lg", "{% else %}", "btn--sm", "{% endif %}", "shadow", "card"]
+        class_names = [
+            “{% if tuna %}btn--lg{% else %}btn--sm{% endif %} shadow”,
+            “card”,
+        ]
+        left, right = “{“, “}”
+        -> [
+            “{% if tuna %}”, “btn--lg”, “{% else %}”, “btn--sm”,
+            “{% endif %}”, “shadow”, “card”,
+        ]
 
     Notes:
-      - Uses a non-greedy match; supports multiple delimited sections per string.
+      - Uses a non-greedy match; supports multiple delimited sections per
+        string.
       - Unmatched delimiters leave the string as-is (no split).
-      - Set keep_empty=True to retain empty outside pieces (default drops them).
+      - Set keep_empty=True to retain empty outside pieces (default drops
+        them).
       - Does not attempt to handle nested delimiters (e.g., “{ a { b } }”).
 
     """
@@ -519,18 +535,21 @@ def expand_class_names(
             out.append(class_name)
             continue
 
-        parts = pattern.split(class_name)  # keeps the delimited chunks in the result
+        parts = pattern.split(class_name)  # keeps delimited chunks in result
 
-        # Process parts: strip whitespace from non-delimited parts, keep delimited parts as-is
+        # Process parts: strip whitespace from non-delimited parts, keep
+        # delimited parts as-is
         processed_parts = []
         for index, part in enumerate(parts):
             if part.startswith(left) and part.endswith(right):
                 # This is a delimited part - keep as-is
                 processed_parts.append(part)
             else:
-                # This is a non-delimited part - strip whitespace and handle empty
+                # This is a non-delimited part - strip whitespace and handle
+                # empty
                 stripped = part.strip()
-                # Skip empty strings at beginning/end, keep middle ones if keep_empty=True
+                # Skip empty strings at beginning/end, keep middle ones if
+                # keep_empty=True
                 is_first = index == 0
                 is_last = index == len(parts) - 1
                 keep_middle_empty = keep_empty and not (is_first or is_last) and stripped == ""
