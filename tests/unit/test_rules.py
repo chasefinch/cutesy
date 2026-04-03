@@ -59,8 +59,10 @@ class TestRules:
     def test_t1(self) -> None:
         """Test rule T1."""
         # T1: Instruction not long enough to generate a placeholder
-        # This is an internal preprocessor rule that's hard to trigger directly
-        # Skip this test as it's mainly for internal preprocessor logic
+        # Trigger by generating 1297 empty variable tags ({{}}), pushing the
+        # base36 placeholder ID to 3 chars so the 5-char formatted instruction
+        # is too short: 5 - 3 (overhead) - 3 (id) < 0
+        self.run_test("{{}}" * 1297 + "<p>test</p>\n", "T1", is_fixable=False)
 
     def test_p1(self) -> None:
         """Test rule P1."""
@@ -188,9 +190,8 @@ class TestRules:
 
     def test_f10(self) -> None:
         """Test rule F10."""
-        # F10: Attribute using wrong quotes - skip this test as the pattern is
-        # hard to trigger. The rule expects single quotes for attributes that
-        # contain double quotes
+        # F10: Attribute using wrong quotes (single instead of double)
+        self.run_test("<div class='test'></div>\n", "F10")
 
     def test_f11(self) -> None:
         """Test rule F11."""
@@ -270,5 +271,5 @@ class TestRules:
 
     def test_e4(self) -> None:
         """Test rule E4."""
-        # E4: Right angle bracket not represented as "&gt;" - skip this test
-        # The rule may not trigger in normal text content within HTML
+        # E4: Right angle bracket not represented as "&gt;"
+        # Rule is defined but not yet implemented in the linter.
