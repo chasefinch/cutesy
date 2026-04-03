@@ -641,7 +641,8 @@ class HTMLLinter(HTMLParser):
         old_indentation_level = self._indentation_level
         opening_line = None  # Track line where opening instruction was found
 
-        # Handle block ending/continuation - restore correct indentation from stack
+        # Handle block ending/continuation - restore correct indentation
+        # from stack
         if instruction_type.ends_block or instruction_type.continues_block:
             found_match = False
             while self._tag_stack:
@@ -687,7 +688,8 @@ class HTMLLinter(HTMLParser):
                     # Remove blank lines from the end of the result buffer
                     if self._result:
                         last_chunk = self._result[-1]
-                        # Replace multiple trailing newlines with single newline + indentation
+                        # Replace multiple trailing newlines with single
+                        # newline + indentation
                         self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
                 else:
                     # Report F4 error for extra vertical whitespace
@@ -696,10 +698,12 @@ class HTMLLinter(HTMLParser):
 
         self._reconcile_indentation()  # Between the indentation change
 
-        # Track indentation before we change it (for detecting blank lines after opening)
+        # Track indentation before we change it (for detecting blank lines
+        # after opening)
         self._prev_indentation_level = self._indentation_level
 
-        # Handle block starting/continuation - push onto stack and increase indentation
+        # Handle block starting/continuation - push onto stack and increase
+        # indentation
         if instruction_type.starts_block:
             # Push the opening instruction type and current indentation level
             self._tag_stack.append(

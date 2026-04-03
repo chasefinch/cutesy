@@ -226,7 +226,8 @@ class TestHTMLLinter:
         linter = HTMLLinter(check_doctype=True)
         html = '<!DOCTYPE html SYSTEM "about:legacy-compat"><div>Hello</div>'
 
-        # Should not raise DoctypeError when check_doctype=True, but report as linting error
+        # Should not raise DoctypeError when check_doctype=True, but report as
+        # linting error
         _result, errors = linter.lint(html)
         # Should have E1 error for invalid doctype
         e1_errors = [error for error in errors if error.rule.code == "E1"]
@@ -241,7 +242,8 @@ class TestHTMLLinter:
         linter = HTMLLinter(check_doctype=False)
         html = '<!DOCTYPE html SYSTEM "about:legacy-compat"><div>Hello</div>'
 
-        # Should raise DoctypeError when check_doctype=False to skip non-HTML5 files
+        # Should raise DoctypeError when check_doctype=False to skip non-HTML5
+        # files
         with pytest.raises(DoctypeError):
             linter.lint(html)
 
@@ -434,7 +436,8 @@ class TestHTMLLinter:
         """Test reporting case errors in complex attribute names."""
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
 
-        # HTML with uppercase in complex attribute name that should trigger F8 error
+        # HTML with uppercase in complex attribute name that should trigger
+        # F8 error
         html = '<div Data{% block %}content{% endblock %}="value">content</div>'
 
         _result, errors = linter.lint(html)
@@ -452,7 +455,8 @@ class TestHTMLLinter:
         """Test quote character selection based on attribute content."""
         linter = HTMLLinter(fix=True)
 
-        # Attribute value with single quotes should use double quotes for wrapping
+        # Attribute value with single quotes should use double quotes for
+        # wrapping
         html = "<div data-value=\"text with 'single' quotes\">content</div>"
 
         result, errors = linter.lint(html)

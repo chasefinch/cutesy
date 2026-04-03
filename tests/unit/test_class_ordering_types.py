@@ -341,7 +341,8 @@ class TestBaseClassOrderingAttributeProcessor:
             attr_body="btn",
         )
 
-        # max_length = line_length - ((current_indentation_level + 1) * tab_width)
+        # max_length = line_length -
+        # ((current_indentation_level + 1) * tab_width)
         # max_length = 80 - ((1 + 1) * 4) = 80 - 8 = 72
         expected_max_length = MAX_CHARS_PER_LINE - ((1 + 1) * 4)
         assert processor.max_length == expected_max_length

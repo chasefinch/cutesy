@@ -404,7 +404,8 @@ class TestSuperGroup:
         classes = ["flex", "items-center", "order-1", "gap-4", "p-4", "bg-red-500"]
         groups = group_and_sort(classes, with_super_groups=True)
 
-        # Should have a SuperGroup containing display, flex container, gap/space, flex item
+        # Should have a SuperGroup containing display, flex container,
+        # gap/space, flex item
         super_groups = [
             super_group for super_group in groups if isinstance(super_group, SuperGroup)
         ]
@@ -456,7 +457,7 @@ class TestSuperGroup:
         assert len(super_groups) == 1
 
         sg = super_groups[0]
-        # display comes first, then flex container, then gap/space, then flex item
+        # display comes first, then flex container, then gap/space, then item
         assert sg[0] == ["flex"]
         assert sg[1] == ["items-center"]
         assert sg[2] == ["gap-4"]
@@ -575,8 +576,8 @@ class TestMergeCollapsibleGroups:
             ("flex container", ["items-center"]),
         ]
         result = _merge_collapsible_groups(tagged)
-        # The None group breaks the adjacency, so display is alone (not wrapped)
-        # and flex container is alone (not wrapped)
+        # The None group breaks the adjacency, so display is alone
+        # (not wrapped) and flex container is alone (not wrapped)
         assert len(result) == 3  # noqa: PLR2004
         for group in result:
             assert not isinstance(group, SuperGroup)
@@ -637,8 +638,9 @@ class TestSuperGroupRendering:
         # Should be multi-line
         assert len(lines) > 2  # noqa: PLR2004
 
-        # Layout sub-groups should each get their own line since combined is too long
-        # Verify flex container and flex item classes are on separate lines
+        # Layout sub-groups should each get their own line since combined is
+        # too long. Verify flex container and flex item classes are on separate
+        # lines.
         flex_container_found = any("flex-row" in line and "items-center" in line for line in lines)
         flex_item_found = any("order-1" in line and "grow" in line for line in lines)
         assert flex_container_found

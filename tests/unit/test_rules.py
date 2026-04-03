@@ -106,12 +106,14 @@ class TestRules:
 
     def test_d3(self) -> None:
         """Test rule D3."""
-        # D3: Expected closing tag - triggered when closing tags are in wrong order
+        # D3: Expected closing tag - triggered when closing tags are in wrong
+        # order
         self.run_test("<div><span><p>content</p></div></span>", "D3", is_fixable=False)
 
     def test_d4(self) -> None:
         """Test rule D4."""
-        # D4: Tag doesn't have a matching opening tag - not fixable as it's a structural error
+        # D4: Tag doesn't have a matching opening tag - not fixable as it's a
+        # structural error
         self.run_test("<p>content</p></div>", "D4", is_fixable=False)
 
     def test_d5(self) -> None:
@@ -131,7 +133,8 @@ class TestRules:
 
     def test_d8(self) -> None:
         """Test rule D8."""
-        # D8: Malformed closing tag - use a different malformed closing tag pattern
+        # D8: Malformed closing tag - use a different malformed closing tag
+        # pattern
         self.run_test("<div>content</div body>", "D8", is_fixable=False)
 
     def test_d9(self) -> None:
@@ -160,7 +163,7 @@ class TestRules:
 
     def test_f5(self) -> None:
         """Test rule F5."""
-        # F5: Extra horizontal whitespace - this is detected within text content
+        # F5: Extra horizontal whitespace - detected within text content
         self.run_test("<div>text  with  extra  spaces</div>", "F5")
 
     def test_f6(self) -> None:
@@ -185,8 +188,9 @@ class TestRules:
 
     def test_f10(self) -> None:
         """Test rule F10."""
-        # F10: Attribute using wrong quotes - skip this test as the pattern is hard to trigger
-        # The rule expects single quotes for attributes that contain double quotes
+        # F10: Attribute using wrong quotes - skip this test as the pattern is
+        # hard to trigger. The rule expects single quotes for attributes that
+        # contain double quotes
 
     def test_f11(self) -> None:
         """Test rule F11."""
@@ -195,7 +199,8 @@ class TestRules:
 
     def test_f12(self) -> None:
         """Test rule F12."""
-        # F12: Long tag should be on a new line - need preceding content for line break logic
+        # F12: Long tag should be on a new line - need preceding content for
+        # line break logic
         long_attrs = " ".join([f'attr{index}="value{index}"' for index in range(10)])
         self.run_test(f"<p>text</p><div {long_attrs}>content</div>", "F12")
 
@@ -206,7 +211,8 @@ class TestRules:
 
     def test_f14(self) -> None:
         """Test rule F14."""
-        # F14: Expected tag attributes on new lines - tag already on new line but attrs should wrap
+        # F14: Expected tag attributes on new lines - tag already on new line
+        # but attrs should wrap
         long_attrs = " ".join([f'attr{index}="value{index}"' for index in range(10)])
         self.run_test(f"<div>\n\t<span {long_attrs}>content</span>\n</div>", "F14")
 
@@ -249,7 +255,7 @@ class TestRules:
 
     def test_e1(self) -> None:
         """Test rule E1."""
-        # E1: Doctype not "html" - not fixable as it requires manual intervention
+        # E1: Doctype not "html" - not fixable, requires manual intervention
         self.run_test("<!doctype html5>", "E1", is_fixable=False)
 
     def test_e2(self) -> None:
@@ -259,7 +265,7 @@ class TestRules:
 
     def test_e3(self) -> None:
         """Test rule E3."""
-        # E3: Left angle bracket not represented as "&lt;" - not fixable automatically
+        # E3: Left angle bracket not represented as "&lt;" - not fixable
         self.run_test("<div>5 < 10</div>", "E3", is_fixable=False)
 
     def test_e4(self) -> None:

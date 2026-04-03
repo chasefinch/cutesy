@@ -421,7 +421,8 @@ class TestErrorHandling:
         """Test handling block ending without matching start."""
         processor = MockClassOrderingProcessor()
 
-        # The implementation may handle this gracefully rather than raising an error
+        # The implementation may handle this gracefully rather than raising
+        # an error
         result = processor.process(
             attr_name="class",
             position=(1, 0),
@@ -444,7 +445,8 @@ class TestErrorHandling:
         """Test handling continuation outside a block."""
         processor = MockClassOrderingProcessor()
 
-        # The implementation may handle this gracefully rather than raising an error
+        # The implementation may handle this gracefully rather than raising
+        # an error
         result = processor.process(
             attr_name="class",
             position=(1, 0),

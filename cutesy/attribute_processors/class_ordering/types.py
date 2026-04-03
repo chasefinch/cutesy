@@ -456,7 +456,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             if len(candidate) <= self.max_length:
                 return candidate
 
-        # Could not compact; return the sequence with children preserved in place.
+        # Could not compact; return the sequence with children preserved
+        # in place.
         return normalized
 
     def _extract_columns_and_lines(
@@ -499,7 +500,7 @@ def expand_class_names(
     *,
     keep_empty: bool = False,
 ) -> list[str]:
-    “””Break up delimited strings in a list of class names.
+    """Break up delimited strings in a list of class names.
 
     For each string in `class_names`, find every occurrence of text delimited
     by `left` ... `right`, and expand that string into a sequence of
@@ -508,13 +509,13 @@ def expand_class_names(
 
     Example:
         class_names = [
-            “{% if tuna %}btn--lg{% else %}btn--sm{% endif %} shadow”,
-            “card”,
+            "{% if tuna %}btn--lg{% else %}btn--sm{% endif %} shadow",
+            "card",
         ]
-        left, right = “{“, “}”
+        left, right = "{", "}"
         -> [
-            “{% if tuna %}”, “btn--lg”, “{% else %}”, “btn--sm”,
-            “{% endif %}”, “shadow”, “card”,
+            "{% if tuna %}", "btn--lg", "{% else %}", "btn--sm",
+            "{% endif %}", "shadow", "card",
         ]
 
     Notes:
@@ -523,7 +524,7 @@ def expand_class_names(
       - Unmatched delimiters leave the string as-is (no split).
       - Set keep_empty=True to retain empty outside pieces (default drops
         them).
-      - Does not attempt to handle nested delimiters (e.g., “{ a { b } }”).
+      - Does not attempt to handle nested delimiters (e.g., "{ a { b } }").
 
     """
     pattern = re.compile(f"({re.escape(left)}.*?{re.escape(right)})")

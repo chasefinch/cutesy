@@ -7,7 +7,8 @@ import setuptools
 
 VERSION = "1.0b27"
 
-# Modules to skip for mypyc compilation (use Path for cross-platform compatibility)
+# Modules to skip for mypyc compilation (use Path for cross-platform
+# compatibility)
 MYPYC_SKIP = frozenset(
     str(Path(path))
     for path in (

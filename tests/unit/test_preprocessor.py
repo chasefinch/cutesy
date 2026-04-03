@@ -348,7 +348,8 @@ class TestBasePreprocessor:
         """Test reset when HTML contains many special characters."""
         preprocessor = MockPreprocessor()
         # HTML containing many special characters to force delimiter search
-        # Use specific characters, avoiding soft hyphen (\xad) which is in SPECIAL_CHARS
+        # Use specific characters, avoiding soft hyphen (\xad) which is in
+        # SPECIAL_CHARS
         special_chars_html = "¡¢£¤¥¦§¨©ª«¬®¯°±²³"  # Skip ­ (soft hyphen)
         html = f"<div>{special_chars_html}</div>"
 

@@ -23,10 +23,8 @@ CONFIGURATION
     extras = ["django", "tailwind", ...]  # OPTIONAL
     indentation_type = "spaces"|"tabs"  # OPTIONAL (default: "spaces")
     tab_width = 4  # OPTIONAL (default: 4, used for line length even with tabs)
-    max_items_per_line = 3  # OPTIONAL (default: 5, item = attribute/instruction/
-                           # etc.)
-    line_length = 88  # OPTIONAL (default: 99, lines may exceed but tags wrap
-                      # when possible)
+    max_items_per_line = 3  # OPTIONAL (default: 5 items/attrs)
+    line_length = 88  # OPTIONAL (default: 99 by wrapping tags when possible)
       - NOTE: The internal attribute processors "whitespace" and "reindent" are
         always enabled by default (in that order). Disable both with
         --preserve-attr-whitespace.

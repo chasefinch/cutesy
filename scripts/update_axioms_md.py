@@ -130,7 +130,8 @@ def _block_to_markdown(block: dict[str, Any]) -> str:
         return "---\n\n"
 
     if block_type == "callout":
-        return f"> {text}\n\n"
+        # Handled separately in _callout_to_markdown
+        return ""
 
     if block_type in ("table", "table_row"):
         return ""
@@ -139,6 +140,35 @@ def _block_to_markdown(block: dict[str, Any]) -> str:
         f"Warning: Skipping unsupported block type: {block_type}\n",
     )
     return ""
+
+
+def _callout_to_markdown(
+    callout_block: dict[str, Any],
+    blocks: dict[str, Any],
+) -> str:
+    """Convert a Notion callout block to a Markdown blockquote."""
+    props = callout_block.get("properties", {})
+    title = props.get("title", [])
+    text = _get_plain_text(title) if title else ""
+
+    fmt = callout_block.get("format", {})
+    icon = fmt.get("page_icon", "")
+
+    parts: list[str] = []
+    if icon or text:
+        prefix = f"{icon} " if icon else ""
+        parts.append(f"{prefix}{text}")
+
+    for child_id in callout_block.get("content", []):
+        child = blocks.get(child_id)
+        if not child:
+            continue
+        child_md = _block_to_markdown(child).rstrip("\n")
+        if child_md:
+            parts.append(child_md)
+
+    body = "\n>\n> ".join(parts) if parts else ""
+    return f"> {body}\n\n"
 
 
 def _table_to_markdown(
@@ -183,8 +213,11 @@ def _export_axioms_md() -> str:
         block = blocks.get(block_id)
         if not block:
             continue
-        if block.get("type") == "table":
+        block_type = block.get("type")
+        if block_type == "table":
             markdown += _table_to_markdown(block, blocks)
+        elif block_type == "callout":
+            markdown += _callout_to_markdown(block, blocks)
         else:
             markdown += _block_to_markdown(block)
 

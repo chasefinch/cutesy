@@ -273,7 +273,8 @@ class TestMainIntegration:
 
             result = runner.invoke(main, ["--extras", "django", str(html_file)])
 
-            # Should process without error (django preprocessor handles {{ }} syntax)
+            # Should process without error (django preprocessor handles
+            # {{ }} syntax)
             assert result.exit_code == 0
 
     def test_main_with_structural_rule_ignored_in_fix_mode_exits_with_error(self) -> None:
@@ -439,7 +440,8 @@ class TestErrorHandling:
         """Test error when ignoring structural rule category in fix mode."""
         runner = CliRunner()
 
-        # F1 category includes structural rules - ignoring it in fix mode should fail
+        # F1 category includes structural rules - ignoring it in fix mode
+        # should fail
         result = runner.invoke(main, ["--fix", "--ignore", "F1", "--code", "<div>test</div>"])
 
         assert result.exit_code == 1

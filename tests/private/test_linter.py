@@ -56,7 +56,8 @@ class TestHTMLLinter:
         linter = HTMLLinter(fix=False)
         linter._mode = Mode.DOCUMENT
 
-        # Should generate D2 error when trying to add another doctype in document mode
+        # Should generate D2 error when trying to add another doctype in
+        # document mode
         linter.handle_decl("doctype html")
 
         d2_errors = [error for error in linter._errors if error.rule.code == "D2"]
@@ -67,7 +68,8 @@ class TestHTMLLinter:
         linter = HTMLLinter(fix=False)
         linter._mode = Mode.UNSTRUCTURED
 
-        # Should generate D1 error when trying to add doctype in unstructured mode
+        # Should generate D1 error when trying to add doctype in
+        # unstructured mode
         linter.handle_decl("doctype html")
 
         d1_errors = [error for error in linter._errors if error.rule.code == "D1"]

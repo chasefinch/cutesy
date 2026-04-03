@@ -135,8 +135,7 @@ HTML, JSON, CSS, Cloudflare, Cutesy, Prettier, AlpineJS | Svelte
 - I009 – Use Universal Links (or platform equivalents) for deep-linking into apps.
 # P - Python
 
-Ruff, UV, SH, Wemake Python Styleguide, mypyc, Rust/PyO3/maturin
-Django
+Ruff, UV, SH, Wemake Python Styleguide, Django, mypyc, Rust/PyO3/maturin
 
 - P000 - Ask for forgiveness, not for permission.
 - P001 - Let unexpected exceptions bubble to a centralized handler (for example, Sentry). Don’t silently swallow them.
@@ -510,7 +509,9 @@ Don’t set or modify attributes on self in a helper method that’s called by a
 
 Even peer methods at the same level should have a clear depth order: if method A and method B are both called by method C, A should not silently set state on self that B later reads. Data should flow through return values or explicit parameters, not through side effects on self.
 
-> 
+> 💡 
+>
+> The ability to call methods on “self” creates tension in an OOP-based environment. Calling a method on self is a bit of an imperative shortcut, where a call to an injected dependency would be cleaner. You can avoid the messiness this can create by maintaining a clear hierarchy between a class’s own methods.
 
 ```Python
 # ❌ Hidden data flow through self
@@ -1113,7 +1114,9 @@ class PaymentTests(TransactionTestCase):
         self.assertEqual(len(mail.outbox), 1)
 ```
 
-> 
+> 💡 
+>
+> TransactionTestCase is slower than TestCase because it truncates tables instead of rolling back a transaction. Use it when you need true commit behavior (signals, on_commit, multi-database tests) or when debugging flaky tests that pass in isolation but fail together. For most unit tests, Django’s default TestCase provides sufficient isolation via rollback.
 
 # 4 - Content
 
@@ -1121,7 +1124,7 @@ class PaymentTests(TransactionTestCase):
 
 Use proper typographical punctuation in user-facing content.
 
-Render real typographic characters instead of ASCII approximations.
+Render real typographic characters instead of ASCII approximations in text content. In HTML, use character ref codes like &apos;.
 
 | Instead of | Use |
 | --- | --- |
@@ -1130,6 +1133,10 @@ Render real typographic characters instead of ASCII approximations.
 | -- or - | – (en dash) or — (em dash) |
 | ... | … (ellipsis) |
 | x (letter) | × (multiplication sign) |
+
+> 💡 
+>
+> Note for agents: This obviously does not include quotes in code, either for logic or code samples in docs.
 
 ## X401
 

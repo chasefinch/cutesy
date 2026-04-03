@@ -441,7 +441,8 @@ class TestBaseClassOrderingAttributeProcessor:
             attr_body="btn",
         )
 
-        # max_length = line_length - ((current_indentation_level + 1) * tab_width)
+        # max_length = line_length -
+        # ((current_indentation_level + 1) * tab_width)
         # max_length = 80 - ((1 + 1) * 4) = 80 - 8 = 72
         expected_max_length = MAX_CHARS_PER_LINE - ((1 + 1) * 4)
         assert processor.max_length == expected_max_length
@@ -518,7 +519,8 @@ class TestErrorHandling:
         """Test handling block ending without matching start."""
         processor = MockClassOrderingProcessor()
 
-        # The implementation may handle this gracefully rather than raising an error
+        # The implementation may handle this gracefully rather than raising
+        # an error
         result = processor.process(
             attr_name="class",
             position=(1, 0),
@@ -541,7 +543,8 @@ class TestErrorHandling:
         """Test handling continuation outside a block."""
         processor = MockClassOrderingProcessor()
 
-        # The implementation may handle this gracefully rather than raising an error
+        # The implementation may handle this gracefully rather than raising
+        # an error
         result = processor.process(
             attr_name="class",
             position=(1, 0),
