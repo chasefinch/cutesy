@@ -62,7 +62,9 @@ class TestRules:
         # Trigger by generating 1297 empty variable tags ({{}}), pushing the
         # base36 placeholder ID to 3 chars so the 5-char formatted instruction
         # is too short: 5 - 3 (overhead) - 3 (id) < 0
-        self.run_test("{{}}" * 1297 + "<p>test</p>\n", "T1", is_fixable=False)
+        empty_variable_count = 1297
+        empty_variable_string = "{{}}" * empty_variable_count
+        self.run_test(f"{empty_variable_string}<p>test</p>\n", "T1", is_fixable=False)
 
     def test_p1(self) -> None:
         """Test rule P1."""

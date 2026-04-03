@@ -6,9 +6,9 @@ Markdown.
 
 from __future__ import annotations
 
-import http.client
 import json
 import sys
+from http import client as http_client
 from pathlib import Path
 from typing import Any
 
@@ -33,8 +33,8 @@ HEADER = """\
 
 def _post_notion(body: dict[str, Any]) -> dict[str, Any]:
     """POST JSON to the Notion internal API and return the parsed response."""
-    conn = http.client.HTTPSConnection(NOTION_HOST)
-    conn.request(
+    connection = http_client.HTTPSConnection(NOTION_HOST)
+    connection.request(
         "POST",
         NOTION_PATH,
         body=json.dumps(body).encode(),
@@ -43,10 +43,10 @@ def _post_notion(body: dict[str, Any]) -> dict[str, Any]:
             "User-Agent": "Mozilla/5.0",
         },
     )
-    resp = conn.getresponse()
-    data: dict[str, Any] = json.loads(resp.read())
-    conn.close()
-    return data
+    response = connection.getresponse()
+    page_data: dict[str, Any] = json.loads(response.read())
+    connection.close()
+    return page_data
 
 
 def _fetch_blocks() -> dict[str, Any]:
@@ -66,10 +66,10 @@ def _fetch_blocks() -> dict[str, Any]:
         )
 
         record_map = result.get("recordMap", {})
-        for bid, bdata in record_map.get("block", {}).items():
-            v = bdata.get("value", {}).get("value", {})
-            if v.get("type"):
-                all_blocks[bid] = v
+        for block_id, block_data in record_map.get("block", {}).items():
+            value = block_data.get("value", {}).get("value", {})
+            if value.get("type"):
+                all_blocks[block_id] = value
 
         cursor = result.get("cursor", {})
         if not cursor.get("stack"):
@@ -151,8 +151,8 @@ def _callout_to_markdown(
     title = props.get("title", [])
     text = _get_plain_text(title) if title else ""
 
-    fmt = callout_block.get("format", {})
-    icon = fmt.get("page_icon", "")
+    block_format = callout_block.get("format", {})
+    icon = block_format.get("page_icon", "")
 
     parts: list[str] = []
     if icon or text:
@@ -176,23 +176,26 @@ def _table_to_markdown(
     blocks: dict[str, Any],
 ) -> str:
     """Convert a Notion table block to Markdown."""
-    fmt = table_block.get("format", {})
-    col_order = fmt.get("table_block_column_order", [])
-    has_header = fmt.get("table_block_column_header", False)
+    block_format = table_block.get("format", {})
+    column_order = block_format.get("table_block_column_order", [])
+    has_header = block_format.get("table_block_column_header", False)
     row_ids = table_block.get("content", [])
 
-    if not row_ids or not col_order:
+    if not row_ids or not column_order:
         return ""
 
     markdown = ""
-    for i, row_id in enumerate(row_ids):
+    for index, row_id in enumerate(row_ids):
         row = blocks.get(row_id, {})
         props = row.get("properties", {})
-        cells = [_get_plain_text(props.get(col, [[""]])).replace("|", r"\|") for col in col_order]
-        markdown += f"| {' | '.join(cells)} |\n"
-        if i == 0 and has_header:
-            sep = " | ".join("---" for _ in col_order)
-            markdown += f"| {sep} |\n"
+        cells = [
+            _get_plain_text(props.get(column, [[""]])).replace("|", r"\|")
+            for column in column_order
+        ]
+        markdown = f"{markdown}| {' | '.join(cells)} |\n"
+        if index == 0 and has_header:
+            separator = " | ".join("---" for _ in column_order)
+            markdown = f"{markdown}| {separator} |\n"
 
     return f"{markdown}\n"
 

@@ -91,7 +91,8 @@ class TestCollapseWhitespaceOutsideStrings:
     def test_multiple_strings(self) -> None:
         """Test with multiple string literals."""
         input_str = 'start   "first  string"   middle   "second  string"   end'
-        # The regex only collapses 2+ whitespace between non-whitespace chars (not at edges)
+        # The regex only collapses 2+ whitespace between non-whitespace chars
+        # (not at edges)
         expected = 'start   "first  string"   middle   "second  string"   end'
         assert collapse_whitespace_outside_strings(input_str) == expected
 
@@ -114,7 +115,8 @@ class TestCollapseWhitespaceOutsideStrings:
     def test_preserve_newlines(self) -> None:
         """Test that newlines are preserved (not collapsed)."""
         input_str = "hello  \n  world"
-        # The regex only matches [^\S\n]{2,} between non-whitespace chars, excluding newlines
+        # The regex only matches [^\S\n]{2,} between non-whitespace chars,
+        # excluding newlines
         # The spaces before \n don't have non-whitespace after, so no collapse
         expected = "hello  \n  world"
         assert collapse_whitespace_outside_strings(input_str) == expected

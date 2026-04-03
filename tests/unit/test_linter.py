@@ -423,7 +423,7 @@ class TestHTMLLinter:
         """Test attribute processing when attribute names contain quotes."""
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
 
-        # HTML with attribute names that would trigger quote character selection
+        # HTML with attribute names which trigger quote character selection
         html = '<div pre"fix{% block %}content{% endblock %}="value">content</div>'
 
         result, errors = linter.lint(html)
