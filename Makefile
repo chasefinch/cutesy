@@ -1,6 +1,14 @@
-default: clean configure format lint check test
+default: clean sync configure format lint check test
 
 all: default build test-build
+
+sync-spec:
+	@echo "Syncing configuration with global spec..."
+	@nitpick fix > /dev/null || true
+	@echo "...done."
+
+sync: sync-spec sync-docs
+	@printf "\e[1mSync complete!\e[0m\n\n"
 
 configure-spec:
 	@echo "Checking configuration against global spec..."
@@ -133,4 +141,4 @@ clean:
 	@find cutesy -name "*.c" -delete
 	@echo "...done."
 
-.PHONY: default configure format lint test test-unit test-integration test-private setup build test-build clean-build
+.PHONY: default sync sync-spec sync-docs configure format lint test test-unit test-integration test-private setup build test-build clean-build
