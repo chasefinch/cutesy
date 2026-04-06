@@ -81,21 +81,21 @@ def parse_tailwind_class(full: str) -> TailwindClass:
 
     # Handle @ prefixed modifiers - combine empty strings with following parts
     processed_modifiers = []
-    index = 0
-    while index < len(modifiers):
-        if modifiers[index] == "" and index + 1 < len(modifiers):
+    i = 0
+    while i < len(modifiers):
+        if modifiers[i] == "" and i + 1 < len(modifiers):
             # Empty string from @ at start - combine with next part
             # (e.g., @lg, @max-sm)
-            processed_modifiers.append(f"@{modifiers[index + 1]}")
-            index += 2
-        elif modifiers[index] == "" and index + 1 >= len(modifiers):
+            processed_modifiers.append(f"@{modifiers[i + 1]}")
+            i += 2
+        elif modifiers[i] == "" and i + 1 >= len(modifiers):
             # Empty string at end from @ - means base should be @base
             # (e.g., @container)
             base = f"@{base}"
-            index += 1
+            i += 1
         else:
-            processed_modifiers.append(modifiers[index])
-            index += 1
+            processed_modifiers.append(modifiers[i])
+            i += 1
 
     return TailwindClass(
         class_name=base,
@@ -306,7 +306,7 @@ def group_and_sort(
         classes.append(tailwind_class)
 
     # Partition
-    for index, tailwind_class in enumerate(classes):
+    for i, tailwind_class in enumerate(classes):
         arbitrary_modifier = next(
             (
                 modifier
@@ -317,7 +317,7 @@ def group_and_sort(
         )
         if arbitrary_modifier is not None:
             arbitrary_selector_groups.setdefault(arbitrary_modifier, []).append(
-                (index, tailwind_class),
+                (i, tailwind_class),
             )
             continue
 
@@ -325,7 +325,7 @@ def group_and_sort(
         if group is None:
             user_defined.append(tailwind_class.full_string)
         else:
-            group_items[group].append((index, tailwind_class))
+            group_items[group].append((i, tailwind_class))
 
     # Emit results as tagged pairs (name, classes) for super-group merging
     tagged: list[tuple[str | None, list[str]]] = []
@@ -391,10 +391,10 @@ def _merge_collapsible_groups(
 
 
 _RESPONSIVE_ORDER_INDEX: Final = MappingProxyType(
-    {modifier: index for index, modifier in enumerate(RESPONSIVE_ORDER)},
+    {modifier: i for i, modifier in enumerate(RESPONSIVE_ORDER)},
 )
 _STATE_ORDER_INDEX: Final = MappingProxyType(
-    {modifier: index for index, modifier in enumerate(STATE_ORDER)},
+    {modifier: i for i, modifier in enumerate(STATE_ORDER)},
 )
 
 

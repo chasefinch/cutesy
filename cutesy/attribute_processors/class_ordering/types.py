@@ -114,14 +114,14 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             class_names = expand_class_names(class_names, left, right, keep_empty=False)
             stack: list[StackNode] = []
 
-            for index, class_name in enumerate(class_names):
+            for i, class_name in enumerate(class_names):
                 if class_name.startswith(left):
                     min_instruction_string_length = 4
                     assert len(class_name) >= min_instruction_string_length
                     instruction_type = InstructionType(class_name[1])
 
                     if instruction_type.starts_block:
-                        node: list = [index]  # start index
+                        node: list = [i]  # start index
                         if stack:
                             stack[-1].append(node)  # nest under current open node
                         else:
@@ -132,13 +132,13 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                         if not stack:
                             error_code = "P3"
                             raise preprocessor.make_fatal_error(error_code, attr=attr_name)
-                        stack[-1].append(index)  # continuation marker
+                        stack[-1].append(i)  # continuation marker
 
                     elif instruction_type.ends_block:
                         if not stack:
                             error_code = "P3"
                             raise preprocessor.make_fatal_error(error_code, attr=attr_name)
-                        stack[-1].append(index + 1)  # end index (exclusive)
+                        stack[-1].append(i + 1)  # end index (exclusive)
                         stack.pop()
 
             if stack:
@@ -154,8 +154,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                 )
                 raise StructuralError(errors=[error])
 
-            for index, index_range in enumerate(reversed(preprocessed_index_ranges)):
-                sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{index}"
+            for i, index_range in enumerate(reversed(preprocessed_index_ranges)):
+                sentinel = f"{DYNAMIC_LIST_ITEM_SENTINEL}_{i}"
                 class_names, stash = self._extract_with_sentinel(
                     class_names,
                     index_range,
@@ -399,8 +399,8 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             hydrated_class_entries: list[StashItem] = []
             for user_defined_item in last:
                 if user_defined_item.startswith(DYNAMIC_LIST_ITEM_SENTINEL):
-                    index = int(user_defined_item.split("_")[-1])
-                    flattened = self._flatten_stash(self.stashed_class_names.pop(index))
+                    i = int(user_defined_item.split("_")[-1])
+                    flattened = self._flatten_stash(self.stashed_class_names.pop(i))
                     hydrated_class_entries.append(flattened)
                 else:
                     hydrated_class_entries.append(user_defined_item)
@@ -541,7 +541,7 @@ def expand_class_names(
         # Process parts: strip whitespace from non-delimited parts, keep
         # delimited parts as-is
         processed_parts = []
-        for index, part in enumerate(parts):
+        for i, part in enumerate(parts):
             if part.startswith(left) and part.endswith(right):
                 # This is a delimited part - keep as-is
                 processed_parts.append(part)
@@ -551,8 +551,8 @@ def expand_class_names(
                 stripped = part.strip()
                 # Skip empty strings at beginning/end, keep middle ones if
                 # keep_empty=True
-                is_first = index == 0
-                is_last = index == len(parts) - 1
+                is_first = i == 0
+                is_last = i == len(parts) - 1
                 keep_middle_empty = keep_empty and not (is_first or is_last) and stripped == ""
                 if stripped or keep_middle_empty:
                     processed_parts.append(stripped)

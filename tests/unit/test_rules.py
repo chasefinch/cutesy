@@ -204,7 +204,7 @@ class TestRules:
         """Test rule F12."""
         # F12: Long tag should be on a new line - need preceding content for
         # line break logic
-        long_attrs = " ".join([f'attr{index}="value{index}"' for index in range(10)])
+        long_attrs = " ".join([f'attr{i}="value{i}"' for i in range(10)])
         self.run_test(f"<p>text</p><div {long_attrs}>content</div>", "F12")
 
     def test_f13(self) -> None:
@@ -216,7 +216,7 @@ class TestRules:
         """Test rule F14."""
         # F14: Expected tag attributes on new lines - tag already on new line
         # but attrs should wrap
-        long_attrs = " ".join([f'attr{index}="value{index}"' for index in range(10)])
+        long_attrs = " ".join([f'attr{i}="value{i}"' for i in range(10)])
         self.run_test(f"<div>\n\t<span {long_attrs}>content</span>\n</div>", "F14")
 
     def test_f15(self) -> None:

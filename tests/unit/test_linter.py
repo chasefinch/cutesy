@@ -204,9 +204,9 @@ class TestHTMLLinter:
 
         # Errors should be sorted by line, then column
         if len(errors) > 1:
-            for index in range(len(errors) - 1):
-                current = errors[index]
-                next_error = errors[index + 1]
+            for i in range(len(errors) - 1):
+                current = errors[i]
+                next_error = errors[i + 1]
                 assert current.line < next_error.line or (
                     current.line == next_error.line and current.column <= next_error.column
                 )

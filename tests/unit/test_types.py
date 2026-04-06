@@ -113,7 +113,7 @@ class TestInstructionType:
         values = sorted([instruction_type.value for instruction_type in InstructionType])
 
         # Should be continuous from 'a' to some letter
-        expected = [chr(ord("a") + index) for index in range(len(values))]
+        expected = [chr(ord("a") + i) for i in range(len(values))]
         assert values == expected
 
 

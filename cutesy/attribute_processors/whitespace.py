@@ -54,19 +54,19 @@ def collapse_whitespace_outside_strings(string: str) -> str:
     Preserve whitespace inside string literals.
     """
     out = []
-    pos = 0
+    position = 0
     for match in STRING_RE.finditer(string):
         # process the gap before the string
-        chunk = string[pos : match.start()]
+        chunk = string[position : match.start()]
         chunk = MIDDLE_WS_RUN.sub(" ", chunk)  # collapse to a single space
         out.append(chunk)
 
         # keep the string literal untouched
         out.append(match.group(0))
-        pos = match.end()
+        position = match.end()
 
     # tail after the last string
-    tail = string[pos:]
+    tail = string[position:]
     tail = MIDDLE_WS_RUN.sub(" ", tail)
     out.append(tail)
 

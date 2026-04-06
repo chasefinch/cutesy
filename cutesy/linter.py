@@ -565,18 +565,18 @@ class HTMLLinter(HTMLParser):
         else:
             html_lines = html_data.split("\n")
             new_html_lines = new_html_data.split("\n")
-            for index, line in enumerate(new_html_lines):
-                if index == len(new_html_lines) - 1 and not line:
+            for i, line in enumerate(new_html_lines):
+                if i == len(new_html_lines) - 1 and not line:
                     # This is the last line; We don't know what's coming next
                     if not self.fix:
                         # We should confirm the indentation once we know it.
-                        self._expected_indentation = html_lines[index]
+                        self._expected_indentation = html_lines[i]
                     break
 
                 # This isn't the last line
-                original_line = html_lines[index]
+                original_line = html_lines[i]
                 if line != original_line:
-                    self._handle_error("F3", line_offset=index, column=0)
+                    self._handle_error("F3", line_offset=i, column=0)
 
         # Check for & fix too many consecutive empty lines
         extra_vertical_lines = r"\n{3,}"
@@ -588,14 +588,14 @@ class HTMLLinter(HTMLParser):
                 self._handle_error("F4", line_offset=line_offset, column=0)
 
         lines = []
-        for index, line in enumerate(html_data.split("\n")):
+        for i, line in enumerate(html_data.split("\n")):
             original_line = line
             line_contents = line
             line_start = ""
 
             # We don't assume that the lines have been indented, or have had
             # trailing whitespace removed, since we might not be in "fix" mode
-            if index > 0:
+            if i > 0:
                 line_contents = line_contents.lstrip()
                 line_start = original_line[: len(original_line) - len(line_contents)]
 
@@ -621,7 +621,7 @@ class HTMLLinter(HTMLParser):
                     len_line,
                 )
 
-                self._handle_error("F5", line_offset=index, column=len(line_start) + column)
+                self._handle_error("F5", line_offset=i, column=len(line_start) + column)
 
             lines.append(original_line)
 

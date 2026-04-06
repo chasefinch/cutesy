@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - "*"
+  schedule:
+    # 4:00 AM EST (UTC-5) = 9:00 AM UTC, weekdays only
+    - cron: "0 9 * * 1-5"
 
 # Prevent multiple instances of this workflow from running for pushes to a branch.
 concurrency:
-  group: ${{ github.ref }} # Use the branch reference as the group identifier
+  group: ${{ github.event_name == 'schedule' && 'schedule' || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
@@ -29,6 +32,8 @@ jobs:
 
       - name: Fetch repository
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install UV and update PATH
         run: |
@@ -45,10 +50,38 @@ jobs:
           . .venv/bin/activate
           uv pip install -r requirements/development.txt
 
-      - name: Confirm configuration
+      - name: Configure
+        id: configure
+        continue-on-error: ${{ github.event_name == 'schedule' }}
         run: |
           . .venv/bin/activate
           make configure
+
+      - name: Sync and create PR
+        if: ${{ github.event_name == 'schedule' && steps.configure.outcome == 'failure' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          . .venv/bin/activate
+          # Skip if an open sync PR already exists
+          if gh pr list --label auto-sync --state open --json number --jq '.[0].number' | grep -q .; then
+            echo "An open sync PR already exists — skipping."
+            exit 0
+          fi
+          make sync
+          if git diff --quiet; then
+            echo "No changes after sync — configure failure may require manual intervention."
+            exit 1
+          fi
+          branch="auto-sync-$(date +%Y-%m-%d)"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "Sync configuration"
+          git push origin "$branch"
+          gh pr create \
+            --title "Sync configuration" \
+            --label auto-sync \
+            --body "Automated PR created by the daily sync check. \`make configure\` failed, so \`make sync\` was run to fix the issues."
 
       - name: Lint
         run: |

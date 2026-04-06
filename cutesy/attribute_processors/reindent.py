@@ -42,13 +42,13 @@ class AttributeProcessor(BaseAttributeProcessor):
         indentation_and_lines: list[tuple[int, str]] = []
         for line in lines:
             num_indents = 0
-            index = 0
-            while any(line[index:].startswith(string) for string in indentation_strings):
+            i = 0
+            while any(line[i:].startswith(string) for string in indentation_strings):
                 num_indents += 1
-                if line[index:].startswith(" "):
-                    index += tab_width
+                if line[i:].startswith(" "):
+                    i += tab_width
                 else:
-                    index += 1
+                    i += 1
             indentation_and_lines.append((num_indents, line.strip()))
 
         # Drop the first & last line for this calculation

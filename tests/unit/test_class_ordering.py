@@ -288,7 +288,7 @@ class TestBaseClassOrderingAttributeProcessor:
     def test_multi_line_mode_single_group(self) -> None:
         """Test multi-line mode with single group."""
         # Create a long list that exceeds max_items_per_line
-        long_class_list = " ".join([f"class-{index}" for index in range(10)])
+        long_class_list = " ".join([f"class-{i}" for i in range(10)])
         line_length = 50
         result = self.processor.process(
             attr_name="class",

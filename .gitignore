@@ -17,11 +17,11 @@
 /*.egg-info/
 /.installed.cfg
 /*.egg
-/.cache
+/.cache/
 /MANIFEST
 
 # Virtual environments
-/.venv/*
+/.venv/
 
 # IDE
 /.vscode/
