@@ -9,7 +9,7 @@ docformatter==1.7.7
 wemake-python-styleguide==1.6.1
 ruff==0.15.9
 
-mypy==1.19.1
+mypy==1.20.0
 setuptools==82.0.1
 setuptools-rust==1.12.1
 wheel==0.46.3
