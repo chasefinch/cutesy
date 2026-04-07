@@ -23,7 +23,7 @@ make             # Run everything
 ```
 
 **Project requirements:**
-- **Python 3.11+** for development
+- **Python 3.12+** for development
 - **uv** for dependency management - `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - **mypy** (includes mypyc) - `pip install mypy`
 - **Rust 1.70+** (optional, for Rust extensions) - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`

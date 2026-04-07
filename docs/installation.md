@@ -13,7 +13,7 @@ cutesy "*.html" --fix
 
 ## Requirements
 
-- **Python**: 3.11 or higher
+- **Python**: 3.12 or higher
 - **Operating System**: Linux, macOS, or Windows
 - **Dependencies**: Automatically installed with pip
 
@@ -215,7 +215,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install Cutesy
       run: pip install cutesy
@@ -237,7 +237,7 @@ Add to `.gitlab-ci.yml`:
 
 ```yaml
 lint-html:
-  image: python:3.11
+  image: python:3.12
   script:
     - pip install cutesy
     - cutesy "**/*.html" --extras=[django,tailwind]

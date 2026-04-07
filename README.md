@@ -53,7 +53,7 @@ cutesy "templates/**/*.html" --fix --extras=[django,tailwind]
 
 ## Installation
 
-Cutesy requires **Python 3.11+** and works on Linux, macOS, and Windows.
+Cutesy requires **Python 3.12+** and works on Linux, macOS, and Windows.
 
 **Basic Installation:**
 ```bash

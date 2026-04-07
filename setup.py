@@ -87,14 +87,14 @@ setuptools.setup(
     rust_extensions=rust_extensions,
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Programming Language :: Rust",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.11",
+    python_requires=">=3.12",
     install_requires=[
         "data-enum>=2.0.1,<3",
         "click>=8.1.8,<9",

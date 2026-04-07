@@ -26,7 +26,7 @@ git push origin v1.0b27
 
 This triggers `.github/workflows/publish-to-pypi.yml` which:
 1. Builds wheels for all platforms (Linux, macOS, Windows)
-2. Builds wheels for all Python versions (3.11, 3.12, 3.13)
+2. Builds wheels for all Python versions (3.12, 3.13, 3.14)
 3. Builds source distribution
 4. Publishes to PyPI using trusted publishing
 
