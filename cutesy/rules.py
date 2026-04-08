@@ -35,6 +35,7 @@ Rule("D6", "Self-closing of non-void element {tag}", structural=True)
 Rule("D7", "Malformed tag", structural=False)
 Rule("D8", "Malformed closing tag", structural=False)
 Rule("D9", "Expected blank line at end of document", structural=False)
+Rule("D10", "Closing tag on void element {tag}", structural=True)
 
 # Formatting rules
 Rule("F1", "Doctype not lowercase", structural=False)

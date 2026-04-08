@@ -1,10 +1,64 @@
 """Prerendering to accommodate the Django template language."""
 
 # Current App
+from __future__ import annotations
+
 from typing import ClassVar
 
-from ..types import InstructionType
+from ..types import ConfigurationError, InstructionType
 from . import BasePreprocessor
+
+_CATEGORY_TO_TYPES: dict[str, tuple[InstructionType, InstructionType]] = {
+    "partial": (InstructionType.PARTIAL, InstructionType.END_PARTIAL),
+    "conditional": (InstructionType.CONDITIONAL, InstructionType.END_CONDITIONAL),
+    "repeatable": (InstructionType.REPEATABLE, InstructionType.END_REPEATABLE),
+}
+
+_BUILTIN_INSTRUCTION_MAP: dict[str, InstructionType] = {
+    "block": InstructionType.PARTIAL,
+    "endblock": InstructionType.END_PARTIAL,
+    "if": InstructionType.CONDITIONAL,
+    "elif": InstructionType.MID_CONDITIONAL,
+    "else": InstructionType.LAST_CONDITIONAL,
+    "endif": InstructionType.END_CONDITIONAL,
+    "for": InstructionType.REPEATABLE,
+    "empty": InstructionType.MID_CONDITIONAL,
+    "endfor": InstructionType.END_REPEATABLE,
+    "while": InstructionType.REPEATABLE,
+    "endwhile": InstructionType.END_REPEATABLE,
+    "with": InstructionType.PARTIAL,
+    "endwith": InstructionType.END_PARTIAL,
+    "component": InstructionType.PARTIAL,
+    "endcomponent": InstructionType.END_PARTIAL,
+    "fill": InstructionType.PARTIAL,
+    "endfill": InstructionType.END_PARTIAL,
+    "slot": InstructionType.PARTIAL,
+    "endslot": InstructionType.END_PARTIAL,
+    "blocktrans": InstructionType.CONDITIONAL,
+    "plural": InstructionType.LAST_CONDITIONAL,
+    "endblocktrans": InstructionType.END_CONDITIONAL,
+    "comment": InstructionType.COMMENT,
+    "endcomment": InstructionType.END_COMMENT,
+    "spaceless": InstructionType.FREEFORM,
+    "endspaceless": InstructionType.END_FREEFORM,
+    "spaceless_json": InstructionType.FREEFORM,
+    "endspaceless_json": InstructionType.END_FREEFORM,
+}
+
+_BUILTIN_EXPECTED_CLOSING: dict[str, str] = {
+    "block": "endblock",
+    "component": "endcomponent",
+    "fill": "endfill",
+    "slot": "endslot",
+    "if": "endif",
+    "for": "endfor",
+    "while": "endwhile",
+    "with": "endwith",
+    "blocktrans": "endblocktrans",
+    "freeform": "endfreeform",
+    "spaceless": "endspaceless",
+    "spaceless_json": "endspaceless_json",
+}
 
 
 class Preprocessor(BasePreprocessor):
@@ -23,20 +77,62 @@ class Preprocessor(BasePreprocessor):
         "spaceless_json": "endspaceless_json",
     }
 
-    expected_closing_instructions: ClassVar[dict[str, str]] = {
-        "block": "endblock",
-        "component": "endcomponent",
-        "fill": "endfill",
-        "slot": "endslot",
-        "if": "endif",
-        "for": "endfor",
-        "while": "endwhile",
-        "with": "endwith",
-        "blocktrans": "endblocktrans",
-        "freeform": "endfreeform",
-        "spaceless": "endspaceless",
-        "spaceless_json": "endspaceless_json",
-    }
+    expected_closing_instructions: ClassVar[dict[str, str]] = _BUILTIN_EXPECTED_CLOSING
+
+    def __init__(self, *, custom_tags: dict[str, list[list[str]]] | None = None) -> None:
+        """Initialize with optional custom block-level tags.
+
+        custom_tags maps category names to lists of [start, end] pairs::
+
+            {"partial": [["macro", "endmacro"]], "repeatable": [["each", "endeach"]]}
+
+        In TOML::
+
+            [custom_tags]
+            partial = [["macro", "endmacro"], ["cache", "endcache"]]
+
+        Supported categories: partial, conditional, repeatable.
+        """
+        self._instruction_map = dict(_BUILTIN_INSTRUCTION_MAP)
+
+        if not custom_tags:
+            return
+
+        # Validate and merge custom tags
+        instance_closing = dict(_BUILTIN_EXPECTED_CLOSING)
+
+        for category, pairs in custom_tags.items():
+            if category not in _CATEGORY_TO_TYPES:
+                allowed = ", ".join(sorted(_CATEGORY_TO_TYPES))
+                msg = f"Unknown custom_tags category {category!r} (allowed: {allowed})"
+                raise ConfigurationError(msg)
+
+            if not isinstance(pairs, list):
+                msg = f"custom_tags[{category!r}] must be a list of [start, end] pairs"
+                raise ConfigurationError(msg)
+
+            start_type, end_type = _CATEGORY_TO_TYPES[category]
+
+            for pair in pairs:
+                if not isinstance(pair, list) or len(pair) != 2:  # noqa: PLR2004
+                    msg = (
+                        f"custom_tags[{category!r}] entries must be "
+                        f"[start, end] pairs, got {pair!r}"
+                    )
+                    raise ConfigurationError(msg)
+
+                start_tag, end_tag = pair
+
+                if start_tag in self._instruction_map:
+                    msg = f"Custom tag {start_tag!r} conflicts with built-in tag"
+                    raise ConfigurationError(msg)
+
+                self._instruction_map[start_tag] = start_type
+                self._instruction_map[end_tag] = end_type
+                instance_closing[start_tag] = end_tag
+
+        # Shadow the ClassVar with an instance attribute
+        self.expected_closing_instructions = instance_closing
 
     def parse_instruction_tag(
         self,
@@ -75,39 +171,7 @@ class Preprocessor(BasePreprocessor):
                 return "…", InstructionType.IGNORED
 
         try:
-            return (
-                instruction,
-                {
-                    "block": InstructionType.PARTIAL,
-                    "endblock": InstructionType.END_PARTIAL,
-                    "if": InstructionType.CONDITIONAL,
-                    "elif": InstructionType.MID_CONDITIONAL,
-                    "else": InstructionType.LAST_CONDITIONAL,
-                    "endif": InstructionType.END_CONDITIONAL,
-                    "for": InstructionType.REPEATABLE,
-                    "empty": InstructionType.MID_CONDITIONAL,
-                    "endfor": InstructionType.END_REPEATABLE,
-                    "while": InstructionType.REPEATABLE,
-                    "endwhile": InstructionType.END_REPEATABLE,
-                    "with": InstructionType.PARTIAL,
-                    "endwith": InstructionType.END_PARTIAL,
-                    "component": InstructionType.PARTIAL,
-                    "endcomponent": InstructionType.END_PARTIAL,
-                    "fill": InstructionType.PARTIAL,
-                    "endfill": InstructionType.END_PARTIAL,
-                    "slot": InstructionType.PARTIAL,
-                    "endslot": InstructionType.END_PARTIAL,
-                    "blocktrans": InstructionType.CONDITIONAL,
-                    "plural": InstructionType.LAST_CONDITIONAL,
-                    "endblocktrans": InstructionType.END_CONDITIONAL,
-                    "comment": InstructionType.COMMENT,
-                    "endcomment": InstructionType.END_COMMENT,
-                    "spaceless": InstructionType.FREEFORM,
-                    "endspaceless": InstructionType.END_FREEFORM,
-                    "spaceless_json": InstructionType.FREEFORM,
-                    "endspaceless_json": InstructionType.END_FREEFORM,
-                }[instruction],
-            )
+            return instruction, self._instruction_map[instruction]
         except KeyError:
             # Unrecognized but valid tags behave like values.
             return instruction, InstructionType.VALUE

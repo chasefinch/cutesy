@@ -22,7 +22,7 @@ Cutesy is a linter and formatter for HTML that enforces consistent code style an
 |----------|-------------|---------------|
 | **T** | Temporary preprocessing (internal) | T1 |
 | **P** | Template language processing | P1-P6 |
-| **D** | Document structure & validity | D1-D9 |
+| **D** | Document structure & validity | D1-D10 |
 | **F** | Formatting & style | F1-F17 |
 | **E** | Encoding & HTML5 compliance | E1-E4 |
 
@@ -305,6 +305,27 @@ Files should end with a newline character.
 <!doctype html>
 <html><body></body></html>
 
+```
+
+</details>
+
+<details>
+<summary><strong>D10: Closing tag on void element</strong></summary>
+
+**Fixable:** Yes | **Structural:** Yes
+
+Void elements cannot have closing tags in HTML.
+
+**❌ Problem:**
+```html
+<img src="photo.jpg"></img>
+<br></br>
+```
+
+**✅ Fixed:**
+```html
+<img src="photo.jpg">
+<br>
 ```
 
 </details>
@@ -777,6 +798,7 @@ Only HTML5 doctype is supported.
 | D7 | Malformed opening tag | ❌ | ❌ | Structure |
 | D8 | Malformed closing tag | ❌ | ❌ | Structure |
 | D9 | Missing final newline | ✅ | ❌ | Structure |
+| D10 | Closing tag on void element | ✅ | ✅ | Structure |
 | F1 | Doctype case | ✅ | ❌ | Format |
 | F2 | Trailing whitespace | ✅ | ✅ | Format |
 | F3 | Incorrect indentation | ✅ | ✅ | Format |

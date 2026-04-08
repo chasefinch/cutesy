@@ -141,6 +141,11 @@ class TestRules:
         # pattern
         self.run_test("<div>content</div body>", "D8", is_fixable=False)
 
+    def test_d10(self) -> None:
+        """Test rule D10."""
+        # D10: Closing tag on void element
+        self.run_test("<img></img>", "D10")
+
     def test_d9(self) -> None:
         """Test rule D9."""
         # D9: Expected blank line at end of document

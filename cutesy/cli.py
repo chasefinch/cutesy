@@ -224,11 +224,16 @@ def main(
         "amp": amp_processor.AttributeProcessor,
     }
 
+    # Parse custom_tags from config
+    custom_tags = config.get("custom_tags")
+    if custom_tags is not None and not isinstance(custom_tags, dict):
+        raise click.BadParameter("custom_tags must be a table/dict", param_hint="custom_tags")
+
     # Build preprocessor instance (only one supported for now)
     preprocessor_instance = None
     extras_list = extras_list or []
     if "django" in extras_list:
-        preprocessor_instance = preprocessors["django"]()
+        preprocessor_instance = preprocessors["django"](custom_tags=custom_tags)
 
     # Compose attribute processor order
     final_attr_processor_names: list[str] = []

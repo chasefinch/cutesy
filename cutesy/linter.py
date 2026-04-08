@@ -539,6 +539,13 @@ class HTMLLinter(HTMLParser):
                 self._handle_error("F7", tag=f"</{tag}>")
             tag = tag_lower
 
+        # --- Void element closing tag check ---
+        # Void elements (br, img, etc.) cannot have closing tags.
+        if tag in VOID_ELEMENTS and not foreign_context:
+            if not self.fix:
+                self._handle_error("D10", tag=f"<{tag}>")
+            return
+
         # Snapshot indentation before popping, so we can detect blank-line
         # issues between the last content and this closing tag
         old_indentation_level = self._indentation_level
