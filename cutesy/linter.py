@@ -8,6 +8,11 @@ from html.parser import HTMLParser
 from typing import Any, Final, Literal, NamedTuple, Never, TypeGuard
 
 from .attribute_processors import BaseAttributeProcessor
+from .foreign_content import (
+    FOREIGN_CONTENT_ELEMENTS,
+    get_correct_attr_name,
+    get_correct_tag_name,
+)
 from .preprocessors import BasePreprocessor
 from .rules import Rule
 from .types import (
@@ -311,45 +316,93 @@ class HTMLLinter(HTMLParser):
             self._process(f"<!{decl}>")
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        """Process a self-closing tag."""
+        """Process a self-closing tag (e.g. <br/>, <path d="..."/>).
+
+        After handle_starttag, the tag is on the stack (if non-void).
+        We then either: silently close it (foreign), warn about unnecessary
+        self-close (void), or warn about invalid self-close (non-void).
+        """
+        # Opens the tag normally — pushes onto stack, emits output
         self.handle_starttag(tag, attrs)
 
-        tag = tag.lower()
-        if tag in VOID_ELEMENTS:
-            if not self.fix:
-                self._handle_error("D5", tag=f"<{tag}>")
+        tag_lower = tag.lower()
+        foreign_context = self._get_foreign_content_context()
 
+        if foreign_context or tag_lower in FOREIGN_CONTENT_ELEMENTS:
+            # SVG/MathML: self-closing is valid XML syntax, just close it
+            correct_tag = get_correct_tag_name(tag_lower, foreign_context or tag_lower)
+            self.handle_endtag(correct_tag)
+        elif tag_lower in VOID_ELEMENTS:
+            # Void elements (br, img, etc.): self-close is unnecessary but not harmful
+            if not self.fix:
+                self._handle_error("D5", tag=f"<{tag_lower}>")
         else:
+            # Non-void HTML elements: self-closing is invalid (e.g. <div/>)
             if not self.fix:
-                self._handle_error("D6", tag=f"<{tag}>")
+                self._handle_error("D6", tag=f"<{tag_lower}>")
 
-            self.handle_endtag(tag)
+            self.handle_endtag(tag_lower)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        """Process a start tag."""
+        """Process a start tag.
+
+        State at entry: tag/attrs are raw from the parser (original casing).
+        State at exit: tag is on _tag_stack (if non-void), _indentation_level
+        is incremented, and the formatted tag is appended to _result (if fix).
+        """
         self._handle_encountered_data()
-        self._last_data = None  # Clear last data when we encounter a tag
-        self._prev_indentation_level = self._indentation_level  # Track indentation before tag
+        self._last_data = None
+        self._prev_indentation_level = self._indentation_level
 
         is_new_line = self._expected_indentation is not None
 
-        if not self.fix and tag != tag.lower():
-            # Tag isn't lowercase
-            self._handle_error("F7", tag=f"<{tag}>")
+        # --- Normalize tag casing ---
+        # HTML tags → lowercase. SVG/MathML → spec-correct case (e.g. clipPath).
+        # When tag_lower is "svg"/"math", we're entering foreign content but
+        # the tag itself isn't on the stack yet, so we check both.
+        tag_lower = tag.lower()
+        foreign_context = self._get_foreign_content_context()
 
-        tag = tag.lower()
+        if foreign_context or tag_lower in FOREIGN_CONTENT_ELEMENTS:
+            effective_context = foreign_context or tag_lower
+            correct_tag = get_correct_tag_name(tag_lower, effective_context)
+            if not self.fix and tag != correct_tag:
+                self._handle_error("F7", tag=f"<{tag}>")
+            tag = correct_tag
+        else:
+            if not self.fix and tag != tag_lower:
+                self._handle_error("F7", tag=f"<{tag}>")
+            tag = tag_lower
+
+        # Attributes on <svg>/<math> itself also need foreign-context casing,
+        # even though the tag hasn't been pushed onto the stack yet
+        if foreign_context:
+            attr_foreign_context: str | None = foreign_context
+        elif tag_lower in FOREIGN_CONTENT_ELEMENTS:
+            attr_foreign_context = tag_lower
+        else:
+            attr_foreign_context = None
 
         num_attrs = len(attrs)
         solo = num_attrs == 1
 
-        _, attr_strings = self._make_attr_strings(attrs, solo=solo, final_pass=False)
+        # --- Two-pass attribute processing ---
+        # Pass 1 (final_pass=False): measure attr lengths without reporting
+        # errors, to decide whether attributes should wrap to multiple lines.
+        _, attr_strings = self._make_attr_strings(
+            attrs,
+            solo=solo,
+            final_pass=False,
+            foreign_context=attr_foreign_context,
+        )
 
-        # Decide whether this should be kept on one line or should wrap
-
+        # Determine if any attribute contains a line break (e.g. multi-line
+        # class lists, code content, template conditionals)
         has_breaking_attr = any(
             char in attr_string for attr_string in attr_strings for char in ("\n", "\t")
         )
 
+        # Estimate total line length to decide if we need to wrap
         len_angle_brackets = 2
         len_attrs = sum(len(attr_string) for attr_string in attr_strings)
         num_spaces = num_attrs
@@ -368,22 +421,33 @@ class HTMLLinter(HTMLParser):
             ),
         )
 
+        # Edge case: a single attribute has a line break (e.g. a long class
+        # list). We temporarily step back one indentation level so the
+        # attribute's internal content gets the right indentation depth.
         single_attribute_wrap = has_breaking_attr and not wrap
         if single_attribute_wrap:
             self._indentation_level -= 1
 
-        # Recalculate attr_stings at the new indentation level (the final pass)
-        _, attr_strings = self._make_attr_strings(attrs, solo=solo)
+        # Pass 2 (final_pass=True): re-render attrs at the resolved
+        # indentation level, and report any errors (F8, F17, etc.)
+        _, attr_strings = self._make_attr_strings(
+            attrs,
+            solo=solo,
+            foreign_context=attr_foreign_context,
+        )
 
         if single_attribute_wrap:
+            # Restore indentation level after re-rendering
             self._indentation_level += 1
 
+            # Re-check: the attr may no longer break at the new depth
             has_breaking_attr = any(
                 char in attr_string for attr_string in attr_strings for char in ("\n", "\t")
             )
             if not has_breaking_attr:
                 wrap = False
 
+        # If wrapping is needed but we're inline, try to insert a line break
         if wrap and not is_new_line:
             fix_f12 = self.fix and not self.is_rule_ignored("F12")
             if fix_f12 and self._break_for_inline_tag():
@@ -393,11 +457,15 @@ class HTMLLinter(HTMLParser):
             else:
                 self._handle_error("F12", tag=f"<{tag}>")
 
+        # Emit any pending indentation before the tag
         self._reconcile_indentation()
 
+        # Only wrap if we're actually at the start of a line
         wrap = wrap and is_new_line
 
+        # --- Format the final tag string ---
         if wrap:
+            # Each attr on its own line, indented one level deeper than the tag
             indentation_level = self._indentation_level + 1
             indentation = self.indentation * indentation_level
             attrs_string = f"\n{indentation}".join(attr_strings)
@@ -405,15 +473,15 @@ class HTMLLinter(HTMLParser):
             end_char = self.indentation * (indentation_level - 1)
             attrs_string = f"\n{indentation}{attrs_string}\n{end_char}"
         elif attr_strings:
-            # Don't wrap; Just separate all by a space
             attrs_string = " ".join(attr_strings)
             attrs_string = f" {attrs_string}"
         else:
-            # No attributes
             attrs_string = ""
 
+        # Collapse blank lines within the attribute block
         attrs_string = re.sub(rf"\n({self.indentation})+\n", "\n\n", attrs_string)
 
+        # In lint mode, compare whitespace layout to detect formatting errors
         if not self.fix:
             new_whitespace = list(filter(is_whitespace, list(attrs_string)))
             old_whitespace = list(filter(is_whitespace, list(self.__starttag_text or "")))
@@ -428,54 +496,74 @@ class HTMLLinter(HTMLParser):
 
                 self._handle_error(error_code, tag=f"<{tag}>")
 
+        # --- Update the tag stack ---
+        # Non-void tags get pushed so handle_endtag can match them later.
+        # The stored name uses correct casing (e.g. "clipPath" not "clippath").
         if tag not in VOID_ELEMENTS:
-            # Tag should be closed, add it to the stack.
             self._tag_stack.append(
                 StackItem(StackItemType.TAG, tag, self._indentation_level, self.getpos()[0]),
             )
 
             if tag != "html":
-                # All non-void elements increase the expected indentation level
-                # except <html>
                 self._indentation_level += 1
 
         if self.fix:
             self._process(f"<{tag}{attrs_string}>")
 
     def handle_endtag(self, tag: str) -> None:
-        """Process a closing tag."""
-        if not self.fix and tag != tag.lower():
-            self._handle_error("F7", tag=f"</{tag}>")
+        """Process a closing tag.
 
-        tag = tag.lower()
+        State at entry: tag is raw from the parser (original casing).
+        State at exit: matching StackItem is popped from _tag_stack,
+        _indentation_level is restored to the opening tag's level, and
+        the formatted closing tag is appended to _result (if fix).
+        """
+        # --- Normalize tag casing (same logic as handle_starttag) ---
+        tag_lower = tag.lower()
+        foreign_context = self._get_foreign_content_context()
 
-        # Store the current indentation level before we pop the stack
+        if foreign_context:
+            correct_tag = get_correct_tag_name(tag_lower, foreign_context)
+            if not self.fix and tag != correct_tag:
+                self._handle_error("F7", tag=f"</{tag}>")
+            tag = correct_tag
+        else:
+            if not self.fix and tag != tag_lower:
+                self._handle_error("F7", tag=f"</{tag}>")
+            tag = tag_lower
+
+        # Snapshot indentation before popping, so we can detect blank-line
+        # issues between the last content and this closing tag
         old_indentation_level = self._indentation_level
-        opening_line = None  # Track line where opening tag was found
+        opening_line = None
 
+        # --- Pop the stack to find the matching opening tag ---
+        # Stack names use correct casing (e.g. "clipPath"), so end-tag must
+        # match. Any intervening items are reported as unclosed.
         if tag in {item.name for item in self._tag_stack if item.item_type == StackItemType.TAG}:
-            # Pop self._tag_stack until we find the matching opening tag
             while self._tag_stack:
                 stack_item = self._tag_stack.pop()
 
                 if stack_item.item_type == StackItemType.TAG and stack_item.name == tag:
+                    # Found the match — restore indentation to opening level
                     self._indentation_level = stack_item.indentation
                     opening_line = stack_item.line
                     break
                 if stack_item.item_type == StackItemType.TAG:
+                    # Skipped over an unclosed tag
                     self._handle_error("D3", tag=f"</{stack_item.name}>")
                 else:
-                    # Found an unclosed instruction before the matching tag
+                    # Skipped over an unclosed template instruction
                     self._handle_error("P2", tag=f"{{{stack_item.name}}}")
         else:
+            # No matching opener on the stack at all
             self._handle_error("D4", tag=f"</{tag}>")
-            # Decrement anyway to try to recover
             if self._indentation_level > 0:
                 self._indentation_level -= 1
 
-        # Check for blank lines before closing tag that decreases indentation
-        # Skip this check if the closing tag is on the same line as the
-        # opening tag
+        # --- Blank-line cleanup before closing tags ---
+        # If indentation decreased (i.e. we actually closed something) and
+        # there's trailing whitespace before this tag, clean it up
         if (
             self._indentation_level < old_indentation_level
             and self._last_data
@@ -484,17 +572,15 @@ class HTMLLinter(HTMLParser):
             match = re.search(r"\n\s*\n\s*$", self._last_data)
             if match:
                 if self.fix:
-                    # Remove blank lines from the end of the result buffer
                     if self._result:
                         last_chunk = self._result[-1]
-                        # Replace multiple trailing newlines with single
-                        # newline + indentation
                         self._result[-1] = re.sub(r"\n\s*\n\s*$", r"\n", last_chunk)
                 else:
-                    # Report F4 error for extra vertical whitespace
                     line_offset = self._last_data[: match.start()].count("\n")
                     self._handle_error("F4", line_offset=line_offset, column=0)
 
+        # Emit pending indentation (skip for CDATA elements like script/style,
+        # which manage their own whitespace)
         if tag != self.cdata_elem:
             self._reconcile_indentation()
 
@@ -502,20 +588,30 @@ class HTMLLinter(HTMLParser):
             self._process(f"</{tag}>")
 
     def handle_data(self, html_data: str) -> None:
-        """Process HTML data."""
-        # Store the raw data for checking in handle_endtag
+        """Process raw text content between tags.
+
+        Applies multiple passes over the text:
+        1. Blank-line cleanup after opening tags
+        2. Trailing whitespace removal (F2)
+        3. Indentation normalization (F3)
+        4. Consecutive blank line collapse (F4)
+        5. Horizontal whitespace collapse (F5)
+        """
+        # Stash for handle_endtag's blank-line-before-close check
         self._last_data = html_data
 
         self._handle_encountered_data()
         self._reconcile_indentation()
 
+        # Inside <script>/<style> or freeform template blocks: emit verbatim
         if self.cdata_elem or self._freeform_level:
             if self.fix:
                 self._process(html_data)
             return
 
-        # Check for blank lines after opening tag/instruction that increased
-        # indentation
+        # --- Pass 1: blank lines after opening tags ---
+        # If we just increased indentation (an opening tag was processed),
+        # strip leading blank lines from the content that follows it
         if self._indentation_level > self._prev_indentation_level:
             # Match: newline followed by any blank lines at the start
             match = re.search(r"^\n[ \t]*\n", html_data)
@@ -531,7 +627,7 @@ class HTMLLinter(HTMLParser):
 
         indentation = self.indentation * self._indentation_level
 
-        # Check for & fix trailing whitespace
+        # --- Pass 2: trailing whitespace (F2) ---
         trailing_whitespace = r"[ \t]+\n"
         if self.fix:
             html_data = re.sub(trailing_whitespace, "\n", html_data)
@@ -543,10 +639,14 @@ class HTMLLinter(HTMLParser):
                 column = html_data.rfind("\n", 0, start) - 1
                 self._handle_error("F2", line_offset=line_offset, column=column)
 
-        # Check for & fix inappropriate indentation
+        # --- Pass 3: indentation normalization (F3) ---
+        # Replace all existing indentation with the expected amount.
+        # new_html_data is the "ideal" version; we compare against it to
+        # find errors, or use it directly in fix mode.
         some_indentation = r"\n[ \t]*"
         new_html_data = re.sub(some_indentation, f"\n{indentation}", html_data)
 
+        # Don't indent blank lines — keep them truly empty
         if indentation:
             blank_line = f"\n{indentation}\n"
 
@@ -554,31 +654,34 @@ class HTMLLinter(HTMLParser):
                 new_html_data = new_html_data.replace(blank_line, "\n\n")
 
         if new_html_data.endswith(f"\n{indentation}"):
+            # Strip trailing indentation — the next tag/data will emit its
+            # own via _reconcile_indentation. Store a flag so reconcile knows
+            # indentation is pending.
             if indentation:
                 new_html_data = new_html_data[: -1 * len(indentation)]
 
-            # We should add indentation once we know how deep to indent.
             self._expected_indentation = True
 
         if self.fix:
             html_data = new_html_data
         else:
+            # In lint mode, diff line-by-line against the ideal version
             html_lines = html_data.split("\n")
             new_html_lines = new_html_data.split("\n")
             for i, line in enumerate(new_html_lines):
                 if i == len(new_html_lines) - 1 and not line:
-                    # This is the last line; We don't know what's coming next
+                    # Last line is blank — we don't know the next element's
+                    # indentation yet. Stash the original for reconcile to
+                    # compare against later.
                     if not self.fix:
-                        # We should confirm the indentation once we know it.
                         self._expected_indentation = html_lines[i]
                     break
 
-                # This isn't the last line
                 original_line = html_lines[i]
                 if line != original_line:
                     self._handle_error("F3", line_offset=i, column=0)
 
-        # Check for & fix too many consecutive empty lines
+        # --- Pass 4: consecutive blank lines (F4) ---
         extra_vertical_lines = r"\n{3,}"
         if self.fix:
             html_data = re.sub(extra_vertical_lines, "\n\n", html_data)
@@ -587,14 +690,17 @@ class HTMLLinter(HTMLParser):
                 line_offset = html_data.count("\n", 0, match.start())
                 self._handle_error("F4", line_offset=line_offset, column=0)
 
+        # --- Pass 5: horizontal whitespace collapse (F5) ---
+        # Collapse runs of spaces/tabs within each line's content, preserving
+        # leading/trailing single spaces (which may be significant).
         lines = []
         for i, line in enumerate(html_data.split("\n")):
             original_line = line
             line_contents = line
             line_start = ""
 
-            # We don't assume that the lines have been indented, or have had
-            # trailing whitespace removed, since we might not be in "fix" mode
+            # Separate indentation from content (only for continuation lines;
+            # line 0 may start mid-tag so its leading space is content)
             if i > 0:
                 line_contents = line_contents.lstrip()
                 line_start = original_line[: len(original_line) - len(line_contents)]
@@ -1020,6 +1126,19 @@ class HTMLLinter(HTMLParser):
 
         return end_cursor
 
+    def _get_foreign_content_context(self) -> str | None:
+        """Return the foreign content context type, or None if in normal HTML.
+
+        Scans the tag stack for the innermost <svg> or <math> ancestor.
+        """
+        for stack_item in reversed(self._tag_stack):
+            if (
+                stack_item.item_type == StackItemType.TAG
+                and stack_item.name in FOREIGN_CONTENT_ELEMENTS
+            ):
+                return stack_item.name
+        return None
+
     def _process(self, html_chunk: str) -> None:
         """Process the HTML chunk."""
         self._result.append(html_chunk)
@@ -1046,7 +1165,14 @@ class HTMLLinter(HTMLParser):
         self._mode = self._mode or Mode.UNSTRUCTURED
 
     def _reconcile_indentation(self, adjustment: int = 0) -> None:
-        """Return indentation properly."""
+        """Emit or check pending indentation.
+
+        Called before any output that follows a newline. _expected_indentation
+        is set to True (fix mode) or the original whitespace string (lint
+        mode) by handle_data when it strips trailing indentation from content.
+        This method resolves that pending state by emitting the correct
+        indentation or comparing against what was in the source.
+        """
         if self._expected_indentation is None:
             return
 
@@ -1064,6 +1190,7 @@ class HTMLLinter(HTMLParser):
         *,
         solo: bool = False,
         final_pass: bool = True,
+        foreign_context: str | None = None,
     ) -> tuple[str | None, Sequence[str]]:
         """Return the prepared attribute strings.
 
@@ -1086,11 +1213,21 @@ class HTMLLinter(HTMLParser):
                     if start_index > 0:
                         split_name = name[:start_index]
                         split_name_lower = split_name.lower()
-                        if not self.fix and split_name != split_name_lower and final_pass:
-                            self._handle_error("F8", attr=split_name_lower)
+                        if foreign_context:
+                            correct_name = get_correct_attr_name(
+                                split_name_lower,
+                                foreign_context,
+                            )
+                            if not self.fix and split_name != correct_name and final_pass:
+                                self._handle_error("F8", attr=correct_name)
+                            processed_name = correct_name
+                        else:
+                            if not self.fix and split_name != split_name_lower and final_pass:
+                                self._handle_error("F8", attr=split_name_lower)
+                            processed_name = split_name_lower
 
-                        quote_char = "'" if '"' in split_name_lower else '"'
-                        all_attrs.append((split_name_lower, value, quote_char))
+                        quote_char = "'" if '"' in processed_name else '"'
+                        all_attrs.append((processed_name, value, quote_char))
 
                     split_name = name[start_index:end_index]
 
@@ -1100,11 +1237,18 @@ class HTMLLinter(HTMLParser):
                     name = name[end_index:]
             if name:
                 name_lower = name.lower()
-                if not self.fix and name != name_lower and final_pass:
-                    self._handle_error("F8", attr=name_lower)
+                if foreign_context:
+                    correct_name = get_correct_attr_name(name_lower, foreign_context)
+                    if not self.fix and name != correct_name and final_pass:
+                        self._handle_error("F8", attr=correct_name)
+                    processed_name = correct_name
+                else:
+                    if not self.fix and name != name_lower and final_pass:
+                        self._handle_error("F8", attr=name_lower)
+                    processed_name = name_lower
 
                 quote_char = "'" if '"' in (value or "") else '"'
-                all_attrs.append((name_lower, value, quote_char))
+                all_attrs.append((processed_name, value, quote_char))
 
         attr_keys_and_groups = []
 
@@ -1131,6 +1275,7 @@ class HTMLLinter(HTMLParser):
                     subgroup_key, subgroup = self._make_attr_strings(
                         subgroup_attrs,
                         final_pass=False,
+                        foreign_context=foreign_context,
                     )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)
@@ -1146,6 +1291,7 @@ class HTMLLinter(HTMLParser):
                     subgroup_key, subgroup = self._make_attr_strings(
                         subgroup_attrs,
                         final_pass=False,
+                        foreign_context=foreign_context,
                     )
                     if group_key and subgroup_key:
                         group_key = min(group_key, subgroup_key)

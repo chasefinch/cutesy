@@ -295,6 +295,119 @@ class TestTokenAttributes:
         assert "  " not in result
 
 
+class TestCommaSeparatedAttributes:
+    """Test comma-separated attribute processing."""
+
+    def test_srcset_normalized(self) -> None:
+        """Srcset items are trimmed and comma-joined."""
+        processor = AttributeProcessor()
+        result, errors = processor.process(
+            attr_name="srcset",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="image.jpg 480w ,  image-lg.jpg 800w",
+        )
+        assert result == "image.jpg 480w, image-lg.jpg 800w"
+        assert errors == []
+
+    def test_accept_comma_separated(self) -> None:
+        """Accept is comma-separated, not space-separated."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="accept",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="image/png,image/jpeg, .gif",
+        )
+        assert result == "image/png, image/jpeg, .gif"
+
+    def test_empty_srcset_returns_none(self) -> None:
+        """Empty srcset signals removal."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="srcset",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="  , , ",
+        )
+        assert result is None
+
+    def test_multiline_srcset(self) -> None:
+        """Long srcset goes multiline with trailing commas."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="srcset",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=40,  # noqa: WPS432
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="image-small.jpg 480w, image-large.jpg 800w",
+        )
+        assert result is not None
+        assert "\n" in result
+        lines = result.split("\n")
+        assert lines[0] == ""
+        assert lines[1].endswith("480w,")
+        assert not lines[2].endswith(",")
+        assert lines[-1] == "\t"
+
+    def test_coords_normalized(self) -> None:
+        """Coords values are comma-separated."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="coords",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body=" 34 , 44 , 270 , 350 ",
+        )
+        assert result == "34, 44, 270, 350"
+
+    def test_imagesrcset_processed(self) -> None:
+        """Imagesrcset gets comma-separated processing."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="imagesrcset",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="img1.jpg 1x ,  img2.jpg 2x",
+        )
+        assert result == "img1.jpg 1x, img2.jpg 2x"
+
+
 class TestCodeContentAttributes:
     """Test code-content attribute processing (on*, style)."""
 

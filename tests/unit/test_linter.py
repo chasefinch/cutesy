@@ -708,3 +708,255 @@ asdf
         if id_errors:
             expected_line = 1
             assert id_errors[0].line == expected_line, "ID error should be on line 2"
+
+
+class TestForeignContent:
+    """Test foreign content (SVG & MathML) handling."""
+
+    # --- Tag casing (F7) in SVG ---
+
+    def test_svg_correct_case_no_error(self) -> None:
+        """SVG camelCase elements with correct casing produce no F7 errors."""
+        linter = HTMLLinter(fix=False)
+        html = "<svg><clipPath><rect></rect></clipPath></svg>"
+
+        _result, errors = linter.lint(html)
+
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        assert len(f7_errors) == 0
+
+    def test_svg_lowercase_camelcase_tag_reports_f7(self) -> None:
+        """Lowercase version of a camelCase SVG tag reports F7."""
+        linter = HTMLLinter(fix=False)
+        html = "<svg><clippath><rect></rect></clippath></svg>"
+
+        _result, errors = linter.lint(html)
+
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        expected_error_count = 2  # Opening and closing
+        assert len(f7_errors) == expected_error_count
+
+    def test_svg_uppercase_camelcase_tag_reports_f7(self) -> None:
+        """Wrong casing (all caps) of a camelCase SVG tag reports F7."""
+        linter = HTMLLinter(fix=False)
+        html = "<svg><CLIPPATH><rect></rect></CLIPPATH></svg>"
+
+        _result, errors = linter.lint(html)
+
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        expected_error_count = 2
+        assert len(f7_errors) == expected_error_count
+
+    def test_svg_lowercase_elements_no_error(self) -> None:
+        """SVG elements not in the adjustment table stay lowercase."""
+        linter = HTMLLinter(fix=False)
+        html = "<svg><g><rect></rect><circle></circle></g></svg>"
+
+        _result, errors = linter.lint(html)
+
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        assert len(f7_errors) == 0
+
+    def test_svg_fix_corrects_tag_case(self) -> None:
+        """Fix mode corrects SVG element casing."""
+        linter = HTMLLinter(fix=True)
+        html = "<svg><clippath><rect></rect></clippath></svg>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<clipPath>" in result
+        assert "</clipPath>" in result
+        assert "<clippath>" not in result
+
+    def test_svg_fix_multiple_camelcase_tags(self) -> None:
+        """Fix mode corrects multiple camelCase SVG elements."""
+        linter = HTMLLinter(fix=True)
+        html = "<svg><lineargradient></lineargradient><radialgradient></radialgradient></svg>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<linearGradient>" in result
+        assert "</linearGradient>" in result
+        assert "<radialGradient>" in result
+        assert "</radialGradient>" in result
+
+    def test_svg_fix_foreignobject(self) -> None:
+        """Fix mode corrects foreignObject casing."""
+        linter = HTMLLinter(fix=True)
+        html = "<svg><foreignobject><div></div></foreignobject></svg>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<foreignObject>" in result
+        assert "</foreignObject>" in result
+
+    # --- Attribute casing (F8) in SVG ---
+
+    def test_svg_viewbox_correct_case_no_error(self) -> None:
+        """Correct viewBox casing produces no F8 error."""
+        linter = HTMLLinter(fix=False)
+        html = '<svg viewBox="0 0 100 100"></svg>'
+
+        _result, errors = linter.lint(html)
+
+        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        assert len(f8_errors) == 0
+
+    def test_svg_viewbox_wrong_case_reports_f8(self) -> None:
+        """Lowercase viewbox reports F8."""
+        linter = HTMLLinter(fix=False)
+        html = '<svg viewbox="0 0 100 100"></svg>'
+
+        _result, errors = linter.lint(html)
+
+        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        assert len(f8_errors) == 1
+
+    def test_svg_fix_corrects_attribute_case(self) -> None:
+        """Fix mode corrects SVG attribute casing."""
+        linter = HTMLLinter(fix=True)
+        html = '<svg viewbox="0 0 100 100"></svg>'
+
+        result, _errors = linter.lint(html)
+
+        assert 'viewBox="0 0 100 100"' in result
+        assert "viewbox" not in result
+
+    def test_svg_preserveaspectratio_fix(self) -> None:
+        """Fix mode corrects preserveAspectRatio casing."""
+        linter = HTMLLinter(fix=True)
+        html = '<svg preserveaspectratio="xMidYMid meet"></svg>'
+
+        result, _errors = linter.lint(html)
+
+        assert "preserveAspectRatio=" in result
+
+    def test_svg_html_attrs_stay_lowercase(self) -> None:
+        """Standard HTML attributes on SVG elements stay lowercase."""
+        linter = HTMLLinter(fix=False)
+        html = '<svg class="icon" id="logo"></svg>'
+
+        _result, errors = linter.lint(html)
+
+        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        assert len(f8_errors) == 0
+
+    def test_svg_nested_element_attr_case(self) -> None:
+        """Attributes on nested SVG elements use correct casing."""
+        linter = HTMLLinter(fix=True)
+        html = '<svg><feGaussianBlur stddeviation="5"></feGaussianBlur></svg>'
+
+        result, _errors = linter.lint(html)
+
+        assert 'stdDeviation="5"' in result
+
+    # --- Self-closing in SVG ---
+
+    def test_svg_self_closing_no_d5_d6(self) -> None:
+        """Self-closing SVG elements should not report D5 or D6."""
+        linter = HTMLLinter(fix=False)
+        html = '<svg><path d="M0 0"/><circle r="5"/></svg>'
+
+        _result, errors = linter.lint(html)
+
+        d5_errors = [error for error in errors if error.rule.code == "D5"]
+        d6_errors = [error for error in errors if error.rule.code == "D6"]
+        assert len(d5_errors) == 0
+        assert len(d6_errors) == 0
+
+    def test_svg_self_closing_fix_mode(self) -> None:
+        """Fix mode handles self-closing SVG elements correctly."""
+        linter = HTMLLinter(fix=True)
+        html = '<svg><rect width="10" height="10"/></svg>'
+
+        result, _errors = linter.lint(html)
+
+        assert "<rect" in result
+        assert "</rect>" in result
+
+    # --- Context boundaries ---
+
+    def test_svg_inside_html(self) -> None:
+        """SVG inside HTML: HTML stays lowercase, SVG uses correct case."""
+        linter = HTMLLinter(fix=True)
+        html = "<div><svg><clippath></clippath></svg></div>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<div>" in result
+        assert "<clipPath>" in result
+        assert "</clipPath>" in result
+        assert "</div>" in result
+
+    def test_context_ends_after_closing_svg(self) -> None:
+        """After </svg>, HTML lowercase rules resume."""
+        linter = HTMLLinter(fix=False)
+        html = "<svg><g></g></svg><DIV></DIV>"
+
+        _result, errors = linter.lint(html)
+
+        # No F7 inside SVG (g is lowercase, correct)
+        # F7 for DIV after SVG closes
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        expected_error_count = 2  # <DIV> and </DIV>
+        assert len(f7_errors) == expected_error_count
+
+    def test_nested_svg_elements(self) -> None:
+        """Deeply nested SVG elements all use correct casing."""
+        linter = HTMLLinter(fix=True)
+        html = "<svg><g><clipPath><rect></rect></clipPath></g></svg>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<clipPath>" in result
+        assert "</clipPath>" in result
+
+    # --- MathML ---
+
+    def test_math_context(self) -> None:
+        """Basic MathML context works."""
+        linter = HTMLLinter(fix=False)
+        html = "<math><mrow></mrow></math>"
+
+        _result, errors = linter.lint(html)
+
+        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        assert len(f7_errors) == 0
+
+    def test_math_definitionurl_fix(self) -> None:
+        """Fix mode corrects MathML definitionURL attribute."""
+        linter = HTMLLinter(fix=True)
+        html = '<math><csymbol definitionurl="https://example.com"></csymbol></math>'
+
+        result, _errors = linter.lint(html)
+
+        assert "definitionURL=" in result
+
+    # --- fe* filter elements ---
+
+    def test_svg_fix_fe_elements(self) -> None:
+        """Fix mode corrects fe* filter element casing."""
+        linter = HTMLLinter(fix=True)
+        html = (
+            "<svg><filter>"
+            "<fegaussianblur></fegaussianblur>"
+            "<fecolormatrix></fecolormatrix>"
+            "</filter></svg>"
+        )
+
+        result, _errors = linter.lint(html)
+
+        assert "<feGaussianBlur>" in result
+        assert "</feGaussianBlur>" in result
+        assert "<feColorMatrix>" in result
+        assert "</feColorMatrix>" in result
+
+    def test_svg_textpath_fix(self) -> None:
+        """Fix mode corrects textPath casing."""
+        linter = HTMLLinter(fix=True)
+        html = "<svg><text><textpath></textpath></text></svg>"
+
+        result, _errors = linter.lint(html)
+
+        assert "<textPath>" in result
+        assert "</textPath>" in result

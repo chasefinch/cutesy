@@ -15,6 +15,7 @@ from ..types import Error
 from . import BaseAttributeProcessor
 from .constants import (
     CODE_CONTENT_ATTRIBUTES,
+    COMMA_SEPARATED_ATTRIBUTES,
     ENUMERATED_ATTRIBUTES,
     JS_ATTRIBUTE_PREFIXES,
     NUMERIC_ATTRIBUTES,
@@ -30,7 +31,20 @@ from .whitespace import (
 # Notably excludes sandbox="" (applies all iframe restrictions) and
 # aria-describedby/aria-labelledby (may affect assistive technology).
 _REMOVABLE_WHEN_EMPTY: frozenset[str] = frozenset(
-    ("class", "rel", "accept", "accept-charset", "headers", "sizes", "allow", "style"),
+    (
+        "class",
+        "rel",
+        "accept-charset",
+        "headers",
+        "sizes",
+        "allow",
+        "style",
+        "srcset",
+        "imagesrcset",
+        "imagesizes",
+        "accept",
+        "coords",
+    ),
 )
 
 
@@ -87,9 +101,11 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         # Classify
         is_token = attr_name in TOKEN_ATTRIBUTES
-        is_code = not is_token and self._is_code_content(attr_name)
+        is_comma = not is_token and attr_name in COMMA_SEPARATED_ATTRIBUTES
+        is_code = not is_token and not is_comma and self._is_code_content(attr_name)
         is_strip = (
             not is_token
+            and not is_comma
             and not is_code
             and (
                 attr_name in NUMERIC_ATTRIBUTES
@@ -98,7 +114,7 @@ class AttributeProcessor(BaseAttributeProcessor):
             )
         )
 
-        if not is_token and not is_code and not is_strip:
+        if not is_token and not is_comma and not is_code and not is_strip:
             return attr_body, self._errors
 
         # Common safety check: raw bounding quote inside value (F16)
@@ -109,6 +125,17 @@ class AttributeProcessor(BaseAttributeProcessor):
 
         if is_token:
             return self._process_token(
+                attr_name,
+                attr_body,
+                indentation,
+                current_indentation_level,
+                tab_width,
+                line_length,
+                max_items_per_line,
+            )
+
+        if is_comma:
+            return self._process_comma_separated(
                 attr_name,
                 attr_body,
                 indentation,
@@ -176,6 +203,48 @@ class AttributeProcessor(BaseAttributeProcessor):
         line_indent = indentation * (current_indentation_level + 1)
         lines = [""]  # Empty first line (newline after opening quote)
         lines.extend(f"{line_indent}{token}" for token in tokens)
+        lines.append(indentation * current_indentation_level)
+        return "\n".join(lines), self._errors
+
+    def _process_comma_separated(
+        self,
+        attr_name: str,
+        attr_body: str,
+        indentation: str,
+        current_indentation_level: int,
+        tab_width: int,
+        line_length: int,
+        max_items_per_line: int,
+    ) -> tuple[str | None, list[Error]]:
+        """Process a comma-separated attribute (srcset, accept, etc.).
+
+        Splits on commas, trims each item, and formats as single-line or
+        multiline with proper indentation.
+        """
+        items = [item.strip() for item in attr_body.split(",")]
+        items = [item for item in items if item]
+
+        if not items:
+            if attr_name in _REMOVABLE_WHEN_EMPTY:
+                return None, self._errors
+            return "", self._errors
+
+        one_line = ", ".join(items)
+
+        max_length = line_length - ((current_indentation_level + 1) * tab_width)
+        attr_overhead = len(attr_name) + len('=""')
+        max_attr_chars = max_length - attr_overhead
+
+        if len(items) <= max_items_per_line and len(one_line) <= max_attr_chars:
+            return one_line, self._errors
+
+        # Multi-line: each item on its own indented line, commas at end
+        line_indent = indentation * (current_indentation_level + 1)
+        lines = [""]  # Empty first line (newline after opening quote)
+        last_index = len(items) - 1
+        for i, item in enumerate(items):
+            suffix = "," if i < last_index else ""
+            lines.append(f"{line_indent}{item}{suffix}")
         lines.append(indentation * current_indentation_level)
         return "\n".join(lines), self._errors
 

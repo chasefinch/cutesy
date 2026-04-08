@@ -25,6 +25,7 @@ class TestSpec:
                 [],
             ),
             "0005_attributes": (["F6", "F14", "F15", "F17", "F17", "F17", "F13"], []),
+            "0006_foreign_content": (["F8", "F7", "F7", "F7", "F7"], []),
         },
     )
 

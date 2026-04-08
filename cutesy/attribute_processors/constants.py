@@ -4,7 +4,6 @@ TOKEN_ATTRIBUTES = frozenset(
     (
         "class",
         "rel",
-        "accept",
         "accept-charset",
         "headers",
         "sandbox",
@@ -72,3 +71,13 @@ URI_ATTRIBUTES = frozenset(
 JS_ATTRIBUTE_PREFIXES = frozenset(("on",))
 
 CODE_CONTENT_ATTRIBUTES = frozenset(("style",))
+
+COMMA_SEPARATED_ATTRIBUTES = frozenset(
+    (
+        "srcset",
+        "imagesrcset",
+        "imagesizes",
+        "accept",
+        "coords",
+    ),
+)

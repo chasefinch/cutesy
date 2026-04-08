@@ -442,11 +442,13 @@ Attributes should follow a consistent order.
 </details>
 
 <details>
-<summary><strong>F7: Tags should be lowercase</strong></summary>
+<summary><strong>F7: Tag names should use correct casing</strong></summary>
 
 **Fixable:** Yes | **Structural:** No
 
-**❌ Problem:**
+In HTML, tag names should be lowercase. In foreign content (SVG and MathML), tag names should use their spec-correct casing (which may include camelCase).
+
+**❌ Problem (HTML):**
 ```html
 <DIV><P>Content</P></DIV>
 ```
@@ -456,14 +458,26 @@ Attributes should follow a consistent order.
 <div><p>Content</p></div>
 ```
 
+**❌ Problem (SVG):**
+```html
+<svg><clippath id="a"><rect></rect></clippath></svg>
+```
+
+**✅ Fixed:**
+```html
+<svg><clipPath id="a"><rect></rect></clipPath></svg>
+```
+
 </details>
 
 <details>
-<summary><strong>F8: Attributes should be lowercase</strong></summary>
+<summary><strong>F8: Attribute names should use correct casing</strong></summary>
 
 **Fixable:** Yes | **Structural:** No
 
-**❌ Problem:**
+In HTML, attribute names should be lowercase. In foreign content (SVG and MathML), attribute names should use their spec-correct casing.
+
+**❌ Problem (HTML):**
 ```html
 <div CLASS="test" ID="main">
 ```
@@ -471,6 +485,16 @@ Attributes should follow a consistent order.
 **✅ Fixed:**
 ```html
 <div class="test" id="main">
+```
+
+**❌ Problem (SVG):**
+```html
+<svg viewbox="0 0 100 100">
+```
+
+**✅ Fixed:**
+```html
+<svg viewBox="0 0 100 100">
 ```
 
 </details>
@@ -759,8 +783,8 @@ Only HTML5 doctype is supported.
 | F4 | Extra vertical whitespace | ✅ | ✅ | Format |
 | F5 | Extra horizontal whitespace | ✅ | ✅ | Format |
 | F6 | Attribute order | ✅ | ❌ | Format |
-| F7 | Tag case | ✅ | ✅ | Format |
-| F8 | Attribute case | ✅ | ✅ | Format |
+| F7 | Tag name casing | ✅ | ✅ | Format |
+| F8 | Attribute name casing | ✅ | ✅ | Format |
 | F9 | Missing attribute quotes | ✅ | ✅ | Format |
 | F10 | Wrong quote type | ❌ | ✅ | Format |
 | F11 | Tag whitespace | ✅ | ✅ | Format |
