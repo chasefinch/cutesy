@@ -2,6 +2,7 @@
 
 import pytest
 
+from cutesy.linter import HTMLLinter
 from cutesy.preprocessors.django import Preprocessor
 from cutesy.types import ConfigurationError, InstructionType, StructuralError
 
@@ -436,18 +437,24 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html_open = "{% macro my_macro %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_open, 0, len(html_open) - 2,
+        instruction, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_open,
+            0,
+            len(html_open) - 2,
         )
         assert instruction == "macro"
-        assert itype == InstructionType.PARTIAL
+        assert instruction_type == InstructionType.PARTIAL
 
         html_close = "{% endmacro %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_close, 0, len(html_close) - 2,
+        instruction, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_close,
+            0,
+            len(html_close) - 2,
         )
         assert instruction == "endmacro"
-        assert itype == InstructionType.END_PARTIAL
+        assert instruction_type == InstructionType.END_PARTIAL
 
     def test_custom_conditional_tag(self) -> None:
         """Custom conditional tag is recognized."""
@@ -455,16 +462,22 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html_open = "{% switch value %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_open, 0, len(html_open) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_open,
+            0,
+            len(html_open) - 2,
         )
-        assert itype == InstructionType.CONDITIONAL
+        assert instruction_type == InstructionType.CONDITIONAL
 
         html_close = "{% endswitch %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_close, 0, len(html_close) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_close,
+            0,
+            len(html_close) - 2,
         )
-        assert itype == InstructionType.END_CONDITIONAL
+        assert instruction_type == InstructionType.END_CONDITIONAL
 
     def test_custom_repeatable_tag(self) -> None:
         """Custom repeatable tag is recognized."""
@@ -472,16 +485,22 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html_open = "{% each items %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_open, 0, len(html_open) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_open,
+            0,
+            len(html_open) - 2,
         )
-        assert itype == InstructionType.REPEATABLE
+        assert instruction_type == InstructionType.REPEATABLE
 
         html_close = "{% endeach %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html_close, 0, len(html_close) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_close,
+            0,
+            len(html_close) - 2,
         )
-        assert itype == InstructionType.END_REPEATABLE
+        assert instruction_type == InstructionType.END_REPEATABLE
 
     def test_non_end_prefix_closing_tag(self) -> None:
         """Custom pair with a closing tag that doesn't start with 'end'."""
@@ -491,16 +510,22 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html_open = "{% call my_func %}"
-        _, itype = preprocessor.parse_instruction_tag(
-            braces, html_open, 0, len(html_open) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_open,
+            0,
+            len(html_open) - 2,
         )
-        assert itype == InstructionType.PARTIAL
+        assert instruction_type == InstructionType.PARTIAL
 
         html_close = "{% caller %}"
-        _, itype = preprocessor.parse_instruction_tag(
-            braces, html_close, 0, len(html_close) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html_close,
+            0,
+            len(html_close) - 2,
         )
-        assert itype == InstructionType.END_PARTIAL
+        assert instruction_type == InstructionType.END_PARTIAL
 
     def test_builtin_tags_still_work(self) -> None:
         """Adding custom tags does not break built-in tags."""
@@ -508,11 +533,14 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html = "{% block content %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html, 0, len(html) - 2,
+        instruction, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html,
+            0,
+            len(html) - 2,
         )
         assert instruction == "block"
-        assert itype == InstructionType.PARTIAL
+        assert instruction_type == InstructionType.PARTIAL
 
     def test_unknown_tag_still_value(self) -> None:
         """Unrecognized tags still fall through to VALUE."""
@@ -520,10 +548,13 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html = "{% load static %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html, 0, len(html) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html,
+            0,
+            len(html) - 2,
         )
-        assert itype == InstructionType.VALUE
+        assert instruction_type == InstructionType.VALUE
 
     def test_unknown_category_raises(self) -> None:
         """Invalid category name raises ConfigurationError."""
@@ -531,7 +562,7 @@ class TestCustomTags:
             Preprocessor(custom_tags={"bogus": [["foo", "endfoo"]]})
 
     def test_collision_with_builtin_raises(self) -> None:
-        """Custom tag that conflicts with a built-in tag raises ConfigurationError."""
+        """Custom tag conflicting with a built-in raises ConfigurationError."""
         with pytest.raises(ConfigurationError, match="conflicts with built-in"):
             Preprocessor(custom_tags={"partial": [["block", "endblock"]]})
 
@@ -542,10 +573,10 @@ class TestCustomTags:
 
     def test_bad_pair_raises(self) -> None:
         """Entry that isn't a [start, end] pair raises ConfigurationError."""
-        with pytest.raises(ConfigurationError, match="\\[start, end\\] pairs"):
+        with pytest.raises(ConfigurationError, match=r"\[start, end\] pairs"):
             Preprocessor(custom_tags={"partial": [["macro"]]})
 
-        with pytest.raises(ConfigurationError, match="\\[start, end\\] pairs"):
+        with pytest.raises(ConfigurationError, match=r"\[start, end\] pairs"):
             Preprocessor(custom_tags={"partial": ["macro"]})  # type: ignore[list-item]
 
     def test_no_custom_tags_backward_compatible(self) -> None:
@@ -554,10 +585,13 @@ class TestCustomTags:
 
         braces = ("{%", "%}")
         html = "{% macro %}"
-        instruction, itype = preprocessor.parse_instruction_tag(
-            braces, html, 0, len(html) - 2,
+        _, instruction_type = preprocessor.parse_instruction_tag(
+            braces,
+            html,
+            0,
+            len(html) - 2,
         )
-        assert itype == InstructionType.VALUE
+        assert instruction_type == InstructionType.VALUE
 
     def test_expected_closing_instructions_updated(self) -> None:
         """Custom tags are added to expected_closing_instructions."""
@@ -567,30 +601,16 @@ class TestCustomTags:
         assert preprocessor.expected_closing_instructions["block"] == "endblock"
 
     def test_end_to_end_macro_indentation(self) -> None:
-        """Full lint pipeline indents content inside {% macro %}...{% endmacro %}."""
-        from cutesy.linter import HTMLLinter
-
+        """Full lint pipeline indents inside {% macro %}...{% endmacro %}."""
         preprocessor = Preprocessor(custom_tags={"partial": [["macro", "endmacro"]]})
-        html = (
-            "{% macro my_macro %}\n"
-            "<div>\n"
-            "</div>\n"
-            "{% endmacro %}\n"
-        )
-        expected = (
-            "{% macro my_macro %}\n"
-            "\t<div>\n"
-            "\t</div>\n"
-            "{% endmacro %}\n"
-        )
+        html = "{% macro my_macro %}\n<div>\n</div>\n{% endmacro %}\n"
+        expected = "{% macro my_macro %}\n\t<div>\n\t</div>\n{% endmacro %}\n"
         linter = HTMLLinter(fix=True, preprocessor=preprocessor)
-        result, errors = linter.lint(html)
+        result, _errors = linter.lint(html)
         assert result == expected
 
     def test_dangling_custom_tag_raises(self) -> None:
         """Unclosed custom block tag raises StructuralError."""
-        from cutesy.linter import HTMLLinter
-
         preprocessor = Preprocessor(custom_tags={"partial": [["macro", "endmacro"]]})
         html = "{% macro my_macro %}\n<div></div>\n"
         linter = HTMLLinter(fix=False, preprocessor=preprocessor)
@@ -598,9 +618,7 @@ class TestCustomTags:
             linter.lint(html)
 
     def test_unmatched_end_tag_raises(self) -> None:
-        """{% endmacro %} without opening {% macro %} raises StructuralError."""
-        from cutesy.linter import HTMLLinter
-
+        """Unmatched endmacro without macro raises StructuralError."""
         preprocessor = Preprocessor(custom_tags={"partial": [["macro", "endmacro"]]})
         html = "<div></div>\n{% endmacro %}\n"
         linter = HTMLLinter(fix=False, preprocessor=preprocessor)

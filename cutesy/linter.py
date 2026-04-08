@@ -40,6 +40,7 @@ class StackItem(NamedTuple):
     name: str | InstructionType  # tag name or instruction type
     indentation: int
     line: int  # line number where this item was opened
+    original_text: str = ""  # original template instruction text (instructions only)
 
 
 def is_whitespace(char: str) -> TypeGuard[Never]:
@@ -568,7 +569,7 @@ class HTMLLinter(HTMLParser):
                     self._handle_error("D3", tag=f"</{stack_item.name}>")
                 else:
                     # Skipped over an unclosed template instruction
-                    self._handle_error("P2", tag=f"{{{stack_item.name}}}")
+                    self._handle_error("D3", tag=stack_item.original_text or str(stack_item.name))
         else:
             # No matching opener on the stack at all
             self._handle_error("D4", tag=f"</{tag}>")
@@ -785,7 +786,8 @@ class HTMLLinter(HTMLParser):
                         # or another continuation
                         assert isinstance(stack_item.name, InstructionType)
                         if not (stack_item.name.starts_block or stack_item.name.continues_block):
-                            self._handle_error("P2", tag=f"{{{instruction_text}}}")
+                            original = self._restore_instruction(instruction_text)
+                            self._handle_error("D3", tag=original)
 
                     found_match = True
                     break
@@ -794,7 +796,8 @@ class HTMLLinter(HTMLParser):
 
             if not found_match:
                 # No matching opening instruction found
-                self._handle_error("P3", tag=f"{{{instruction_text}}}")
+                original = self._restore_instruction(instruction_text)
+                self._handle_error("D4", tag=original)
                 # Decrement anyway to try to recover
                 if self._indentation_level > 0:
                     self._indentation_level -= 1
@@ -831,12 +834,16 @@ class HTMLLinter(HTMLParser):
         # Continuation ({% else %}): was popped above, now re-push so the
         # next {% endif %} / {% else %} can find it.
         if instruction_type.starts_block or instruction_type.continues_block:
+            original_text = ""
+            if self.preprocessor:
+                original_text = self.preprocessor.restore_instruction(instruction_text)
             self._tag_stack.append(
                 StackItem(
                     StackItemType.INSTRUCTION,
                     instruction_type,
                     self._indentation_level,
                     self.getpos()[0],
+                    original_text=original_text,
                 ),
             )
             self._indentation_level += 1
@@ -1430,6 +1437,12 @@ class HTMLLinter(HTMLParser):
                 attr_strings.extend(group)
 
         return sort_key, attr_strings
+
+    def _restore_instruction(self, placeholder_content: str) -> str:
+        """Restore a placeholder's original instruction text for errors."""
+        if self.preprocessor:
+            return self.preprocessor.restore_instruction(placeholder_content)
+        return f"{{{placeholder_content}}}"
 
     def _handle_error(
         self,

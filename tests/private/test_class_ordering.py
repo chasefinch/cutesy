@@ -359,10 +359,11 @@ class TestBaseClassOrderingAttributeProcessor:
         assert "b" in result
 
     def test_flatten_stash_preserves_space_between_class_and_instruction(self) -> None:
-        """Spaces separating class names from compound instruction strings must be kept."""
+        """Spaces between class names and compound instructions are kept."""
         processor = MockClassOrderingProcessor()
         processor.max_length = 200
 
+        assert processor.preprocessor is not None
         left, right = processor.preprocessor.delimiters
         block_start = f"{left}a0------{right}"
         if_start = f"{left}c1----{right}"

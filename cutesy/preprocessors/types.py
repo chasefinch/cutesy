@@ -3,7 +3,7 @@
 import re
 import unicodedata
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import ClassVar
 
 # Cutesy
@@ -71,7 +71,7 @@ class BasePreprocessor(ABC):
 
     braces: ClassVar[set[tuple[str, str]]]
     closing_tag_string_map: ClassVar[dict[str, str]]
-    expected_closing_instructions: ClassVar[dict[str, str]]
+    expected_closing_instructions: ClassVar[Mapping[str, str]]
 
     def reset(self, dynamic_html: str, *, fix: bool = False) -> None:
         """Prepare the preprocessor for processing."""
@@ -208,6 +208,20 @@ class BasePreprocessor(ABC):
             column += 1
 
         return modified_html
+
+    def restore_instruction(self, placeholder_content: str) -> str:
+        """Look up the original template instruction from placeholder content.
+
+        Given the inner content of a placeholder (without delimiters),
+        return the original instruction text (e.g. ``{% if x %}``).
+        Falls back to wrapping the content in braces if not found.
+        """
+        prefix, postfix = self.delimiters
+        full_placeholder = f"{prefix}{placeholder_content}{postfix}"
+        for replacement, instruction in self._instructions:
+            if replacement == full_placeholder:
+                return instruction
+        return f"{{{placeholder_content}}}"
 
     def parse_instruction_tag(
         self,

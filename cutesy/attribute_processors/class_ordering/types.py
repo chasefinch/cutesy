@@ -446,19 +446,24 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             left_raw, right_raw = self.preprocessor.delimiters
             pieces = [str(normalized_item) for normalized_item in normalized]
 
-            def _is_pure_instruction(piece: str) -> bool:
-                return (
-                    piece.startswith(left_raw)
-                    and piece.endswith(right_raw)
-                    and piece.count(left_raw) == 1
-                    and piece.count(right_raw) == 1
-                )
+            is_pure = [
+                piece.startswith(left_raw)
+                and piece.endswith(right_raw)
+                and piece.count(left_raw) == 1
+                and piece.count(right_raw) == 1
+                for piece in pieces
+            ]
 
             parts: list[str] = [pieces[0]]
-            for i in range(1, len(pieces)):
-                if not _is_pure_instruction(pieces[i - 1]) and not _is_pure_instruction(pieces[i]):
+            for prev_pure, piece, curr_pure in zip(
+                is_pure,
+                pieces[1:],
+                is_pure[1:],
+                strict=False,
+            ):
+                if not prev_pure and not curr_pure:
                     parts.append(" ")
-                parts.append(pieces[i])
+                parts.append(piece)
             candidate = "".join(parts)
 
             # Allow flattening if it fits within length, even with block

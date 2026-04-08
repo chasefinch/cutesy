@@ -233,7 +233,7 @@ def main(
     preprocessor_instance = None
     extras_list = extras_list or []
     if "django" in extras_list:
-        preprocessor_instance = preprocessors["django"](custom_tags=custom_tags)
+        preprocessor_instance = django.Preprocessor(custom_tags=custom_tags)
 
     # Compose attribute processor order
     final_attr_processor_names: list[str] = []

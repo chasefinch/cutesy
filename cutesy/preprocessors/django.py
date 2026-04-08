@@ -3,62 +3,72 @@
 # Current App
 from __future__ import annotations
 
-from typing import ClassVar
+from types import MappingProxyType
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 from ..types import ConfigurationError, InstructionType
 from . import BasePreprocessor
 
-_CATEGORY_TO_TYPES: dict[str, tuple[InstructionType, InstructionType]] = {
-    "partial": (InstructionType.PARTIAL, InstructionType.END_PARTIAL),
-    "conditional": (InstructionType.CONDITIONAL, InstructionType.END_CONDITIONAL),
-    "repeatable": (InstructionType.REPEATABLE, InstructionType.END_REPEATABLE),
-}
+_CATEGORY_TO_TYPES = MappingProxyType(
+    {
+        "partial": (InstructionType.PARTIAL, InstructionType.END_PARTIAL),
+        "conditional": (InstructionType.CONDITIONAL, InstructionType.END_CONDITIONAL),
+        "repeatable": (InstructionType.REPEATABLE, InstructionType.END_REPEATABLE),
+    },
+)
 
-_BUILTIN_INSTRUCTION_MAP: dict[str, InstructionType] = {
-    "block": InstructionType.PARTIAL,
-    "endblock": InstructionType.END_PARTIAL,
-    "if": InstructionType.CONDITIONAL,
-    "elif": InstructionType.MID_CONDITIONAL,
-    "else": InstructionType.LAST_CONDITIONAL,
-    "endif": InstructionType.END_CONDITIONAL,
-    "for": InstructionType.REPEATABLE,
-    "empty": InstructionType.MID_CONDITIONAL,
-    "endfor": InstructionType.END_REPEATABLE,
-    "while": InstructionType.REPEATABLE,
-    "endwhile": InstructionType.END_REPEATABLE,
-    "with": InstructionType.PARTIAL,
-    "endwith": InstructionType.END_PARTIAL,
-    "component": InstructionType.PARTIAL,
-    "endcomponent": InstructionType.END_PARTIAL,
-    "fill": InstructionType.PARTIAL,
-    "endfill": InstructionType.END_PARTIAL,
-    "slot": InstructionType.PARTIAL,
-    "endslot": InstructionType.END_PARTIAL,
-    "blocktrans": InstructionType.CONDITIONAL,
-    "plural": InstructionType.LAST_CONDITIONAL,
-    "endblocktrans": InstructionType.END_CONDITIONAL,
-    "comment": InstructionType.COMMENT,
-    "endcomment": InstructionType.END_COMMENT,
-    "spaceless": InstructionType.FREEFORM,
-    "endspaceless": InstructionType.END_FREEFORM,
-    "spaceless_json": InstructionType.FREEFORM,
-    "endspaceless_json": InstructionType.END_FREEFORM,
-}
+_BUILTIN_INSTRUCTION_MAP = MappingProxyType(
+    {
+        "block": InstructionType.PARTIAL,
+        "endblock": InstructionType.END_PARTIAL,
+        "if": InstructionType.CONDITIONAL,
+        "elif": InstructionType.MID_CONDITIONAL,
+        "else": InstructionType.LAST_CONDITIONAL,
+        "endif": InstructionType.END_CONDITIONAL,
+        "for": InstructionType.REPEATABLE,
+        "empty": InstructionType.MID_CONDITIONAL,
+        "endfor": InstructionType.END_REPEATABLE,
+        "while": InstructionType.REPEATABLE,
+        "endwhile": InstructionType.END_REPEATABLE,
+        "with": InstructionType.PARTIAL,
+        "endwith": InstructionType.END_PARTIAL,
+        "component": InstructionType.PARTIAL,
+        "endcomponent": InstructionType.END_PARTIAL,
+        "fill": InstructionType.PARTIAL,
+        "endfill": InstructionType.END_PARTIAL,
+        "slot": InstructionType.PARTIAL,
+        "endslot": InstructionType.END_PARTIAL,
+        "blocktrans": InstructionType.CONDITIONAL,
+        "plural": InstructionType.LAST_CONDITIONAL,
+        "endblocktrans": InstructionType.END_CONDITIONAL,
+        "comment": InstructionType.COMMENT,
+        "endcomment": InstructionType.END_COMMENT,
+        "spaceless": InstructionType.FREEFORM,
+        "endspaceless": InstructionType.END_FREEFORM,
+        "spaceless_json": InstructionType.FREEFORM,
+        "endspaceless_json": InstructionType.END_FREEFORM,
+    },
+)
 
-_BUILTIN_EXPECTED_CLOSING: dict[str, str] = {
-    "block": "endblock",
-    "component": "endcomponent",
-    "fill": "endfill",
-    "slot": "endslot",
-    "if": "endif",
-    "for": "endfor",
-    "while": "endwhile",
-    "with": "endwith",
-    "blocktrans": "endblocktrans",
-    "freeform": "endfreeform",
-    "spaceless": "endspaceless",
-    "spaceless_json": "endspaceless_json",
-}
+_BUILTIN_EXPECTED_CLOSING = MappingProxyType(
+    {
+        "block": "endblock",
+        "component": "endcomponent",
+        "fill": "endfill",
+        "slot": "endslot",
+        "if": "endif",
+        "for": "endfor",
+        "while": "endwhile",
+        "with": "endwith",
+        "blocktrans": "endblocktrans",
+        "freeform": "endfreeform",
+        "spaceless": "endspaceless",
+        "spaceless_json": "endspaceless_json",
+    },
+)
 
 
 class Preprocessor(BasePreprocessor):
@@ -77,14 +87,15 @@ class Preprocessor(BasePreprocessor):
         "spaceless_json": "endspaceless_json",
     }
 
-    expected_closing_instructions: ClassVar[dict[str, str]] = _BUILTIN_EXPECTED_CLOSING
+    expected_closing_instructions: ClassVar[Mapping[str, str]] = _BUILTIN_EXPECTED_CLOSING
 
     def __init__(self, *, custom_tags: dict[str, list[list[str]]] | None = None) -> None:
         """Initialize with optional custom block-level tags.
 
         custom_tags maps category names to lists of [start, end] pairs::
 
-            {"partial": [["macro", "endmacro"]], "repeatable": [["each", "endeach"]]}
+            {"partial": [["macro", "endmacro"]],
+             "repeatable": [["each", "endeach"]]}
 
         In TOML::
 
@@ -132,7 +143,7 @@ class Preprocessor(BasePreprocessor):
                 instance_closing[start_tag] = end_tag
 
         # Shadow the ClassVar with an instance attribute
-        self.expected_closing_instructions = instance_closing
+        self.expected_closing_instructions = instance_closing  # type: ignore[misc]  # noqa: WPS601
 
     def parse_instruction_tag(
         self,
