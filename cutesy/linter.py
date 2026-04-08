@@ -1340,6 +1340,7 @@ class HTMLLinter(HTMLParser):
                     # Run each attribute processor (whitespace, reindent,
                     # tailwind, etc.) to normalize the value
                     processed_value = value
+                    fix_f17 = self.fix and not self.is_rule_ignored("F17")
                     for processor in self.attribute_processors:
                         processed_value, processing_errors = processor.process(
                             attr_name=name,
@@ -1354,7 +1355,6 @@ class HTMLLinter(HTMLParser):
                             attr_body=processed_value,
                             solo=solo,
                         )
-                        fix_f17 = self.fix and not self.is_rule_ignored("F17")
                         if processing_errors:
                             for processing_error in processing_errors:
                                 self._handle_error(error=processing_error)
@@ -1363,8 +1363,17 @@ class HTMLLinter(HTMLParser):
                             if not fix_f17 and final_pass:
                                 self._handle_error("F17", attr=name)
                             break
-                        elif not fix_f17 and value != processed_value and final_pass:
-                            self._handle_error("F17", attr=name)
+                    # Compare against the original value after ALL processors
+                    # have run. Checking inside the loop caused false positives
+                    # when an earlier processor changed the value but a later
+                    # one (e.g. Tailwind) normalized it back to the original.
+                    if (
+                        processed_value is not None
+                        and not fix_f17
+                        and value != processed_value
+                        and final_pass
+                    ):
+                        self._handle_error("F17", attr=name)
                     if processed_value is None and self.fix:
                         continue
                     if processed_value is None:
