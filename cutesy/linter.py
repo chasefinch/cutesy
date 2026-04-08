@@ -569,7 +569,8 @@ class HTMLLinter(HTMLParser):
                     self._handle_error("D3", tag=f"</{stack_item.name}>")
                 else:
                     # Skipped over an unclosed template instruction
-                    self._handle_error("D3", tag=stack_item.original_text or str(stack_item.name))
+                    original = stack_item.original_text or str(stack_item.name)
+                    self._handle_error("D3", tag=f"closing instruction for {original}")
         else:
             # No matching opener on the stack at all
             self._handle_error("D4", tag=f"</{tag}>")
@@ -1290,6 +1291,9 @@ class HTMLLinter(HTMLParser):
         attr_keys_and_groups = []
 
         group_level = 0
+        # Buffer top-level comments so they move with the next attribute
+        # during F6 sorting (e.g. {# description #} before class="...")
+        pending_comments: list[str] = []
 
         group = []
         for name, value, quote_char in all_attrs:
@@ -1298,6 +1302,10 @@ class HTMLLinter(HTMLParser):
             instruction_type = None
             if self.preprocessor and name.startswith(self.preprocessor.delimiters[0]):
                 instruction_type = InstructionType(name[1])
+
+            if instruction_type == InstructionType.IGNORED and not group_level:
+                pending_comments.append(name)
+                continue
 
             if instruction_type and instruction_type.is_group_start:
                 # Entering a conditional block (e.g. {% if %})
@@ -1340,7 +1348,8 @@ class HTMLLinter(HTMLParser):
                         group_key = group_key or subgroup_key
                     group += [f"{self.indentation}{attr_string}" for attr_string in subgroup]
                     group.append(name)
-                    attr_keys_and_groups.append((group_key, group))
+                    attr_keys_and_groups.append((group_key, [*pending_comments, *group]))
+                    pending_comments = []
                 else:
                     subgroup_attrs.append(attr)
                 group_level -= 1
@@ -1393,7 +1402,13 @@ class HTMLLinter(HTMLParser):
                     if processed_value is None:
                         processed_value = value
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
-                attr_keys_and_groups.append((name, [attr_string]))
+                attr_keys_and_groups.append((name, [*pending_comments, attr_string]))
+                pending_comments = []
+
+        # Flush any trailing comments (attach to last group)
+        if pending_comments and attr_keys_and_groups:
+            last_key, last_group = attr_keys_and_groups[-1]
+            attr_keys_and_groups[-1] = (last_key, [*last_group, *pending_comments])
 
         # --- Phase 3: Sort attributes (F6) ---
         if self.fix:
@@ -1430,7 +1445,11 @@ class HTMLLinter(HTMLParser):
                 flat = f"{group[0]}{' '.join(inner_items)}{group[-1]}"
                 attr_strings.append(flat)
 
-            elif len(group) == num_empty_dyamic_context_attrs:
+            elif (
+                len(group) == num_empty_dyamic_context_attrs
+                and self.preprocessor
+                and all(item.startswith(self.preprocessor.delimiters[0]) for item in group)
+            ):
                 # Empty conditional (e.g. {% if x %}{% endif %}) — no content
                 attr_strings.append("".join(group))
             else:
