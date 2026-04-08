@@ -187,21 +187,28 @@ class HTMLLinter(HTMLParser):
         super().reset()
         self._mode = None  # Full document or arbitrary HTML
         self._errors = []
-        self._result = []
-        # Parsing state
+        self._result = []  # Accumulator for fixed output (fix mode only)
+
         self._did_report_expected_doctype = False
-        self._freeform_level = 0
-        self._indentation_level = 0
-        # Stack of StackItem for tracking tags and instructions
+        self._freeform_level = 0  # >0 inside {% verbatim %} blocks
+        self._indentation_level = 0  # Current nesting depth
+
+        # Tags and template instructions share one stack so nesting
+        # mismatches (e.g. <div>{% endif %}) are caught
         self._tag_stack: list[StackItem] = []
-        # Possible values: {None, True} if self.fix else {None, str}
+
+        # Deferred indentation: set by handle_data when it strips trailing
+        # whitespace before a newline. Resolved by _reconcile_indentation
+        # when the next element begins.
+        #   None  = no pending indentation
+        #   True  = pending (fix mode, exact string not yet known)
+        #   str   = pending (lint mode, original whitespace to compare)
         self._expected_indentation: str | Literal[True] | None = ""
-        # Track last data to detect blank lines before closing
-        # tags/instructions
+
+        # For detecting blank lines adjacent to opening/closing tags
         self._last_data: str | None = None
-        # Track indentation level before last tag/instruction (for detecting
-        # blank lines after opening)
         self._prev_indentation_level = 0
+
         # Line & column numbers in the modified HTML
         self._line = 0
         self._column = 0
@@ -333,7 +340,7 @@ class HTMLLinter(HTMLParser):
             correct_tag = get_correct_tag_name(tag_lower, foreign_context or tag_lower)
             self.handle_endtag(correct_tag)
         elif tag_lower in VOID_ELEMENTS:
-            # Void elements (br, img, etc.): self-close is unnecessary but not harmful
+            # Void elements (br, img, etc.): self-close is unnecessary
             if not self.fix:
                 self._handle_error("D5", tag=f"<{tag_lower}>")
         else:
@@ -357,9 +364,9 @@ class HTMLLinter(HTMLParser):
         is_new_line = self._expected_indentation is not None
 
         # --- Normalize tag casing ---
-        # HTML tags → lowercase. SVG/MathML → spec-correct case (e.g. clipPath).
-        # When tag_lower is "svg"/"math", we're entering foreign content but
-        # the tag itself isn't on the stack yet, so we check both.
+        # HTML → lowercase. SVG/MathML → spec-correct (e.g. clipPath).
+        # When tag_lower is "svg"/"math", we're entering foreign content
+        # but the tag itself isn't on the stack yet, so we check both.
         tag_lower = tag.lower()
         foreign_context = self._get_foreign_content_context()
 
@@ -735,42 +742,47 @@ class HTMLLinter(HTMLParser):
             self._process("\n".join(lines))
 
     def handle_instruction(self, instruction_text: str) -> None:
-        """Process a dynamic template instruction placeholder."""
+        """Process a dynamic template instruction placeholder.
+
+        Template instructions ({% if %}, {% for %}, etc.) are managed on
+        _tag_stack alongside HTML tags. Block-start instructions push,
+        block-end instructions pop, and continuations ({% else %}) pop
+        then re-push. This mirrors how handle_starttag/handle_endtag
+        manage indentation for HTML elements.
+        """
         instruction_type = InstructionType(instruction_text[0])
 
+        # Freeform blocks (e.g. {% verbatim %}) suppress all formatting
         if instruction_type == InstructionType.FREEFORM:
             self._freeform_level += 1
         elif instruction_type == InstructionType.END_FREEFORM:
             self._freeform_level -= 1
 
-        # Store the current indentation level before we change it
         old_indentation_level = self._indentation_level
-        opening_line = None  # Track line where opening instruction was found
+        opening_line = None
 
-        # Handle block ending/continuation - restore correct indentation
-        # from stack
+        # --- Pop the stack for block-end / continuation instructions ---
+        # Mirrors handle_endtag: walk the stack to find the matching opener,
+        # restoring its indentation level. Any intervening items are unclosed.
         if instruction_type.ends_block or instruction_type.continues_block:
             found_match = False
             while self._tag_stack:
-                # Pop to find the matching opening instruction
                 stack_item = self._tag_stack.pop()
 
                 if stack_item.item_type == StackItemType.INSTRUCTION:
                     self._indentation_level = stack_item.indentation
                     opening_line = stack_item.line
 
-                    # For continuations (else, elif), validate the match
                     if instruction_type.continues_block:
-                        # Continuation should match a block start or another
-                        # continuation
-                        # stack_item.name is an InstructionType
+                        # {% else %} / {% elif %} must follow a block-start
+                        # or another continuation
                         assert isinstance(stack_item.name, InstructionType)
                         if not (stack_item.name.starts_block or stack_item.name.continues_block):
                             self._handle_error("P2", tag=f"{{{instruction_text}}}")
 
                     found_match = True
                     break
-                # Found an unclosed tag before the matching instruction
+                # Skipped an unclosed HTML tag while searching
                 self._handle_error("D3", tag=f"</{stack_item.name}>")
 
             if not found_match:
@@ -802,27 +814,16 @@ class HTMLLinter(HTMLParser):
                     line_offset = self._last_data[: match.start()].count("\n")
                     self._handle_error("F4", line_offset=line_offset, column=0)
 
-        self._reconcile_indentation()  # Between the indentation change
+        # Emit indentation at the now-restored level (between pop and push)
+        self._reconcile_indentation()
 
-        # Track indentation before we change it (for detecting blank lines
-        # after opening)
         self._prev_indentation_level = self._indentation_level
 
-        # Handle block starting/continuation - push onto stack and increase
-        # indentation
-        if instruction_type.starts_block:
-            # Push the opening instruction type and current indentation level
-            self._tag_stack.append(
-                StackItem(
-                    StackItemType.INSTRUCTION,
-                    instruction_type,
-                    self._indentation_level,
-                    self.getpos()[0],
-                ),
-            )
-            self._indentation_level += 1
-        elif instruction_type.continues_block:
-            # For continuations, push back with the continuation type
+        # --- Push onto stack for block-start / continuation instructions ---
+        # Block-start ({% if %}, {% for %}): push and indent children.
+        # Continuation ({% else %}): was popped above, now re-push so the
+        # next {% endif %} / {% else %} can find it.
+        if instruction_type.starts_block or instruction_type.continues_block:
             self._tag_stack.append(
                 StackItem(
                     StackItemType.INSTRUCTION,
@@ -1167,11 +1168,12 @@ class HTMLLinter(HTMLParser):
     def _reconcile_indentation(self, adjustment: int = 0) -> None:
         """Emit or check pending indentation.
 
-        Called before any output that follows a newline. _expected_indentation
-        is set to True (fix mode) or the original whitespace string (lint
-        mode) by handle_data when it strips trailing indentation from content.
-        This method resolves that pending state by emitting the correct
-        indentation or comparing against what was in the source.
+        Called before any output that follows a newline.
+        _expected_indentation is set to True (fix mode) or the original
+        whitespace string (lint mode) by handle_data when it strips
+        trailing indentation from content. This method resolves that
+        pending state by emitting the correct indentation or comparing
+        against what was in the source.
         """
         if self._expected_indentation is None:
             return
@@ -1192,24 +1194,36 @@ class HTMLLinter(HTMLParser):
         final_pass: bool = True,
         foreign_context: str | None = None,
     ) -> tuple[str | None, Sequence[str]]:
-        """Return the prepared attribute strings.
+        """Build formatted attribute strings for a single tag.
 
-        Recursively handles dynamic attributes, prepending them with the
-        indentation characters.
+        Returns (sort_key, attr_strings) where sort_key is the first
+        attribute name (for F6 ordering) and attr_strings is a list of
+        formatted 'name="value"' strings ready to be joined into a tag.
 
-        The first return value is a key for sorting the whole set in a
-        higher- level set. The second is a list of attribute strings.
+        Called twice per tag in handle_starttag:
+          - Pass 1 (final_pass=False): measure only, no error reporting
+          - Pass 2 (final_pass=True): report F8/F17/F6 errors
+
+        For template preprocessors, attributes may contain instruction
+        delimiters (e.g. {% if %}class="x"{% endif %}). These are split
+        into separate pieces and grouped for conditional rendering.
         """
+        # --- Phase 1: Normalize attribute names and split template parts ---
+        # Produces (name, value, quote_char) tuples with correct casing.
         all_attrs = []
         for incoming_attr in attrs:
             name, value = incoming_attr
 
+            # Template preprocessor: an attr name may contain instruction
+            # delimiters interleaved with real attr names. Split them apart
+            # so each piece can be processed independently.
             if self.preprocessor:
                 wraps = self.preprocessor.delimiters
                 while wraps[0] in name:
                     start_index = name.index(wraps[0])
                     end_index = name.index(wraps[1]) + 1
 
+                    # Text before the delimiter is a real attribute name
                     if start_index > 0:
                         split_name = name[:start_index]
                         split_name_lower = split_name.lower()
@@ -1229,14 +1243,19 @@ class HTMLLinter(HTMLParser):
                         quote_char = "'" if '"' in processed_name else '"'
                         all_attrs.append((processed_name, value, quote_char))
 
+                    # The delimiter itself is kept as-is (template instruction)
                     split_name = name[start_index:end_index]
 
                     quote_char = "'" if '"' in split_name else '"'
                     all_attrs.append((split_name, None, quote_char))
 
                     name = name[end_index:]
+
+            # Remaining text (or the whole name if no preprocessor)
             if name:
                 name_lower = name.lower()
+                # Apply correct casing: spec-correct for SVG/MathML, lowercase
+                # for HTML
                 if foreign_context:
                     correct_name = get_correct_attr_name(name_lower, foreign_context)
                     if not self.fix and name != correct_name and final_pass:
@@ -1250,6 +1269,10 @@ class HTMLLinter(HTMLParser):
                 quote_char = "'" if '"' in (value or "") else '"'
                 all_attrs.append((processed_name, value, quote_char))
 
+        # --- Phase 2: Group attributes and process values ---
+        # Template conditionals ({% if %}/{% endif %}) create groups of
+        # attrs that are rendered together. group_level tracks nesting
+        # depth of these conditional blocks.
         attr_keys_and_groups = []
 
         group_level = 0
@@ -1263,14 +1286,17 @@ class HTMLLinter(HTMLParser):
                 instruction_type = InstructionType(name[1])
 
             if instruction_type and instruction_type.is_group_start:
+                # Entering a conditional block (e.g. {% if %})
                 group_level += 1
                 if group_level == 1:
                     group = [name]
                     group_key: str | None = None
                     subgroup_attrs = []
                 else:
+                    # Nested conditional — collect into parent's subgroup
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_middle:
+                # Continuation (e.g. {% else %}) — finalize current subgroup
                 if group_level == 1:
                     subgroup_key, subgroup = self._make_attr_strings(
                         subgroup_attrs,
@@ -1287,6 +1313,7 @@ class HTMLLinter(HTMLParser):
                 else:
                     subgroup_attrs.append(attr)
             elif instruction_type and instruction_type.is_group_end:
+                # Closing a conditional block (e.g. {% endif %})
                 if group_level == 1:
                     subgroup_key, subgroup = self._make_attr_strings(
                         subgroup_attrs,
@@ -1304,10 +1331,14 @@ class HTMLLinter(HTMLParser):
                     subgroup_attrs.append(attr)
                 group_level -= 1
             elif group_level:
+                # Inside a conditional block — accumulate for subgroup
                 subgroup_attrs.append(attr)
             else:
+                # Regular attribute (not inside a template conditional)
                 attr_string = name
                 if value is not None:
+                    # Run each attribute processor (whitespace, reindent,
+                    # tailwind, etc.) to normalize the value
                     processed_value = value
                     for processor in self.attribute_processors:
                         processed_value, processing_errors = processor.process(
@@ -1328,6 +1359,7 @@ class HTMLLinter(HTMLParser):
                             for processing_error in processing_errors:
                                 self._handle_error(error=processing_error)
                         elif processed_value is None:
+                            # Processor says this attr value should be removed
                             if not fix_f17 and final_pass:
                                 self._handle_error("F17", attr=name)
                             break
@@ -1340,6 +1372,7 @@ class HTMLLinter(HTMLParser):
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 
+        # --- Phase 3: Sort attributes (F6) ---
         if self.fix:
             attr_keys_and_groups.sort(key=attr_sort)
         else:
@@ -1352,6 +1385,10 @@ class HTMLLinter(HTMLParser):
         except IndexError:
             sort_key = None
 
+        # --- Phase 4: Flatten template conditional groups ---
+        # Groups from template conditionals ({% if %}...{% endif %}) are
+        # rendered as multi-line blocks. Short ones that fit on one line
+        # get flattened for readability.
         attr_strings = []
         for _, group in attr_keys_and_groups:
             num_dynamic_tag_parts = 3
@@ -1366,13 +1403,12 @@ class HTMLLinter(HTMLParser):
             )
 
             if is_flattenable:
-                # strip one indent from every inner item, if present
                 inner_items = [item.removeprefix(self.indentation) for item in group[1:-1]]
                 flat = f"{group[0]}{' '.join(inner_items)}{group[-1]}"
                 attr_strings.append(flat)
 
             elif len(group) == num_empty_dyamic_context_attrs:
-                # Nothing between start/end tokens – just glue them together
+                # Empty conditional (e.g. {% if x %}{% endif %}) — no content
                 attr_strings.append("".join(group))
             else:
                 attr_strings.extend(group)
