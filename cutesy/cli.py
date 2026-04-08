@@ -68,7 +68,12 @@ import click
 from click.core import ParameterSource
 
 from . import HTMLLinter
-from .attribute_processors import BaseAttributeProcessor, attributes as attributes_processor
+from .attribute_processors import (
+    BaseAttributeProcessor,
+    alpine as alpine_processor,
+    amp as amp_processor,
+    attributes as attributes_processor,
+)
 from .attribute_processors.class_ordering import tailwind
 from .preprocessors import BasePreprocessor, django
 from .rules import Rule
@@ -215,6 +220,8 @@ def main(
     attr_processor_map: dict[str, type[BaseAttributeProcessor]] = {
         "tailwind": tailwind.AttributeProcessor,
         "attributes": attributes_processor.AttributeProcessor,
+        "alpine": alpine_processor.AttributeProcessor,
+        "amp": amp_processor.AttributeProcessor,
     }
 
     # Build preprocessor instance (only one supported for now)

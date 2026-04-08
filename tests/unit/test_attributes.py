@@ -118,6 +118,23 @@ class TestTokenAttributes:
         )
         assert result is None
 
+    def test_empty_sandbox_not_removed(self) -> None:
+        """Empty sandbox="" is NOT removed (it applies restrictions)."""
+        processor = AttributeProcessor()
+        result, _ = processor.process(
+            attr_name="sandbox",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=1,
+            tab_width=4,
+            line_length=MAX_CHARS_PER_LINE,
+            max_items_per_line=5,
+            bounding_character='"',
+            preprocessor=None,
+            attr_body="",
+        )
+        assert result == ""
+
     def test_rel_attribute_normalized(self) -> None:
         """Rel is a token attribute and gets normalized."""
         processor = AttributeProcessor()

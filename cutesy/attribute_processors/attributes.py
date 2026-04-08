@@ -26,8 +26,12 @@ from .whitespace import (
     has_inner_raw_bounding_quote,
 )
 
-# Token + code-content attributes are meaningless when empty
-_REMOVABLE_WHEN_EMPTY: frozenset[str] = TOKEN_ATTRIBUTES | CODE_CONTENT_ATTRIBUTES
+# Attributes that are truly no-ops when empty and safe to remove.
+# Notably excludes sandbox="" (applies all iframe restrictions) and
+# aria-describedby/aria-labelledby (may affect assistive technology).
+_REMOVABLE_WHEN_EMPTY: frozenset[str] = frozenset(
+    ("class", "rel", "accept", "accept-charset", "headers", "sizes", "allow", "style"),
+)
 
 
 class AttributeProcessor(BaseAttributeProcessor):
@@ -154,7 +158,9 @@ class AttributeProcessor(BaseAttributeProcessor):
         tokens = attr_body.split()
 
         if not tokens:
-            return None, self._errors
+            if attr_name in _REMOVABLE_WHEN_EMPTY:
+                return None, self._errors
+            return "", self._errors
 
         one_line = " ".join(tokens)
 
