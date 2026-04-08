@@ -438,18 +438,28 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
             if len(normalized) == 1:
                 return normalized[0]  # single string
 
-            # Join and fix spaces around delimiters
-            pieces = [str(normalized_item) for normalized_item in normalized]
-            candidate = " ".join(pieces)
-
+            # Join pieces, omitting spaces adjacent to pure instructions
+            # (single placeholders). Spaces between non-instruction items
+            # (class names, compound strings from inner recursion) are kept
+            # so that class names remain properly separated.
             assert self.preprocessor  # required for delimiters
             left_raw, right_raw = self.preprocessor.delimiters
-            left, right = re.escape(left_raw), re.escape(right_raw)
+            pieces = [str(normalized_item) for normalized_item in normalized]
 
-            # Remove space immediately after left delimiter and before right
-            # delimiter
-            candidate = re.sub(rf" {left}", left, candidate)
-            candidate = re.sub(rf"{right} ", right, candidate)
+            def _is_pure_instruction(piece: str) -> bool:
+                return (
+                    piece.startswith(left_raw)
+                    and piece.endswith(right_raw)
+                    and piece.count(left_raw) == 1
+                    and piece.count(right_raw) == 1
+                )
+
+            parts: list[str] = [pieces[0]]
+            for i in range(1, len(pieces)):
+                if not _is_pure_instruction(pieces[i - 1]) and not _is_pure_instruction(pieces[i]):
+                    parts.append(" ")
+                parts.append(pieces[i])
+            candidate = "".join(parts)
 
             # Allow flattening if it fits within length, even with block
             # instructions

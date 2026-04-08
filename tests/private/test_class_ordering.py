@@ -358,6 +358,31 @@ class TestBaseClassOrderingAttributeProcessor:
         assert "content" in result
         assert "b" in result
 
+    def test_flatten_stash_preserves_space_between_class_and_instruction(self) -> None:
+        """Spaces separating class names from compound instruction strings must be kept."""
+        processor = MockClassOrderingProcessor()
+        processor.max_length = 200
+
+        left, right = processor.preprocessor.delimiters
+        block_start = f"{left}a0------{right}"
+        if_start = f"{left}c1----{right}"
+        endif = f"{left}f2----{right}"
+        block_end = f"{left}b3------{right}"
+
+        # Inner compacted string (from a nested _flatten_stash call)
+        inner = f"{if_start}fixedLock{endif}"
+
+        stash: list[StashItem] = [block_start, "body", inner, block_end]
+        result = processor._flatten_stash(stash)
+
+        assert isinstance(result, str)
+        # The space between "body" and the conditional block must survive
+        assert f"body {if_start}" in result
+        # Adjacent pure instructions should have no space
+        assert f"{endif}{block_end}" in result
+        # Instruction adjacent to class name should have no space
+        assert f"{block_start}body" in result
+
     def test_extract_columns_and_lines_string(self) -> None:
         """Test _extract_columns_and_lines with string input."""
         processor = MockClassOrderingProcessor()
