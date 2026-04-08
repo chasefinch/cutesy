@@ -26,5 +26,9 @@ class BaseAttributeProcessor(ABC):
         attr_body: str,
         *,
         solo: bool = False,
-    ) -> tuple[str, list[Error]]:
-        """Replace the dynamic parts of some dynamic HTML with placeholders."""
+    ) -> tuple[str | None, list[Error]]:
+        """Process an attribute value.
+
+        Return the processed body string (or None to signal the
+        attribute should be removed entirely) and a list of errors.
+        """

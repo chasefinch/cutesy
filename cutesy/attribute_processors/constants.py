@@ -70,3 +70,5 @@ URI_ATTRIBUTES = frozenset(
 )
 
 JS_ATTRIBUTE_PREFIXES = frozenset(("on",))
+
+CODE_CONTENT_ATTRIBUTES = frozenset(("style",))

@@ -25,9 +25,9 @@ CONFIGURATION
     tab_width = 4  # OPTIONAL (default: 4, used for line length even with tabs)
     max_items_per_line = 3  # OPTIONAL (default: 5 items/attrs)
     line_length = 88  # OPTIONAL (default: 99 by wrapping tags when possible)
-      - NOTE: The internal attribute processors "whitespace" and "reindent" are
-        always enabled by default (in that order). Disable both with
-        --preserve-attr-whitespace.
+      - NOTE: The internal "attributes" processor is always enabled by default.
+        It handles attributes based on their type (token lists, code content,
+        numeric, etc.). Disable with --preserve-attr-whitespace.
 
 CLI HIGHLIGHTS
 --------------
@@ -40,7 +40,7 @@ CLI HIGHLIGHTS
         --extras=[]
 
   --preserve-attr-whitespace
-      Disables the built-in 'whitespace' and 'reindent' processors.
+      Disables the built-in 'attributes' processor.
 
 Examples
 --------
@@ -68,7 +68,7 @@ import click
 from click.core import ParameterSource
 
 from . import HTMLLinter
-from .attribute_processors import BaseAttributeProcessor, reindent, whitespace
+from .attribute_processors import BaseAttributeProcessor, attributes as attributes_processor
 from .attribute_processors.class_ordering import tailwind
 from .preprocessors import BasePreprocessor, django
 from .rules import Rule
@@ -107,7 +107,7 @@ from .types import DoctypeError, IndentationType, StructuralError
 @click.option(
     "--preserve-attr-whitespace",
     is_flag=True,
-    help="Disable the default 'whitespace' and 'reindent' attribute processors.",
+    help="Disable the default 'attributes' attribute processor.",
 )
 @click.option(
     "--ignore",
@@ -214,8 +214,7 @@ def main(
     }
     attr_processor_map: dict[str, type[BaseAttributeProcessor]] = {
         "tailwind": tailwind.AttributeProcessor,
-        "reindent": reindent.AttributeProcessor,
-        "whitespace": whitespace.AttributeProcessor,
+        "attributes": attributes_processor.AttributeProcessor,
     }
 
     # Build preprocessor instance (only one supported for now)
@@ -226,7 +225,7 @@ def main(
 
     # Compose attribute processor order
     final_attr_processor_names: list[str] = []
-    default_attr_processors = ["whitespace", "reindent"]
+    default_attr_processors = ["attributes"]
     if not preserve_attr_whitespace:
         final_attr_processor_names.extend(default_attr_processors)
     final_attr_processor_names.extend(

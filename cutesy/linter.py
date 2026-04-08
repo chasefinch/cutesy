@@ -1181,8 +1181,16 @@ class HTMLLinter(HTMLParser):
                         if processing_errors:
                             for processing_error in processing_errors:
                                 self._handle_error(error=processing_error)
+                        elif processed_value is None:
+                            if not fix_f17 and final_pass:
+                                self._handle_error("F17", attr=name)
+                            break
                         elif not fix_f17 and value != processed_value and final_pass:
                             self._handle_error("F17", attr=name)
+                    if processed_value is None and self.fix:
+                        continue
+                    if processed_value is None:
+                        processed_value = value
                     attr_string = f"{attr_string}={quote_char}{processed_value}{quote_char}"
                 attr_keys_and_groups.append((name, [attr_string]))
 
