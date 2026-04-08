@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+	<style>
+		body {
+			text-align: center;
+			background-color: #ffffff;
+		}
+
+		a {
+			color: #02b1e8;
+		}
+	</style>
+	<style type="text/css">
+		@font-face {
+			font-family: "SofiaPro";
+			font-weight: 400;
+		}
+	</style>
+</head>
+<body>
+	<script type="module">
+		var initialURL = "https://www.example.com";
+		const currentURL = new URL(window.location);
+		if (currentURL.searchParams.get("locale")) {
+			window.location = initialURL;
+		}
+	</script>
+	<div>Hello</div>
+</body>
+</html>

@@ -206,6 +206,11 @@ class HTMLLinter(HTMLParser):
         #   str   = pending (lint mode, original whitespace to compare)
         self._expected_indentation: str | Literal[True] | None = ""
 
+        # Pre-scanned minimum whitespace prefix for CDATA (script/style)
+        # content. Computed once when entering CDATA mode so that all
+        # handle_data chunks (split by template tags) share the same base.
+        self._cdata_common_prefix: str | None = None
+
         # For detecting blank lines adjacent to opening/closing tags
         self._last_data: str | None = None
         self._prev_indentation_level = 0
@@ -595,10 +600,7 @@ class HTMLLinter(HTMLParser):
                     line_offset = self._last_data[: match.start()].count("\n")
                     self._handle_error("F4", line_offset=line_offset, column=0)
 
-        # Emit pending indentation (skip for CDATA elements like script/style,
-        # which manage their own whitespace)
-        if tag != self.cdata_elem:
-            self._reconcile_indentation()
+        self._reconcile_indentation()
 
         if self.fix:
             self._process(f"</{tag}>")
@@ -619,10 +621,15 @@ class HTMLLinter(HTMLParser):
         self._handle_encountered_data()
         self._reconcile_indentation()
 
-        # Inside <script>/<style> or freeform template blocks: emit verbatim
-        if self.cdata_elem or self._freeform_level:
+        # Inside freeform template blocks: emit verbatim
+        if self._freeform_level:
             if self.fix:
                 self._process(html_data)
+            return
+
+        # Inside <script>/<style>: rebase indentation, skip other passes
+        if self.cdata_elem:
+            self._process_cdata_content(html_data)
             return
 
         # --- Pass 1: blank lines after opening tags ---
@@ -904,6 +911,26 @@ class HTMLLinter(HTMLParser):
         cursor = 0
         size = len(rawdata)
         while cursor < size:
+            # Inside <script>/<style>: skip straight to the closing tag,
+            # emitting the entire content (including any preprocessor
+            # placeholders) as one handle_data call so indentation
+            # rebasing sees complete lines.
+            if self.cdata_elem:
+                close_pos = rawdata.lower().find(
+                    f"</{self.cdata_elem}>",
+                    cursor,
+                )
+                if close_pos < 0:
+                    self.handle_data(rawdata[cursor:size])
+                    cursor = self.updatepos(cursor, size)
+                    break
+                if cursor < close_pos:
+                    self.handle_data(rawdata[cursor:close_pos])
+                cursor = self.updatepos(cursor, close_pos)
+                cursor2 = self.parse_endtag(cursor)
+                cursor = self.updatepos(cursor, cursor2)
+                continue
+
             match = interesting.search(rawdata, cursor)  # < or &, or a dynamic tag
             cursor2 = match.start() if match else size
             if cursor < cursor2:
@@ -1091,6 +1118,7 @@ class HTMLLinter(HTMLParser):
             tag = tag.lower()
             if tag in self.CDATA_CONTENT_ELEMENTS:
                 self.set_cdata_mode(tag)
+                self._scan_cdata_min_prefix(end_cursor)
 
         return end_cursor
 
@@ -1179,6 +1207,96 @@ class HTMLLinter(HTMLParser):
     def _handle_encountered_data(self) -> None:
         """Handle encountered data."""
         self._mode = self._mode or Mode.UNSTRUCTURED
+
+    def _scan_cdata_min_prefix(self, start_pos: int) -> None:
+        """Pre-scan CDATA content to find the minimum whitespace prefix.
+
+        Called once when entering CDATA mode so that every handle_data
+        chunk (which may be split by template-tag placeholders) shares
+        the same base indentation for rebasing.
+        """
+        rawdata = self.rawdata
+        tag = self.cdata_elem
+
+        # Find the closing tag
+        close_pos = rawdata.lower().find(f"</{tag}>", start_pos)
+        if close_pos < 0:
+            self._cdata_common_prefix = None
+            return
+
+        cdata_content = rawdata[start_pos:close_pos]
+
+        min_prefix: str | None = None
+        for line in cdata_content.split("\n")[1:]:
+            stripped = line.lstrip(" \t")
+            if not stripped:
+                continue
+            prefix = line[: len(line) - len(stripped)]
+            if min_prefix is None or len(prefix) < len(min_prefix):
+                min_prefix = prefix
+
+        self._cdata_common_prefix = min_prefix
+
+    def _process_cdata_content(self, html_data: str) -> None:
+        """Process content inside <script>/<style> elements.
+
+        Rebases indentation to match the HTML hierarchy while preserving
+        the relative indentation structure of the CSS/JS content. Uses
+        the pre-scanned _cdata_common_prefix so all chunks agree on the
+        same base indentation.
+        """
+        indentation = self.indentation * self._indentation_level
+        common = self._cdata_common_prefix
+
+        # --- Indentation rebasing (F3) ---
+        lines = html_data.split("\n")
+
+        if common is None:
+            new_html_data = html_data
+        else:
+            # Rebuild with rebased indentation
+            new_lines = [lines[0]]
+            for line in lines[1:]:
+                if line.strip() and line.startswith(common):
+                    new_lines.append(f"{indentation}{line[len(common) :]}")
+                elif line.strip():
+                    new_lines.append(f"{indentation}{line.lstrip()}")
+                else:
+                    new_lines.append("")
+
+            new_html_data = "\n".join(new_lines)
+
+        # Don't indent blank lines
+        if indentation:
+            blank_line = f"\n{indentation}\n"
+            while blank_line in new_html_data:
+                new_html_data = new_html_data.replace(blank_line, "\n\n")
+
+        # Handle trailing indentation — strip it and mark as pending so
+        # _reconcile_indentation can emit the correct level for the
+        # closing tag
+        if new_html_data.endswith(f"\n{indentation}"):
+            if indentation:
+                new_html_data = new_html_data[: -len(indentation)]
+            self._expected_indentation = True
+        elif new_html_data.endswith("\n"):
+            self._expected_indentation = True
+
+        if self.fix:
+            self._process(new_html_data)
+        else:
+            # In lint mode, diff line-by-line against the ideal version
+            html_lines = html_data.split("\n")
+            new_html_lines = new_html_data.split("\n")
+            for i, line in enumerate(new_html_lines):
+                if i == len(new_html_lines) - 1 and not line:
+                    # Last line is blank — stash original for reconcile
+                    if i < len(html_lines):
+                        self._expected_indentation = html_lines[i]
+                    break
+
+                if i < len(html_lines) and line != html_lines[i]:
+                    self._handle_error("F3", line_offset=i, column=0)
 
     def _reconcile_indentation(self, adjustment: int = 0) -> None:
         """Emit or check pending indentation.
