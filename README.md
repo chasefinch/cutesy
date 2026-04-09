@@ -280,7 +280,7 @@ Cutesy is great for:
 - **Attribute-heavy patterns** like AlpineJS and HTMX, with smart attribute reordering and formatting
 - **Component frameworks** like Svelte and Vue (`.svelte`, `.vue` files) with HTMLX-style syntax
 - **Speed-focused static analysis for HTML** — fast, with additional linting and best-practice checks beyond formatting
-- **Pluggable attribute processing** — hooks for custom attribute ordering, validation, and transformation
+- **Pluggability** — better hooks for custom attribute ordering, validation, and transformation
 - **AI code validation** — an all-in validation strategy to maximize code quality and catch errors, which agents can use to validate and update their own output
 
 ### Not for
