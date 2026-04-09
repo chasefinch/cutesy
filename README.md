@@ -285,8 +285,8 @@ Cutesy is great for:
 
 ### Not for
 
-- **JSX / TSX files** — Cutesy formats HTML templates, not JavaScript files. Use your JS toolchain for those.
-- **Standalone JS / CSS files** — Cutesy's 
+- **JSX / TSX files** — Cutesy formats HTML templates, not JavaScript files.
+- **Standalone JS / CSS files** — Cutesy’s just for HTML, the templates that generate it, and the styles & scripts inside it. Use a CSS/JS toolchain for external files. Avoid JS or CSS “templates” which accept server instructions; Keep this in your HTML.
 
 **Why not Prettier, Stylelint & ESLint?** Cutesy uses all three under the hood for formatting scripts & styles, and it will even respect your configuration for each. Cutesy provides access to these tools (as well as Typescript and automated testing) for server-rendered HTML templates, for <style> and <script> blocks inside of HTML documents, and for styles & scripts inside of HTML attributes.
 
