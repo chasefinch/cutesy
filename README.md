@@ -29,6 +29,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 - [Framework Support](#framework-support)
 - [Examples](#examples)
 - [Documentation](#documentation)
+- [When to Use Cutesy](#when-to-use-cutesy)
 - [Benefits](#benefits)
 - [Badge](#badge)
 - [License](#license)
@@ -270,6 +271,26 @@ cutesy "src/components/*.html" --fix --extras=tailwind
 | **[Rules Reference](docs/rules.md)** | Complete list of all rules with examples and fixes |
 | **[Development Guide](docs/development.md)** | Contributing, testing, development setup, Rust extensions |
 | **[Distribution Guide](docs/distribution.md)** | PyPI publishing, Homebrew formula, package management |
+
+## When to Use Cutesy
+
+Cutesy is great for:
+
+- **Server-rendered HTML templates** with Django, Jinja2, ERB, Liquid, and other template engines
+- **Attribute-heavy patterns** like AlpineJS and HTMX, with smart attribute reordering and formatting
+- **Component frameworks** like Svelte and Vue (`.svelte`, `.vue` files) with HTMLX-style syntax
+- **Speed-focused static analysis for HTML** — fast, with additional linting and best-practice checks beyond formatting
+- **Pluggable attribute processing** — hooks for custom attribute ordering, validation, and transformation
+- **AI code validation** — an all-in validation strategy to maximize code quality and catch errors, which agents can use to validate and update their own output
+
+### Not for
+
+- **JSX / TSX files** — Cutesy formats HTML templates, not JavaScript files. Use your JS toolchain for those.
+- **Standalone JS / CSS files** — Cutesy's 
+
+**Why not Prettier, Stylelint & ESLint?** Cutesy uses all three under the hood for formatting scripts & styles, and it will even respect your configuration for each. Cutesy provides access to these tools (as well as Typescript and automated testing) for server-rendered HTML templates, for <style> and <script> blocks inside of HTML documents, and for styles & scripts inside of HTML attributes.
+
+Aside from that, Cutesy enforces an opinionated style for the HTML itself, along with any template-language tags, and it includes additional post-format analysis such as HTML & framework best practices. (Think image sizing, load order, template tag formatting, Tailwind theme setup, etc.)
 
 ## Benefits
 

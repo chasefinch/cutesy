@@ -20,7 +20,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22
         env:
-          CIBW_BUILD: cp311-* cp312-* cp313-*
+          CIBW_BUILD: cp312-* cp313-* cp314-*
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ENVIRONMENT: CUTESY_USE_MYPYC=1 CUTESY_USE_RUST=0
 
