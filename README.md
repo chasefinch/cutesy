@@ -14,7 +14,7 @@ A cute little HTML linter, until y̵ou ma̴k̵e i̴͌ͅt̴̖̀ a̵̤̤͕͐̅͘͘
 
 - **Auto-fix**: Automatically corrects most formatting issues
 - **Configurable**: Extensive configuration options for your project's needs
-- **Fast**: Rust-accelerated core for high performance
+- **Fast**: Rust core for high performance
 
 ## Status
 

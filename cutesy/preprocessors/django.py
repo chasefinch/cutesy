@@ -70,6 +70,25 @@ _BUILTIN_EXPECTED_CLOSING = MappingProxyType(
     },
 )
 
+# Continuation instructions → set of valid opening instructions
+_BUILTIN_CONTINUATION_OPENERS = MappingProxyType(
+    {
+        "elif": frozenset(("if",)),
+        "else": frozenset(("if",)),
+        "empty": frozenset(("for",)),
+        "plural": frozenset(("blocktrans",)),
+    },
+)
+
+# Non-preferred aliases → preferred form. Fatal error when encountered.
+_BUILTIN_ALIASES = MappingProxyType(
+    {
+        "blocktranslate": "blocktrans",
+        "endblocktranslate": "endblocktrans",
+        "translate": "trans",
+    },
+)
+
 
 class Preprocessor(BasePreprocessor):
     """A preprocessor for Django templates."""
@@ -88,6 +107,8 @@ class Preprocessor(BasePreprocessor):
     }
 
     expected_closing_instructions: ClassVar[Mapping[str, str]] = _BUILTIN_EXPECTED_CLOSING
+    continuation_openers: ClassVar[Mapping[str, frozenset[str]]] = _BUILTIN_CONTINUATION_OPENERS
+    instruction_aliases: ClassVar[Mapping[str, str]] = _BUILTIN_ALIASES
 
     def __init__(self, *, custom_tags: dict[str, list[list[str]]] | None = None) -> None:
         """Initialize with optional custom block-level tags.

@@ -73,6 +73,12 @@ class BasePreprocessor(ABC):
     closing_tag_string_map: ClassVar[dict[str, str]]
     expected_closing_instructions: ClassVar[Mapping[str, str]]
 
+    # Continuation tag → set of valid opener tags (tag-name pairing)
+    continuation_openers: ClassVar[Mapping[str, frozenset[str]]] = {}
+
+    # Non-preferred alias → preferred tag name (fatal when encountered)
+    instruction_aliases: ClassVar[Mapping[str, str]] = {}
+
     def reset(self, dynamic_html: str, *, fix: bool = False) -> None:
         """Prepare the preprocessor for processing."""
         self._dynamic_html = dynamic_html
@@ -289,6 +295,12 @@ class BasePreprocessor(ABC):
 
         end_cursor = cursor2 + len_end
 
+        # Reject non-preferred aliases (e.g. blocktranslate → blocktrans)
+        preferred = self.instruction_aliases.get(instruction_string)
+        if preferred:
+            preferred_tag = f"{braces[0]} {preferred} {braces[1]}"
+            raise self.make_fatal_error("P7", tag=preferred_tag)
+
         # Ensure balanced tags
         tag_string = f"{braces[0]} {instruction_string} {braces[1]}"
         hanging_closing_tag_error = self.make_fatal_error("P3", tag=tag_string)
@@ -322,19 +334,27 @@ class BasePreprocessor(ABC):
         if instruction_type.is_group_start:
             self._block_instruction_stack.append((instruction_type, instruction_string, braces))
 
-        # Handle chained blocks
+        # Handle chained blocks (e.g. {% elif %}, {% else %}, {% plural %})
         if instruction_type.is_group_middle:
             if not self._block_instruction_stack:
                 raise hanging_closing_tag_error
-            last_instruction_type = self._block_instruction_stack[-1][0]
+            last_opener_name = self._block_instruction_stack[-1][1]
 
-            expected_openings = {
-                InstructionType.MID_CONDITIONAL: InstructionType.CONDITIONAL,
-                InstructionType.LAST_CONDITIONAL: InstructionType.CONDITIONAL,
-            }
-
-            if last_instruction_type != expected_openings[instruction_type]:
+            # Tag-name pairing: check the continuation is valid for
+            # the specific opener, not just the InstructionType category
+            valid_openers = self.continuation_openers.get(instruction_string)
+            if valid_openers and last_opener_name not in valid_openers:
                 raise hanging_closing_tag_error
+
+            # Fallback: type-based check for tags without explicit pairing
+            if not valid_openers:
+                last_instruction_type = self._block_instruction_stack[-1][0]
+                type_openings = {
+                    InstructionType.MID_CONDITIONAL: InstructionType.CONDITIONAL,
+                    InstructionType.LAST_CONDITIONAL: InstructionType.CONDITIONAL,
+                }
+                if last_instruction_type != type_openings.get(instruction_type):
+                    raise hanging_closing_tag_error
 
         # End block-type instructions
         if instruction_type.is_group_end:
@@ -343,17 +363,25 @@ class BasePreprocessor(ABC):
             except IndexError as error:
                 raise hanging_closing_tag_error from error
 
-            last_instruction_type = last_instruction_info[0]
+            last_opener_name = last_instruction_info[1]
 
-            expected_openings = {
-                InstructionType.END_PARTIAL: InstructionType.PARTIAL,
-                InstructionType.END_CONDITIONAL: InstructionType.CONDITIONAL,
-                InstructionType.END_REPEATABLE: InstructionType.REPEATABLE,
-                InstructionType.END_FREEFORM: InstructionType.FREEFORM,
-            }
-
-            if last_instruction_type != expected_openings[instruction_type]:
+            # Tag-name pairing via expected_closing_instructions:
+            # check that this end tag is the correct closer for the opener
+            expected_closer = self.expected_closing_instructions.get(last_opener_name)
+            if expected_closer and instruction_string != expected_closer:
                 raise hanging_closing_tag_error
+
+            # Fallback: type-based check for tags without explicit pairing
+            if not expected_closer:
+                last_instruction_type = last_instruction_info[0]
+                type_openings = {
+                    InstructionType.END_PARTIAL: InstructionType.PARTIAL,
+                    InstructionType.END_CONDITIONAL: InstructionType.CONDITIONAL,
+                    InstructionType.END_REPEATABLE: InstructionType.REPEATABLE,
+                    InstructionType.END_FREEFORM: InstructionType.FREEFORM,
+                }
+                if last_instruction_type != type_openings.get(instruction_type):
+                    raise hanging_closing_tag_error
 
         # Handle ignored instructions
         if instruction_type == InstructionType.IGNORED:

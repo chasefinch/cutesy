@@ -20,6 +20,7 @@ Rule("P3", "{tag} doesn’t have a matching opening instruction", structural=Tru
 Rule("P4", "Malformed processing instruction", structural=True)
 Rule("P5", "Extra whitespace in {tag}", structural=False)
 Rule("P6", "Expected padding in {tag}", structural=False)
+Rule("P7", "Use {tag} instead", structural=True)
 
 # Document structure rules
 Rule("D1", "Expected doctype before other HTML elements", structural=False)
