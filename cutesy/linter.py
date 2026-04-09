@@ -916,10 +916,15 @@ class HTMLLinter(HTMLParser):
             # placeholders) as one handle_data call so indentation
             # rebasing sees complete lines.
             if self.cdata_elem:
-                close_pos = rawdata.lower().find(
-                    f"</{self.cdata_elem}>",
-                    cursor,
+                # Use a case-insensitive regex instead of rawdata.lower()
+                # because str.lower() can change string length with certain
+                # Unicode characters (e.g. İ → i̇), corrupting positions.
+                close_match = re.search(
+                    rf"</{re.escape(self.cdata_elem)}\s*>",
+                    rawdata[cursor:],
+                    re.IGNORECASE,
                 )
+                close_pos = cursor + close_match.start() if close_match else -1
                 if close_pos < 0:
                     self.handle_data(rawdata[cursor:size])
                     cursor = self.updatepos(cursor, size)
@@ -1217,14 +1222,21 @@ class HTMLLinter(HTMLParser):
         """
         rawdata = self.rawdata
         tag = self.cdata_elem
+        assert tag is not None
 
-        # Find the closing tag
-        close_pos = rawdata.lower().find(f"</{tag}>", start_pos)
-        if close_pos < 0:
+        # Find the closing tag using a case-insensitive regex instead
+        # of rawdata.lower() — str.lower() can change string length with
+        # certain Unicode characters (e.g. İ → i̇), corrupting positions.
+        close_match = re.search(
+            rf"</{re.escape(tag)}\s*>",
+            rawdata[start_pos:],
+            re.IGNORECASE,
+        )
+        if not close_match:
             self._cdata_common_prefix = None
             return
 
-        cdata_content = rawdata[start_pos:close_pos]
+        cdata_content = rawdata[start_pos : start_pos + close_match.start()]
 
         min_prefix: str | None = None
         for line in cdata_content.split("\n")[1:]:
