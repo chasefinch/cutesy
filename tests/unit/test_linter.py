@@ -582,6 +582,39 @@ asdf
         assert isinstance(result, str)
         assert isinstance(errors, list)
 
+    def test_break_for_inline_tag_preserves_closing_bracket(self) -> None:
+        """Regression: _break_for_inline_tag must not strip '>' from prev tag.
+
+        When two adjacent tags both need attribute wrapping and there is no
+        whitespace between them (e.g. <a ...><img ...>), the line-break
+        logic must not remove the closing '>' of the first tag.
+        """
+        short_line_length = 40
+        linter = HTMLLinter(fix=True, line_length=short_line_length)
+
+        html = (
+            '<a id="footer-icon" href="https://example.com">'
+            '<img width="40" src="icon.png" alt="Icon" />'
+            "</a>"
+        )
+        result, _ = linter.lint(html)
+
+        # The <a> opening tag must close with '>' before <img> starts
+        before_img = result.split("<img")[0]
+        assert before_img.rstrip().endswith(">"), (
+            f"Opening <a> tag lost its closing '>': ...{before_img[-short_line_length:]}"
+        )
+
+    def test_break_for_inline_tag_after_end_tag(self) -> None:
+        """Regression: '>' on closing tag must survive line break."""
+        short_line_length = 40
+        linter = HTMLLinter(fix=True, line_length=short_line_length)
+
+        html = '<p>text</p><div class="container" data-role="main" id="content">inner</div>'
+        result, _ = linter.lint(html)
+
+        assert "</p>" in result, "Closing </p> must remain intact"
+
     def test_line_number_tracking_multiline_html(self) -> None:
         """Test that line numbers are correctly tracked in multi-line HTML."""
         linter = HTMLLinter(fix=False)
@@ -708,6 +741,85 @@ asdf
         if id_errors:
             expected_line = 1
             assert id_errors[0].line == expected_line, "ID error should be on line 2"
+
+    # --- Regression tests for recent fixes ---
+
+    def test_unicode_cdata_closing_tag_not_corrupted(self) -> None:
+        """Regression: Unicode chars that change length under str.lower().
+
+        Turkish İ (U+0130) lowercases to 'i̇' (2 chars), which previously
+        corrupted position tracking when searching for </style> or </script>.
+        """
+        linter = HTMLLinter(fix=True)
+
+        # İ inside a <style> block — str.lower() would make it longer
+        html = "<style>\n\t/* İstanbul */\n\tbody { color: red; }\n</style>"
+        result, _ = linter.lint(html)
+
+        # Must close cleanly — no truncation or corruption
+        assert "</style>" in result
+        assert "İstanbul" in result
+        assert "color: red" in result
+
+    def test_unicode_script_cdata_not_corrupted(self) -> None:
+        """Regression: same Unicode position bug in <script> blocks."""
+        linter = HTMLLinter(fix=True)
+
+        html = '<script>\n\tvar city = "İstanbul";\n\tconsole.log(city);\n</script>'
+        result, _ = linter.lint(html)
+
+        assert "</script>" in result
+        assert "İstanbul" in result
+        assert "console.log" in result
+
+    def test_cdata_indentation_rebasing(self) -> None:
+        """Regression: CDATA indentation is rebased to HTML hierarchy."""
+        linter = HTMLLinter(fix=True)
+
+        # Style block with excess indent should be rebased to match hierarchy
+        html = (
+            "<head>\n"
+            "\t<style>\n"
+            "\t\t\tbody { margin: 0; }\n"
+            "\t\t\ta { color: blue; }\n"
+            "\t</style>\n"
+            "</head>"
+        )
+        result, _ = linter.lint(html)
+
+        # Content lines should be indented at 2 tabs (head > style > content)
+        lines = result.split("\n")
+        body_line = next(line for line in lines if "body" in line)
+        assert body_line.startswith("\t\t"), f"Expected 2-tab indent, got: {body_line!r}"
+
+    def test_cdata_with_template_tags_stays_intact(self) -> None:
+        """Regression: template tags inside CDATA don't break rebasing."""
+        preprocessor = django.Preprocessor()
+        linter = HTMLLinter(fix=True, preprocessor=preprocessor)
+
+        html = "<head>\n\t<style>\n\t\t.item { color: {{ primary_color }}; }\n\t</style>\n</head>"
+        result, _ = linter.lint(html)
+
+        assert "</style>" in result
+        assert "{{ primary_color }}" in result
+
+    def test_preprocessor_comment_stays_with_attribute_on_sort(self) -> None:
+        """Regression: preprocessor comments travel with next attr on sort."""
+        preprocessor = django.Preprocessor()
+        linter = HTMLLinter(fix=True, preprocessor=preprocessor)
+
+        # "id" sorts before "src" per attr_sort; the comment before id=
+        # should move with id= to the top.
+        html = '<img\n\tsrc="icon.png"\n\t{# identifier #}\n\tid="logo"\n>'
+        result, _ = linter.lint(html)
+
+        # id= should sort before src=, and the comment should precede id=
+        id_pos = result.find("id=")
+        src_pos = result.find("src=")
+        comment_pos = result.find("{# identifier #}")
+
+        assert id_pos < src_pos, "id= should sort before src="
+        assert comment_pos < id_pos, "Comment should stay attached before id="
 
 
 class TestForeignContent:

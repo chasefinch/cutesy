@@ -1205,8 +1205,9 @@ class HTMLLinter(HTMLParser):
         if not self._result or not self._result[-1].endswith((" ", ">")):
             return False
 
-        self._result[-1] = self._result[-1][:-1]
-        self._column -= 1
+        if self._result[-1].endswith(" "):
+            self._result[-1] = self._result[-1][:-1]
+            self._column -= 1
         return True
 
     def _handle_encountered_data(self) -> None:

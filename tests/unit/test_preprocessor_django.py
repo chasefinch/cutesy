@@ -624,3 +624,71 @@ class TestCustomTags:
         linter = HTMLLinter(fix=False, preprocessor=preprocessor)
         with pytest.raises(StructuralError):
             linter.lint(html)
+
+    def test_blocktranslate_alias_raises_p7(self) -> None:
+        """Regression: non-preferred alias blocktranslate raises P7."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=False, preprocessor=preprocessor)
+        html = "<div>{% blocktranslate %}Hello{% endblocktranslate %}</div>"
+
+        with pytest.raises(StructuralError) as exc_info:
+            linter.lint(html)
+        assert exc_info.value.errors[0].rule.code == "P7"
+
+    def test_translate_alias_raises_p7(self) -> None:
+        """Regression: non-preferred alias translate raises P7."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=False, preprocessor=preprocessor)
+        html = "<div>{% translate 'Hello' %}</div>"
+
+        with pytest.raises(StructuralError) as exc_info:
+            linter.lint(html)
+        assert exc_info.value.errors[0].rule.code == "P7"
+
+    def test_preferred_blocktrans_does_not_raise(self) -> None:
+        """Regression: preferred form blocktrans must not raise P7."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=True, preprocessor=preprocessor)
+        html = "<div>{% blocktrans %}Hello{% endblocktrans %}</div>"
+
+        result, errors = linter.lint(html)
+        p7_errors = [error for error in errors if error.rule.code == "P7"]
+
+        assert not p7_errors
+        assert "{% blocktrans %}" in result
+
+    def test_empty_after_for_not_after_if(self) -> None:
+        """Regression: {% empty %} only valid inside {% for %}."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=False, preprocessor=preprocessor)
+        html = "<div>{% if x %}<p>yes</p>{% empty %}<p>no</p>{% endif %}</div>"
+
+        with pytest.raises(StructuralError):
+            linter.lint(html)
+
+    def test_empty_valid_inside_for(self) -> None:
+        """Regression: {% empty %} is valid inside {% for %}."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=True, preprocessor=preprocessor)
+        html = (
+            "<ul>\n"
+            "{% for item in items %}\n"
+            "\t<li>{{ item }}</li>\n"
+            "{% empty %}\n"
+            "\t<li>No items</li>\n"
+            "{% endfor %}\n"
+            "</ul>"
+        )
+
+        result, _ = linter.lint(html)
+        assert "{% empty %}" in result
+        assert "{% endfor %}" in result
+
+    def test_plural_only_valid_inside_blocktrans(self) -> None:
+        """Regression: {% plural %} is only valid inside {% blocktrans %}."""
+        preprocessor = Preprocessor()
+        linter = HTMLLinter(fix=False, preprocessor=preprocessor)
+        html = "<div>{% if x %}<p>one</p>{% plural %}<p>many</p>{% endif %}</div>"
+
+        with pytest.raises(StructuralError):
+            linter.lint(html)
