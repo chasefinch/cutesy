@@ -137,6 +137,154 @@ class TestExpandClassNames:
         assert result == expected
 
 
+class TestExpandClassNamesStructuralTypeChars:
+    """Test expand_class_names with structural_type_chars parameter."""
+
+    # Use single-char delimiters like the real preprocessor.
+    left = "«"  # noqa: WPS115
+    right = "»"  # noqa: WPS115
+
+    # Block instruction type chars (from InstructionType):
+    # c=CONDITIONAL, d=MID_CONDITIONAL, e=LAST_CONDITIONAL, f=END_CONDITIONAL
+    # a=PARTIAL, b=END_PARTIAL, g=REPEATABLE, h=END_REPEATABLE
+    structural = frozenset("abcdefgh")  # noqa: WPS115
+
+    def test_value_placeholder_stays_merged_with_prefix(self) -> None:
+        """VALUE placeholder adjacent to CSS text stays as one token."""
+        class_names = ["class--«i0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["class--«i0--»"]
+
+    def test_value_placeholder_stays_merged_with_suffix(self) -> None:
+        """VALUE placeholder followed by adjacent CSS text stays merged."""
+        class_names = ["«i0--»--suffix"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«i0--»--suffix"]
+
+    def test_value_placeholder_between_text(self) -> None:
+        """VALUE placeholder sandwiched between text stays merged."""
+        class_names = ["prefix-«i0--»-suffix"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["prefix-«i0--»-suffix"]
+
+    def test_block_placeholders_still_split(self) -> None:
+        """Block (structural) placeholders are still split out."""
+        class_names = ["«c0--»class-name«f0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«c0--»", "class-name", "«f0--»"]
+
+    def test_value_merged_but_block_split(self) -> None:
+        """VALUE stays merged while adjacent block placeholders split."""
+        # Simulates: {% if cond %}bgImg--{{ slug }}{% endif %}
+        class_names = ["«c0------»bgImg--«i0--»«f0----»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«c0------»", "bgImg--«i0--»", "«f0----»"]
+
+    def test_multiple_values_merged(self) -> None:
+        """Multiple adjacent VALUE placeholders stay merged together."""
+        class_names = ["«i0--»«i1--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«i0--»«i1--»"]
+
+    def test_standalone_value_placeholder(self) -> None:
+        """Standalone VALUE placeholder (no adjacent text) still emitted."""
+        class_names = ["«i0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«i0--»"]
+
+    def test_no_structural_types_merges_everything(self) -> None:
+        """Empty structural set merges all delimited parts with text."""
+        class_names = ["«c0--»class-name«f0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=frozenset(),
+        )
+        assert result == ["«c0--»class-name«f0--»"]
+
+    def test_none_structural_types_splits_everything(self) -> None:
+        """None structural_type_chars uses original split-all behaviour."""
+        class_names = ["class--«i0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=None,
+        )
+        # Original behaviour: VALUE placeholder is split from text
+        assert result == ["class--", "«i0--»"]
+
+    def test_plain_class_names_unaffected(self) -> None:
+        """Plain class names without delimiters pass through unchanged."""
+        class_names = ["btn", "shadow", "primary"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["btn", "shadow", "primary"]
+
+    def test_block_with_continuation(self) -> None:
+        """Block with continuation (else) splits correctly."""
+        # {% if %}class-a{% else %}class-b{% endif %}
+        class_names = ["«c0--»class-a«e0--»class-b«f0--»"]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["«c0--»", "class-a", "«e0--»", "class-b", "«f0--»"]
+
+    def test_whitespace_around_value_stripped(self) -> None:
+        """Whitespace around merged value segments is stripped."""
+        class_names = [" class--«i0--» "]
+        result = expand_class_names(
+            class_names,
+            self.left,
+            self.right,
+            structural_type_chars=self.structural,
+        )
+        assert result == ["class--«i0--»"]
+
+
 class TestBaseClassOrderingAttributeProcessor:
     """Test BaseClassOrderingAttributeProcessor functionality."""
 

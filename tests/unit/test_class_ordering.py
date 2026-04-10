@@ -617,6 +617,75 @@ class TestIntegration:
         assert "{%if" in result[0]
         assert "{%endif%}" in result[0]
 
+    def test_value_placeholder_stays_merged_with_class_prefix(self) -> None:
+        """CSS class concatenated with a VALUE placeholder stays as one token.
+
+        Regression test: ``class--{{ slug }}`` must not be split into
+        ``class--`` and ``{{ slug }}`` on separate lines.
+        """
+        processor = MockClassOrderingProcessor()
+        preprocessor = Preprocessor()
+        preprocessor.reset("test")
+        left, right = preprocessor.delimiters
+
+        value_tag = f"{left}i0--{right}"  # VALUE placeholder
+        # "myClass--{{ slug }} otherClass" after preprocessing
+        attr_body = f"myClass--{value_tag} otherClass"
+
+        result, errors = processor.process(
+            attr_name="class",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            line_length=100,
+            max_items_per_line=10,
+            bounding_character='"',
+            preprocessor=preprocessor,
+            attr_body=attr_body,
+        )
+
+        assert not errors
+        # The VALUE placeholder must stay glued to the class prefix
+        assert f"myClass--{value_tag}" in result
+
+    def test_value_inside_conditional_stays_merged(self) -> None:
+        """VALUE inside a conditional block stays merged with its prefix.
+
+        Regression test for:
+        ``{% if cond %}bgImg--{{ slug }}{% endif %}``
+        """
+        processor = MockClassOrderingProcessor()
+        preprocessor = Preprocessor()
+        preprocessor.reset("test")
+        left, right = preprocessor.delimiters
+
+        if_tag = f"{left}c0------{right}"  # CONDITIONAL
+        value_tag = f"{left}i0----{right}"  # VALUE
+        endif_tag = f"{left}f0------{right}"  # END_CONDITIONAL
+
+        attr_body = f"base {if_tag}bgImg--{value_tag}{endif_tag} final"
+
+        result, errors = processor.process(
+            attr_name="class",
+            position=(1, 0),
+            indentation="\t",
+            current_indentation_level=0,
+            tab_width=4,
+            line_length=100,
+            max_items_per_line=10,
+            bounding_character='"',
+            preprocessor=preprocessor,
+            attr_body=attr_body,
+        )
+
+        assert not errors
+        # bgImg-- must stay glued to the VALUE placeholder
+        assert f"bgImg--{value_tag}" in result
+        # Block instructions should still be separate tokens
+        assert if_tag in result
+        assert endif_tag in result
+
     def test_branch_whitespace_hoisted_before_conditional(self) -> None:
         """Spaces inside conditional branches are hoisted before the block.
 

@@ -111,7 +111,21 @@ class BaseClassOrderingAttributeProcessor(BaseAttributeProcessor):
                 for class_name in class_names
             )
 
-            class_names = expand_class_names(class_names, left, right, keep_empty=False)
+            structural_chars = frozenset(
+                instruction_type.value
+                for instruction_type in (
+                    *InstructionType.block_starts(),
+                    *InstructionType.block_continuations(),
+                    *InstructionType.block_ends(),
+                )
+            )
+            class_names = expand_class_names(
+                class_names,
+                left,
+                right,
+                keep_empty=False,
+                structural_type_chars=structural_chars,
+            )
             stack: list[StackNode] = []
 
             for i, class_name in enumerate(class_names):
@@ -514,6 +528,7 @@ def expand_class_names(
     right: str,
     *,
     keep_empty: bool = False,
+    structural_type_chars: frozenset[str] | None = None,
 ) -> list[str]:
     """Break up delimited strings in a list of class names.
 
@@ -541,8 +556,15 @@ def expand_class_names(
         them).
       - Does not attempt to handle nested delimiters (e.g., "{ a { b } }").
 
+    When ``structural_type_chars`` is provided, only delimited sections whose
+    type character (first char after *left*) is in the set are treated as
+    split points.  Non-structural delimited sections (e.g. VALUE placeholders)
+    stay merged with adjacent non-delimited text so that compound class names
+    like ``my-class--{{ slug }}`` remain a single token.
+
     """
     pattern = re.compile(f"({re.escape(left)}.*?{re.escape(right)})")
+    left_len = len(left)
     out: list[str] = []
 
     for class_name in class_names:
@@ -553,25 +575,83 @@ def expand_class_names(
 
         parts = pattern.split(class_name)  # keeps delimited chunks in result
 
-        # Process parts: strip whitespace from non-delimited parts, keep
-        # delimited parts as-is
-        processed_parts = []
-        for i, part in enumerate(parts):
-            if part.startswith(left) and part.endswith(right):
-                # This is a delimited part - keep as-is
-                processed_parts.append(part)
-            else:
-                # This is a non-delimited part - strip whitespace and handle
-                # empty
-                stripped = part.strip()
-                # Skip empty strings at beginning/end, keep middle ones if
-                # keep_empty=True
-                is_first = i == 0
-                is_last = i == len(parts) - 1
-                keep_middle_empty = keep_empty and not (is_first or is_last) and stripped == ""
-                if stripped or keep_middle_empty:
-                    processed_parts.append(stripped)
-
-        out.extend(processed_parts)
+        if structural_type_chars is None:
+            # Original behaviour: every delimited part is a split point.
+            _expand_split_all(parts, left, right, out, keep_empty=keep_empty)
+        else:
+            # Smart mode: only split on structural (block) placeholders.
+            # Non-structural placeholders stay merged with adjacent text.
+            _expand_with_structural_split(
+                parts,
+                left,
+                left_len,
+                structural_type_chars,
+                out,
+            )
 
     return out
+
+
+def _expand_split_all(
+    parts: list[str],
+    left: str,
+    right: str,
+    out: list[str],
+    *,
+    keep_empty: bool,
+) -> None:
+    """Original expand logic — split on every delimited section."""
+    for i, part in enumerate(parts):
+        if part.startswith(left) and part.endswith(right):
+            out.append(part)
+        else:
+            stripped = part.strip()
+            is_first = i == 0
+            is_last = i == len(parts) - 1
+            keep_middle_empty = keep_empty and not (is_first or is_last) and stripped == ""
+            if stripped or keep_middle_empty:
+                out.append(stripped)
+
+
+def _expand_with_structural_split(
+    parts: list[str],
+    left: str,
+    left_len: int,
+    structural_type_chars: frozenset[str],
+    out: list[str],
+) -> None:
+    """Expand, but only split on structural (block) placeholders.
+
+    Non-structural delimited parts (VALUE, IGNORED, …) are merged with
+    their adjacent non-delimited text so that compound tokens like
+    ``my-class--{{ slug }}`` remain intact.
+    """
+    # Accumulates consecutive non-structural pieces to be merged.
+    merge_buf: list[str] = []
+
+    for part in parts:
+        is_delimited = part.startswith(left)
+        if is_delimited:
+            type_char = part[left_len] if len(part) > left_len else ""
+            if type_char in structural_type_chars:
+                # Structural placeholder → flush merge buffer, then emit
+                # the placeholder as its own entry.
+                _flush_merge_buf(merge_buf, out)
+                out.append(part)
+                continue
+
+        # Non-delimited text *or* non-structural placeholder → accumulate.
+        merge_buf.append(part)
+
+    _flush_merge_buf(merge_buf, out)
+
+
+def _flush_merge_buf(merge_buf: list[str], out: list[str]) -> None:
+    """Join and emit the merge buffer, stripping outer whitespace."""
+    if not merge_buf:
+        return
+    merged = "".join(merge_buf)
+    stripped = merged.strip()
+    merge_buf.clear()
+    if stripped:
+        out.append(stripped)

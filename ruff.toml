@@ -45,6 +45,9 @@ order-by-type = true
 [lint.isort.sections]
 django = ["django"]
 
+[lint.pep8-naming]
+classmethod-decorators = ["classmethod"]
+
 [lint.pycodestyle]
 max-doc-length = 79
 

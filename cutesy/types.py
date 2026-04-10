@@ -118,7 +118,7 @@ class InstructionType(Enum):
     IGNORED = "n"  # noqa: WPS115 (Caps preferred for Enums)
 
     @classmethod
-    def block_starts(cls) -> set["InstructionType"]:  # noqa: N805
+    def block_starts(cls) -> set["InstructionType"]:
         """Return a set of instruction types which start a block."""
         starts: set[InstructionType] = {
             cast("InstructionType", cls.PARTIAL),
@@ -128,7 +128,7 @@ class InstructionType(Enum):
         return starts
 
     @classmethod
-    def block_continuations(cls) -> set["InstructionType"]:  # noqa: N805
+    def block_continuations(cls) -> set["InstructionType"]:
         """Return a set of instruction types which continue a block."""
         continuations: set[InstructionType] = {
             cast("InstructionType", cls.MID_CONDITIONAL),
@@ -137,7 +137,7 @@ class InstructionType(Enum):
         return continuations
 
     @classmethod
-    def block_ends(cls) -> set["InstructionType"]:  # noqa: N805
+    def block_ends(cls) -> set["InstructionType"]:
         """Return a set of instruction types which end a block."""
         ends: set[InstructionType] = {
             cast("InstructionType", cls.END_PARTIAL),
