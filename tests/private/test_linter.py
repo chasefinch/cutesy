@@ -60,7 +60,7 @@ class TestHTMLLinter:
         # document mode
         linter.handle_decl("doctype html")
 
-        d2_errors = [error for error in linter._errors if error.rule.code == "D2"]
+        d2_errors = [error for error in linter._errors if error.rule is Rule.D2]
         assert len(d2_errors) > 0
 
     def test_handle_decl_with_mode_already_set_unstructured(self) -> None:
@@ -72,5 +72,5 @@ class TestHTMLLinter:
         # unstructured mode
         linter.handle_decl("doctype html")
 
-        d1_errors = [error for error in linter._errors if error.rule.code == "D1"]
+        d1_errors = [error for error in linter._errors if error.rule is Rule.D1]
         assert len(d1_errors) > 0

@@ -26,23 +26,21 @@ class TestError:
 
     def test_error_creation(self) -> None:
         """Test Error can be created with required fields."""
-        rule = Rule("TEST1", "Test rule", structural=False)
         error = Error(
             line=SAMPLE_LINE_NUMBER,
             column=SAMPLE_COLUMN_NUMBER,
-            rule=rule,
+            rule=Rule.get("D1"),
             replacements={"old": "new"},
         )
 
         assert error.line == SAMPLE_LINE_NUMBER
         assert error.column == SAMPLE_COLUMN_NUMBER
-        assert error.rule == rule
+        assert error.rule is Rule.D1
         assert error.replacements == {"old": "new"}
 
     def test_error_with_empty_replacements(self) -> None:
         """Test Error with empty replacements dict."""
-        rule = Rule("TEST2", "Another rule", structural=True)
-        error = Error(line=1, column=1, rule=rule, replacements={})
+        error = Error(line=1, column=1, rule=Rule.get("F2"), replacements={})
 
         assert error.replacements == {}
 
@@ -62,8 +60,7 @@ class TestExceptions:
 
     def test_structural_error_with_errors(self) -> None:
         """Test StructuralError with attached errors."""
-        rule = Rule("TEST3", "Structural rule", structural=True)
-        error = Error(line=1, column=1, rule=rule, replacements={})
+        error = Error(line=1, column=1, rule=Rule.get("D5"), replacements={})
 
         structural_error = StructuralError(PARSE_FAILED_MESSAGE, errors=[error])
 

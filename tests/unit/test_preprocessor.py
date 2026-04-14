@@ -416,7 +416,7 @@ class TestBasePreprocessor:
             preprocessor.process()
 
         # Should be a P4 error (malformed tag)
-        assert exc_info.value.errors[0].rule.code == "P4"
+        assert exc_info.value.errors[0].rule is Rule.P4
 
     def test_process_with_comment_blocks(self) -> None:
         """Test processing with comment block tags."""
@@ -441,7 +441,7 @@ class TestBasePreprocessor:
             preprocessor.process()
 
         # Should be a P2 error for missing closing tag
-        assert exc_info.value.errors[0].rule.code == "P2"
+        assert exc_info.value.errors[0].rule is Rule.P2
 
     def test_process_without_valid_padding_in_non_fix_mode(self) -> None:
         """Test processing detects invalid padding in non-fix mode."""
@@ -453,7 +453,7 @@ class TestBasePreprocessor:
 
         # Should process but create P6 error about padding
         assert len(preprocessor.errors) == 1
-        assert preprocessor.errors[0].rule.code == "P6"
+        assert preprocessor.errors[0].rule is Rule.P6
 
     def test_process_with_collapsed_spacing_issues_in_non_fix_mode(self) -> None:
         """Test processing detects spacing issues in non-fix mode."""
@@ -464,4 +464,4 @@ class TestBasePreprocessor:
         preprocessor.process()
 
         # Should detect spacing issues
-        assert any(error.rule.code == "P5" for error in preprocessor.errors)
+        assert any(error.rule is Rule.P5 for error in preprocessor.errors)

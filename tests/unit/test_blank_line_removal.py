@@ -2,6 +2,7 @@
 
 from cutesy.linter import HTMLLinter
 from cutesy.preprocessors import django
+from cutesy.rules import Rule
 
 
 class TestBlankLineRemovalAfterOpeningTags:
@@ -56,7 +57,7 @@ class TestBlankLineRemovalAfterOpeningTags:
         linter = HTMLLinter(fix=False)
         _result, errors = linter.lint(html)
 
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) >= 1
 
     def test_nested_tags_with_blank_lines(self) -> None:
@@ -135,7 +136,7 @@ class TestBlankLineRemovalBeforeClosingTags:
         linter = HTMLLinter(fix=False)
         _result, errors = linter.lint(html)
 
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) >= 1
 
     def test_both_opening_and_closing_blank_lines(self) -> None:
@@ -412,10 +413,10 @@ class TestUnbalancedStructures:
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
         _result, errors = linter.lint(html)
 
-        d3_errors = [error for error in errors if error.rule.code == "D3"]
+        d3_errors = [error for error in errors if error.rule is Rule.D3]
         assert len(d3_errors) == 1
         # Should NOT have P2 error
-        p2_errors = [error for error in errors if error.rule.code == "P2"]
+        p2_errors = [error for error in errors if error.rule is Rule.P2]
         assert len(p2_errors) == 0
 
     def test_multiple_unclosed_tags_before_endif(self) -> None:
@@ -429,7 +430,7 @@ class TestUnbalancedStructures:
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
         _result, errors = linter.lint(html)
 
-        d3_errors = [error for error in errors if error.rule.code == "D3"]
+        d3_errors = [error for error in errors if error.rule is Rule.D3]
         expected_error_count = 2
         assert len(d3_errors) == expected_error_count  # span and div
 
@@ -459,7 +460,7 @@ class TestUnbalancedStructures:
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
         _result, errors = linter.lint(html)
 
-        d3_errors = [error for error in errors if error.rule.code == "D3"]
+        d3_errors = [error for error in errors if error.rule is Rule.D3]
         assert len(d3_errors) >= 1
 
 
@@ -538,7 +539,7 @@ class TestInlineConstructsWithBlankLines:
         _result, errors = linter.lint(html)
 
         # F4 should not be raised for the inline block on the last line
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) == 0, f"Expected no F4 errors, got {len(f4_errors)}"
 
     def test_inline_tag_no_f4_error(self) -> None:
@@ -556,7 +557,7 @@ class TestInlineConstructsWithBlankLines:
         _result, errors = linter.lint(html)
 
         # F4 should not be raised for the inline span on the last line
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) == 0
 
     def test_multiline_block_with_blank_line_raises_f4(self) -> None:
@@ -571,7 +572,7 @@ class TestInlineConstructsWithBlankLines:
         _result, errors = linter.lint(html)
 
         # F4 SHOULD be raised for multiline block with blank line before close
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) == 1, f"Expected 1 F4 error, got {len(f4_errors)}"
 
     def test_complex_inline_blocks_no_f4(self) -> None:
@@ -596,7 +597,7 @@ class TestInlineConstructsWithBlankLines:
         _result, errors = linter.lint(html)
 
         # The inline block (page_styles) should not raise F4
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) == 0
 
     def test_inline_block_fix_mode_preserves_structure(self) -> None:
@@ -635,5 +636,5 @@ class TestInlineConstructsWithBlankLines:
         linter = HTMLLinter(fix=False)
         _result, errors = linter.lint(html)
 
-        f4_errors = [error for error in errors if error.rule.code == "F4"]
+        f4_errors = [error for error in errors if error.rule is Rule.F4]
         assert len(f4_errors) == 0

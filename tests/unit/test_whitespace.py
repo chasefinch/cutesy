@@ -5,6 +5,7 @@ from cutesy.attribute_processors.whitespace import (
     collapse_whitespace_outside_strings,
     has_inner_raw_bounding_quote,
 )
+from cutesy.rules import Rule
 
 MAX_CHARS_PER_LINE = 80
 
@@ -182,7 +183,7 @@ class TestAttributeProcessor:
 
         assert result == "alert(&quot;hello&quot;)"
         assert len(errors) == 1
-        assert errors[0].rule.code == "F16"
+        assert errors[0].rule is Rule.F16
         expected_line = 2
         assert errors[0].line == expected_line
         expected_column = 15
@@ -377,7 +378,7 @@ class TestAttributeProcessor:
 
         assert result == "hello &apos;world&apos; test"
         assert len(errors) == 1
-        assert errors[0].rule.code == "F16"
+        assert errors[0].rule is Rule.F16
 
     def test_process_empty_attribute(self) -> None:
         """Test processing empty attribute."""

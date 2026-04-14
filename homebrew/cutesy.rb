@@ -7,7 +7,7 @@ class Cutesy < Formula
 
   desc "A linter & formatter for consistent HTML code, or else."
   homepage "https://github.com/chasefinch/cutesy"
-  url "https://github.com/chasefinch/cutesy/archive/refs/tags/v1.0rc2.tar.gz"
+  url "https://github.com/chasefinch/cutesy/archive/refs/tags/v1.0rc3.tar.gz"
   sha256 "REPLACE_WITH_ACTUAL_SHA256"  # Get via: shasum -a 256 cutesy-VERSION.tar.gz
   license "Apache-2.0"
   # NOTE: Version is defined in cutesy/__init__.py - update URL and SHA256 manually here
@@ -17,7 +17,7 @@ class Cutesy < Formula
 
   # Python dependencies
   resource "data-enum" do
-    url "https://files.pythonhosted.org/packages/source/d/data-enum/data_enum-2.0.1.tar.gz"
+    url "https://files.pythonhosted.org/packages/source/d/data-enum/data_enum-3.0.0.tar.gz"
     sha256 "REPLACE_WITH_ACTUAL_SHA256"
   end
 

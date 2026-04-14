@@ -262,7 +262,7 @@ def main(
 
     # Check for structural rules being ignored in fix mode
     if fix and ignore_rules_list:
-        structural_rules = {rule.code for rule in Rule.members if rule.structural}
+        structural_rules = {str(rule) for rule in Rule.members if rule.structural}
         ignored_structural_rule_codes = []
 
         for ignored_rule_code in ignore_rules_list:
@@ -394,7 +394,7 @@ def main(
                         message = message.format(**error.replacements)
                     click.echo(
                         f"{indentation}{warning_part}{location_display} "
-                        f"{error.rule.code.ljust(4)} {message}",
+                        f"{str(error.rule).ljust(4)} {message}",
                     )
 
                 click.echo("")

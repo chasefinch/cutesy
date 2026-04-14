@@ -13,6 +13,8 @@ from .rules import Rule
 class Mode(DataEnum):
     """A state to represent the structure of the HTML."""
 
+    __members__ = ("DOCUMENT", "UNSTRUCTURED")
+
 
 Mode.DOCUMENT = Mode()
 Mode.UNSTRUCTURED = Mode()

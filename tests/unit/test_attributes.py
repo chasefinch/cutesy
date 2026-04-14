@@ -1,6 +1,7 @@
 """Tests for the combined attributes processor."""
 
 from cutesy.attribute_processors.attributes import AttributeProcessor
+from cutesy.rules import Rule
 
 MAX_CHARS_PER_LINE = 80
 
@@ -255,7 +256,7 @@ class TestTokenAttributes:
             attr_body='foo "bar" baz',
         )
         assert len(errors) == 1
-        assert errors[0].rule.code == "F16"
+        assert errors[0].rule is Rule.F16
         assert result is not None
         assert "&quot;" in result
 
@@ -505,7 +506,7 @@ class TestCodeContentAttributes:
             attr_body='alert("hi")',
         )
         assert len(errors) == 1
-        assert errors[0].rule.code == "F16"
+        assert errors[0].rule is Rule.F16
         assert result is not None
         assert "&quot;" in result
 
@@ -678,7 +679,7 @@ class TestStripAttributes:
             attr_body='"text"',
         )
         assert len(errors) == 1
-        assert errors[0].rule.code == "F16"
+        assert errors[0].rule is Rule.F16
 
 
 class TestPluginExtension:

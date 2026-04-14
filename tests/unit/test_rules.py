@@ -37,21 +37,21 @@ class TestRules:
             result, errors = self.checking_linter.lint(html)
 
             # Check that the specified rule is present in the errors
-            rule_codes = [error.rule.code for error in errors]
+            rule_codes = [str(error.rule) for error in errors]
             assert rule_code in rule_codes, f"Expected rule {rule_code} not found in {rule_codes}"
 
             if is_fixable:
                 result, errors = self.fixing_linter.lint(html)
                 assert result != html
                 # After fixing, the specific error should be gone
-                rule_codes_after_fix = [error.rule.code for error in errors]
+                rule_codes_after_fix = [str(error.rule) for error in errors]
                 assert rule_code not in rule_codes_after_fix, (
                     f"Rule {rule_code} still present after fix: {rule_codes_after_fix}"
                 )
         except (StructuralError, DoctypeError) as exception:
             # For some rules, the error is detected during preprocessing
             if hasattr(exception, "errors"):
-                rule_codes = [error.rule.code for error in exception.errors]
+                rule_codes = [str(error.rule) for error in exception.errors]
                 assert rule_code in rule_codes, (
                     f"Expected rule {rule_code} not found in preprocessing errors {rule_codes}"
                 )
@@ -247,7 +247,7 @@ class TestRules:
         )
 
         # Check that F16 error was generated
-        rule_codes = [error.rule.code for error in errors]
+        rule_codes = [str(error.rule) for error in errors]
         assert "F16" in rule_codes, f"Expected F16 error not found in {rule_codes}"
 
         # Check that the quotes were fixed (encoded)

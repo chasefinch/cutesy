@@ -89,7 +89,7 @@ class TestSpec:
         result, errors = checking_linter.lint(html)
 
         assert result == html
-        assert self.tests[spec][0] == [error.rule.code for error in errors]
+        assert self.tests[spec][0] == [str(error.rule) for error in errors]
 
         fixing_linter = HTMLLinter(
             check_doctype=True,
@@ -100,4 +100,4 @@ class TestSpec:
         result, errors = fixing_linter.lint(html)
 
         assert result == expected
-        assert self.tests[spec][1] == [error.rule.code for error in errors]
+        assert self.tests[spec][1] == [str(error.rule) for error in errors]

@@ -4,6 +4,7 @@ import pytest
 
 from cutesy.linter import HTMLLinter
 from cutesy.preprocessors.django import Preprocessor
+from cutesy.rules import Rule
 from cutesy.types import ConfigurationError, InstructionType, StructuralError
 
 
@@ -425,7 +426,7 @@ class TestDjangoPreprocessor:
         with pytest.raises(StructuralError) as exc_info:
             preprocessor.parse_instruction_tag(("{%", "%}"), html, 0, len(html) - 2)
 
-        assert exc_info.value.errors[0].rule.code == "P4"
+        assert exc_info.value.errors[0].rule is Rule.P4
 
 
 class TestCustomTags:
@@ -633,7 +634,7 @@ class TestCustomTags:
 
         with pytest.raises(StructuralError) as exc_info:
             linter.lint(html)
-        assert exc_info.value.errors[0].rule.code == "P7"
+        assert exc_info.value.errors[0].rule is Rule.P7
 
     def test_translate_alias_raises_p7(self) -> None:
         """Regression: non-preferred alias translate raises P7."""
@@ -643,7 +644,7 @@ class TestCustomTags:
 
         with pytest.raises(StructuralError) as exc_info:
             linter.lint(html)
-        assert exc_info.value.errors[0].rule.code == "P7"
+        assert exc_info.value.errors[0].rule is Rule.P7
 
     def test_preferred_blocktrans_does_not_raise(self) -> None:
         """Regression: preferred form blocktrans must not raise P7."""
@@ -652,7 +653,7 @@ class TestCustomTags:
         html = "<div>{% blocktrans %}Hello{% endblocktrans %}</div>"
 
         result, errors = linter.lint(html)
-        p7_errors = [error for error in errors if error.rule.code == "P7"]
+        p7_errors = [error for error in errors if error.rule is Rule.P7]
 
         assert not p7_errors
         assert "{% blocktrans %}" in result

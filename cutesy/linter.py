@@ -1604,7 +1604,7 @@ class HTMLLinter(HTMLParser):
         **replacements: str,
     ) -> None:
         if error:
-            rule_code = error.rule.code
+            rule_code = str(error.rule)
         else:
             assert rule_code is not None
             error = self._make_error(

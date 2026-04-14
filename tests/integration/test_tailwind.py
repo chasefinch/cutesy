@@ -223,7 +223,7 @@ class TestCutesySpec:
 
         # Should not modify on check
         assert result == html
-        assert self.tests[spec][0] == [error.rule.code for error in errors]
+        assert self.tests[spec][0] == [str(error.rule) for error in errors]
 
         fixing_linter = HTMLLinter(
             check_doctype=True,
@@ -235,4 +235,4 @@ class TestCutesySpec:
 
         # Should format classes correctly
         assert result == expected
-        assert self.tests[spec][1] == [error.rule.code for error in errors]
+        assert self.tests[spec][1] == [str(error.rule) for error in errors]

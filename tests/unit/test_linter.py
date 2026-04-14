@@ -9,6 +9,7 @@ from cutesy.attribute_processors.class_ordering import tailwind
 from cutesy.linter import HTMLLinter, attr_sort, is_whitespace
 from cutesy.preprocessors import django
 from cutesy.preprocessors.types import BasePreprocessor
+from cutesy.rules import Rule
 from cutesy.types import DoctypeError, IndentationType, InstructionType
 
 
@@ -162,7 +163,7 @@ class TestHTMLLinter:
         _result, errors = linter.lint(html)
 
         # Should have D9 error for missing final newline
-        d9_errors = [error for error in errors if error.rule.code == "D9"]
+        d9_errors = [error for error in errors if error.rule is Rule.D9]
         assert len(d9_errors) > 0
         expected_line = 0
         expected_column = 0
@@ -230,7 +231,7 @@ class TestHTMLLinter:
         # linting error
         _result, errors = linter.lint(html)
         # Should have E1 error for invalid doctype
-        e1_errors = [error for error in errors if error.rule.code == "E1"]
+        e1_errors = [error for error in errors if error.rule is Rule.E1]
         assert len(e1_errors) > 0
         expected_line = 0
         expected_column = 0
@@ -260,7 +261,7 @@ class TestHTMLLinter:
         assert len(errors) == expected_error_count
 
         # D3 error: Expected <span> closing tag
-        d3_errors = [error for error in errors if error.rule.code == "D3"]
+        d3_errors = [error for error in errors if error.rule is Rule.D3]
         assert len(d3_errors) == 1
         expected_line = 0
         expected_column = 11
@@ -268,7 +269,7 @@ class TestHTMLLinter:
         assert d3_errors[0].column == expected_column
 
         # D4 error: </span> doesn't have a matching opening tag
-        d4_errors = [error for error in errors if error.rule.code == "D4"]
+        d4_errors = [error for error in errors if error.rule is Rule.D4]
         assert len(d4_errors) == 1
         expected_line = 0
         expected_column = 17
@@ -294,7 +295,7 @@ class TestHTMLLinter:
         _result, errors = linter.lint(html)
 
         # Should not report F1 errors
-        f1_errors = [error for error in errors if error.rule.code == "F1"]
+        f1_errors = [error for error in errors if error.rule is Rule.F1]
         assert len(f1_errors) == 0
 
     def test_lint_empty_html(self) -> None:
@@ -443,7 +444,7 @@ class TestHTMLLinter:
         _result, errors = linter.lint(html)
 
         # Should report F8 error for case mismatch in attribute name
-        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        f8_errors = [error for error in errors if error.rule is Rule.F8]
         assert len(f8_errors) > 0 or not errors  # Either F8 error found or no errors
         if f8_errors:
             expected_line = 0
@@ -631,7 +632,7 @@ asdf
         span_open_errors = [
             error
             for error in errors
-            if error.rule.code == "F7"
+            if error.rule is Rule.F7
             and error.line == span_line
             and "<SPAN>" in error.replacements.get("tag", "")
         ]
@@ -642,7 +643,7 @@ asdf
         span_close_errors = [
             error
             for error in errors
-            if error.rule.code == "F7"
+            if error.rule is Rule.F7
             and error.line == span_line
             and "</SPAN>" in error.replacements.get("tag", "")
         ]
@@ -655,7 +656,7 @@ asdf
         p_open_errors = [
             error
             for error in errors
-            if error.rule.code == "F7"
+            if error.rule is Rule.F7
             and error.line == p_line
             and "<P>" in error.replacements.get("tag", "")
         ]
@@ -666,7 +667,7 @@ asdf
         p_close_errors = [
             error
             for error in errors
-            if error.rule.code == "F7"
+            if error.rule is Rule.F7
             and error.line == p_line
             and "</P>" in error.replacements.get("tag", "")
         ]
@@ -679,7 +680,7 @@ asdf
         a_open_errors = [
             error
             for error in errors
-            if error.rule.code == "F7"
+            if error.rule is Rule.F7
             and error.line == a_line
             and "<A>" in error.replacements.get("tag", "")
         ]
@@ -688,27 +689,23 @@ asdf
         assert a_open_errors[0].column == expected_column
 
         # F8 error for HREF attribute
-        href_errors = [
-            error for error in errors if error.rule.code == "F8" and error.line == a_line
-        ]
+        href_errors = [error for error in errors if error.rule is Rule.F8 and error.line == a_line]
         assert len(href_errors) == 1
         expected_column = 4
         assert href_errors[0].column == expected_column
 
         # Check F3 errors (indentation) on lines 2, 3, 4
-        f3_line2 = [
-            error for error in errors if error.rule.code == "F3" and error.line == span_line
-        ]
+        f3_line2 = [error for error in errors if error.rule is Rule.F3 and error.line == span_line]
         assert len(f3_line2) == 1
         expected_column = 0
         assert f3_line2[0].column == expected_column
 
-        f3_line3 = [error for error in errors if error.rule.code == "F3" and error.line == p_line]
+        f3_line3 = [error for error in errors if error.rule is Rule.F3 and error.line == p_line]
         assert len(f3_line3) == 1
         expected_column = 0
         assert f3_line3[0].column == expected_column
 
-        f3_line4 = [error for error in errors if error.rule.code == "F3" and error.line == a_line]
+        f3_line4 = [error for error in errors if error.rule is Rule.F3 and error.line == a_line]
         assert len(f3_line4) == 1
         expected_column = 0
         assert f3_line4[0].column == expected_column
@@ -726,12 +723,12 @@ asdf
         class_errors = [
             error
             for error in errors
-            if error.rule.code == "F8" and error.replacements.get("attr") == "class"
+            if error.rule is Rule.F8 and error.replacements.get("attr") == "class"
         ]
         id_errors = [
             error
             for error in errors
-            if error.rule.code == "F8" and error.replacements.get("attr") == "id"
+            if error.rule is Rule.F8 and error.replacements.get("attr") == "id"
         ]
 
         # Verify errors are on correct lines
@@ -834,7 +831,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         assert len(f7_errors) == 0
 
     def test_svg_lowercase_camelcase_tag_reports_f7(self) -> None:
@@ -844,7 +841,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         expected_error_count = 2  # Opening and closing
         assert len(f7_errors) == expected_error_count
 
@@ -855,7 +852,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         expected_error_count = 2
         assert len(f7_errors) == expected_error_count
 
@@ -866,7 +863,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         assert len(f7_errors) == 0
 
     def test_svg_fix_corrects_tag_case(self) -> None:
@@ -911,7 +908,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        f8_errors = [error for error in errors if error.rule is Rule.F8]
         assert len(f8_errors) == 0
 
     def test_svg_viewbox_wrong_case_reports_f8(self) -> None:
@@ -921,7 +918,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        f8_errors = [error for error in errors if error.rule is Rule.F8]
         assert len(f8_errors) == 1
 
     def test_svg_fix_corrects_attribute_case(self) -> None:
@@ -950,7 +947,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f8_errors = [error for error in errors if error.rule.code == "F8"]
+        f8_errors = [error for error in errors if error.rule is Rule.F8]
         assert len(f8_errors) == 0
 
     def test_svg_nested_element_attr_case(self) -> None:
@@ -971,8 +968,8 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        d5_errors = [error for error in errors if error.rule.code == "D5"]
-        d6_errors = [error for error in errors if error.rule.code == "D6"]
+        d5_errors = [error for error in errors if error.rule is Rule.D5]
+        d6_errors = [error for error in errors if error.rule is Rule.D6]
         assert len(d5_errors) == 0
         assert len(d6_errors) == 0
 
@@ -1009,7 +1006,7 @@ class TestForeignContent:
 
         # No F7 inside SVG (g is lowercase, correct)
         # F7 for DIV after SVG closes
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         expected_error_count = 2  # <DIV> and </DIV>
         assert len(f7_errors) == expected_error_count
 
@@ -1032,7 +1029,7 @@ class TestForeignContent:
 
         _result, errors = linter.lint(html)
 
-        f7_errors = [error for error in errors if error.rule.code == "F7"]
+        f7_errors = [error for error in errors if error.rule is Rule.F7]
         assert len(f7_errors) == 0
 
     def test_math_definitionurl_fix(self) -> None:

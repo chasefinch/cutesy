@@ -27,9 +27,6 @@ class SuperGroup(UserList):
     """A group of sub-groups that can collapse onto one line if they fit."""
 
 
-Rule("TW1", "Control instruction overlaps class names", structural=True)
-
-
 type StashItem = str | list[StashItem]
 
 type StackNode = list[int | StackNode]
