@@ -5,7 +5,7 @@ from pathlib import Path
 
 import setuptools
 
-VERSION = "1.0rc3"
+VERSION = "1.0rc4"
 
 # Modules to skip for mypyc compilation (use Path for cross-platform
 # compatibility)
@@ -96,7 +96,7 @@ setuptools.setup(
     ],
     python_requires=">=3.12",
     install_requires=[
-        "data-enum>=3.0.0,<4",
+        "data-enum>=3.0.1,<4",
         "click>=8.1.8,<9",
     ],
     entry_points={
