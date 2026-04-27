@@ -1441,24 +1441,40 @@ class HTMLLinter(HTMLParser):
 
                     name = name[end_index:]
 
-            # Remaining text (or the whole name if no preprocessor). May
-            # contain embedded VALUE placeholders, which lower() leaves
-            # alone (the placeholder body is ASCII digits + lowercase).
+            # Remaining text (or the whole name if no preprocessor). When
+            # the entire name is a single VALUE placeholder ({{ … }}), keep
+            # it as-is without lower()/casing checks — the placeholder body
+            # is opaque to the linter and must round-trip byte-identical so
+            # restore() can match it later. (Also: routing it through
+            # name.lower() into a tuple element triggers a mypyc miscompile
+            # that leaks the placeholder text into output. Skipping that
+            # path also dodges the bug.)
             if name:
-                name_lower = name.lower()
-                # Apply correct casing: spec-correct for SVG/MathML, lowercase
-                # for HTML
-                if foreign_context:
-                    correct_name = get_correct_attr_name(name_lower, foreign_context)
-                    if not self.fix and name != correct_name and final_pass:
-                        self._handle_error("F8", attr=correct_name)
-                    processed_name = correct_name
+                name_is_pure_value_placeholder = bool(
+                    self.preprocessor
+                    and len(name) > 1
+                    and name.startswith(self.preprocessor.delimiters[0])
+                    and name.endswith(self.preprocessor.delimiters[1])
+                    and self.preprocessor.delimiters[0] not in name[1:-1]
+                    and name[1] == value_type_char,
+                )
+                if name_is_pure_value_placeholder:
+                    pieces.append((name, True))
                 else:
-                    if not self.fix and name != name_lower and final_pass:
-                        self._handle_error("F8", attr=name_lower)
-                    processed_name = name_lower
+                    name_lower = name.lower()
+                    # Apply correct casing: spec-correct for SVG/MathML,
+                    # lowercase for HTML
+                    if foreign_context:
+                        correct_name = get_correct_attr_name(name_lower, foreign_context)
+                        if not self.fix and name != correct_name and final_pass:
+                            self._handle_error("F8", attr=correct_name)
+                        processed_name = correct_name
+                    else:
+                        if not self.fix and name != name_lower and final_pass:
+                            self._handle_error("F8", attr=name_lower)
+                        processed_name = name_lower
 
-                pieces.append((processed_name, False))
+                    pieces.append((processed_name, False))
 
             last_idx = len(pieces) - 1
             for piece_idx, (piece_name, is_placeholder) in enumerate(pieces):

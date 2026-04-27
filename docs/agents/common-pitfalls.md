@@ -62,6 +62,24 @@ make test-private
 
 ## Code Bugs Found
 
+### Bug: mypyc miscompiles `name.lower()` returns stored in tuples for placeholder strings
+
+**Context**: `linter.py` — `_make_attr_strings()` Phase 1, the trailing `if name:` branch that handles attribute names with no control-instruction split points.
+
+**Problem**: When the entire attribute name is a single VALUE placeholder (e.g. `¡is---¢` after preprocessing of `{{ extra_attrs|safe }}`) and we pass it through `name_lower = name.lower(); pieces.append((name_lower, False))`, the **mypyc-compiled wheel** corrupts the placeholder downstream so that `restore()` cannot find it, leaking the raw `¡i…¢` string into the rendered file. Plain Python source works fine; only the compiled build is affected. The trigger requires (a) two structurally similar tags wrapped in outer `{% if %}…{% endif %}` blocks, (b) each with a conditional attribute that itself contains an inner VALUE placeholder (e.g. `{% if x %}class="{{ var }}"{% endif %}`), and (c) each with a standalone `{{ … }}` attribute on the tag — the second tag's standalone placeholder leaks. Removing `name.lower()` makes it disappear; calling `.lower()` and discarding the result is fine; using the result inside the appended tuple breaks it.
+
+**Solution**: Detect the "name is a single VALUE placeholder" case and skip the `lower()` path entirely — append the original `name` with `is_placeholder=True`. Placeholder bodies are opaque to the linter (no real attribute name exists to lowercase), so no semantic information is lost. As a side effect this also dodges the mypyc miscompile.
+
+**Reproducer**:
+```html
+{% if c %}<a {% if x %}class="{{ a }}"{% endif %} {{ first_attrs|safe }}>1</a>{% endif %}
+{% if d %}<a {% if x %}class="{{ b }}"{% endif %} {{ second_attrs|safe }}>2</a>{% endif %}
+```
+
+Run `cutesy --fix` against the **wheel build** (`make build && make test-build`). The second `{{ second_attrs|safe }}` becomes `¡ia---…¢` on disk. Source mode is clean.
+
+**Related**: covered by `test_repeated_standalone_value_placeholder_round_trips` in `tests/unit/test_linter.py`. That test runs against source so it doesn't catch a mypyc regression on its own — wheel-level testing (`make test-build`) is what enforces this in CI.
+
 ### Bug: VALUE-type placeholders in attribute names lose value on `--fix`
 
 **Context**: `linter.py` — `_make_attr_strings()` Phase 1 splitting loop.

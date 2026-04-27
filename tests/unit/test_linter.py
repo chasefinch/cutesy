@@ -447,6 +447,36 @@ class TestHTMLLinter:
         assert result == html
         assert not errors
 
+    def test_repeated_standalone_value_placeholder_round_trips(self) -> None:
+        """Test that repeated standalone ``{{ var }}`` attrs round-trip.
+
+        Regression: in mypyc-compiled builds, a standalone ``{{ var }}``
+        attribute on a tag could leak the raw placeholder string into the
+        output (failing restore()) when surrounded by certain conditional
+        attributes. The trigger required two structurally similar tags in
+        an outer ``{% if %}`` wrapper, each with an inner conditional
+        attribute containing a VALUE placeholder. The second occurrence
+        leaked.
+        """
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+
+        html = (
+            "{% if c %}"
+            '<a {% if x %}class="{{ a }}"{% endif %} {{ first_attrs|safe }}>1</a>'
+            "{% endif %}\n"
+            "{% if d %}"
+            '<a {% if x %}class="{{ b }}"{% endif %} {{ second_attrs|safe }}>2</a>'
+            "{% endif %}\n"
+        )
+
+        result, errors = linter.lint(html)
+
+        # Restoration must replace every preprocessor placeholder; if the
+        # delimiter byte (¡, U+00A1) appears in the output, restore failed.
+        assert "¡" not in result, f"placeholder leaked: {result!r}"
+        assert result == html
+        assert not errors
+
     def test_dynamic_name_with_static_prefix_round_trips(self) -> None:
         """Test that a static-prefix + dynamic-suffix attribute round-trips.
 
