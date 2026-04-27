@@ -62,6 +62,16 @@ make test-private
 
 ## Code Bugs Found
 
+### Bug: VALUE-type placeholders in attribute names lose value on `--fix`
+
+**Context**: `linter.py` — `_make_attr_strings()` Phase 1 splitting loop.
+
+**Problem**: The original loop split attribute names on **every** preprocessor placeholder, including VALUE placeholders (`{{ ... }}`). For `{{ attr }}="val"`, the parser produced `(name='<i_attr>', value='val')`; the loop appended `('<i_attr>', None)` (value dropped) and exited. Same root cause produced duplicated/misplaced values for `prefix{{ x }}suffix="val"`.
+
+**Solution**: `find_next_control_placeholder()` skips VALUE placeholders so `{{ ... }}` stays embedded in the surrounding name. The remaining splitting loop only fires on control placeholders (`{% if %}`, etc.). Phase 1 also defers the value attachment to the **last** piece (closest to `=`) to avoid losing or duplicating it when both prefix and suffix exist.
+
+**Example trigger**: Django's widget attrs pattern: `{% for attr, value in widget.attrs.items %}{{ attr }}="{{ value|escape }}"{% endfor %}`.
+
 ### Bug: `_make_attr_strings` reuses `group` list across multiple attribute groups
 
 **Context**: `linter.py` — `_make_attr_strings()` method, around the `is_group_start` branch.

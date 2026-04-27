@@ -48,6 +48,36 @@ def is_whitespace(char: str) -> TypeGuard[Never]:
     return char in string.whitespace
 
 
+def find_next_control_placeholder(
+    name: str,
+    wraps: tuple[str, str],
+    value_type_char: str,
+) -> tuple[int, int] | None:
+    """Locate the next non-VALUE preprocessor placeholder in name.
+
+    VALUE placeholders ({{ ... }}) are dynamic name fragments that
+    belong to the surrounding attribute name (e.g. ``{{ attr }}=...`` or
+    ``x-{{ name }}=...``); only control placeholders ({% ... %}) split
+    an attribute. Returns (start, end) for the next control placeholder,
+    or None if only VALUE placeholders remain.
+    """
+    cursor = 0
+    size = len(name)
+    while cursor < size:
+        start = name.find(wraps[0], cursor)
+        if start < 0:
+            return None
+        end = name.find(wraps[1], start + len(wraps[0]))
+        if end < 0:
+            return None
+        end += len(wraps[1])
+        type_char_index = start + len(wraps[0])
+        if type_char_index >= size or name[type_char_index] != value_type_char:
+            return start, end
+        cursor = end
+    return None
+
+
 def attr_sort(attr: tuple[str | None, Any]) -> tuple[Any, ...]:
     """Return a sort tuple for attributes by priority."""
     return (
@@ -1357,19 +1387,37 @@ class HTMLLinter(HTMLParser):
         # --- Phase 1: Normalize attribute names and split template parts ---
         # Produces (name, value, quote_char) tuples with correct casing.
         all_attrs = []
+        value_type_char = InstructionType.VALUE.value
         for incoming_attr in attrs:
             name, value = incoming_attr
 
             # Template preprocessor: an attr name may contain instruction
-            # delimiters interleaved with real attr names. Split them apart
-            # so each piece can be processed independently.
+            # delimiters interleaved with real attr names. Split apart only
+            # control instructions ({% ... %}); leave VALUE placeholders
+            # ({{ ... }}) embedded in the surrounding name so patterns like
+            # `{{ attr }}="val"` and `x-{{ name }}="val"` round-trip
+            # unchanged instead of having their value dropped or detached.
+            #
+            # The parser-supplied value belongs to the combined name, but
+            # after splitting only one piece can hold it. Attach it to the
+            # last piece — closest to the `=` — to avoid losing it or
+            # duplicating it when there is text on both sides.
+            pieces: list[tuple[str, bool]] = []  # (piece_name, is_placeholder)
+
             if self.preprocessor:
                 wraps = self.preprocessor.delimiters
-                while wraps[0] in name:
-                    start_index = name.index(wraps[0])
-                    end_index = name.index(wraps[1]) + 1
+                while True:
+                    control_indices = find_next_control_placeholder(
+                        name,
+                        wraps,
+                        value_type_char,
+                    )
+                    if control_indices is None:
+                        break
+                    start_index, end_index = control_indices
 
-                    # Text before the delimiter is a real attribute name
+                    # Text before the placeholder is a real attribute name
+                    # (and may itself contain embedded VALUE placeholders).
                     if start_index > 0:
                         split_name = name[:start_index]
                         split_name_lower = split_name.lower()
@@ -1386,18 +1434,16 @@ class HTMLLinter(HTMLParser):
                                 self._handle_error("F8", attr=split_name_lower)
                             processed_name = split_name_lower
 
-                        quote_char = "'" if '"' in processed_name else '"'
-                        all_attrs.append((processed_name, value, quote_char))
+                        pieces.append((processed_name, False))
 
-                    # The delimiter itself is kept as-is (template instruction)
-                    split_name = name[start_index:end_index]
-
-                    quote_char = "'" if '"' in split_name else '"'
-                    all_attrs.append((split_name, None, quote_char))
+                    # The control instruction is kept as-is.
+                    pieces.append((name[start_index:end_index], True))
 
                     name = name[end_index:]
 
-            # Remaining text (or the whole name if no preprocessor)
+            # Remaining text (or the whole name if no preprocessor). May
+            # contain embedded VALUE placeholders, which lower() leaves
+            # alone (the placeholder body is ASCII digits + lowercase).
             if name:
                 name_lower = name.lower()
                 # Apply correct casing: spec-correct for SVG/MathML, lowercase
@@ -1412,8 +1458,16 @@ class HTMLLinter(HTMLParser):
                         self._handle_error("F8", attr=name_lower)
                     processed_name = name_lower
 
-                quote_char = "'" if '"' in (value or "") else '"'
-                all_attrs.append((processed_name, value, quote_char))
+                pieces.append((processed_name, False))
+
+            last_idx = len(pieces) - 1
+            for piece_idx, (piece_name, is_placeholder) in enumerate(pieces):
+                piece_value = value if piece_idx == last_idx else None
+                if is_placeholder:
+                    quote_char = "'" if '"' in piece_name else '"'
+                else:
+                    quote_char = "'" if '"' in (piece_value or "") else '"'
+                all_attrs.append((piece_name, piece_value, quote_char))
 
         # --- Phase 2: Group attributes and process values ---
         # Template conditionals ({% if %}/{% endif %}) create groups of

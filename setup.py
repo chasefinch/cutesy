@@ -5,7 +5,7 @@ from pathlib import Path
 
 import setuptools
 
-VERSION = "1.0rc4"
+VERSION = "1.0rc5"
 
 # Modules to skip for mypyc compilation (use Path for cross-platform
 # compatibility)

@@ -420,6 +420,49 @@ class TestHTMLLinter:
         assert isinstance(result, str)
         assert isinstance(errors, list)
 
+    def test_dynamic_attribute_name_value_pair_round_trips(self) -> None:
+        """Test that a dynamic name/value attribute pair is preserved.
+
+        Regression: ``--fix`` previously stripped the ``="value"`` portion
+        of attributes whose name was a Django template variable (e.g. the
+        ``{% for %}`` loop pattern Django widgets use to render attrs).
+        """
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+
+        html = (
+            "<input\n"
+            "\ttype=\"{{ widget.type|default:'text' }}\"\n"
+            '\tname="{{ widget.name }}"\n'
+            "\t{% if widget.value != None %}"
+            "value=\"{{ widget.value|stringformat:'s' }}\""
+            "{% endif %}\n"
+            "\t{% for attr, value in widget.attrs.items %}"
+            '{{ attr }}="{{ value|escape }}"'
+            "{% endfor %}\n"
+            ">\n"
+        )
+
+        result, errors = linter.lint(html)
+
+        assert result == html
+        assert not errors
+
+    def test_dynamic_name_with_static_prefix_round_trips(self) -> None:
+        """Test that a static-prefix + dynamic-suffix attribute round-trips.
+
+        ``x-{{ name }}="value"`` is a common pattern for binding Alpine.js
+        directives to a Django context variable; the entire token before
+        ``=`` is the attribute name.
+        """
+        linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
+
+        html = '<a x-{{ name }}="value">link</a>\n'
+
+        result, errors = linter.lint(html)
+
+        assert result == html
+        assert not errors
+
     def test_attribute_processing_with_mixed_quotes_in_names(self) -> None:
         """Test attribute processing when attribute names contain quotes."""
         linter = HTMLLinter(fix=False, preprocessor=django.Preprocessor())
