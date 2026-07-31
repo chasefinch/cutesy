@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Test each rule."""
 
 from cutesy import HTMLLinter

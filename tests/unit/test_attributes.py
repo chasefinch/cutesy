@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for the combined attributes processor."""
 
 from cutesy.attribute_processors.attributes import AttributeProcessor

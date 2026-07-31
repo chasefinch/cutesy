@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Lint & format an HTML document in Python."""
 
 import re

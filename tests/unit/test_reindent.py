@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for reindent attribute processor."""
 
 from cutesy.attribute_processors.reindent import AttributeProcessor

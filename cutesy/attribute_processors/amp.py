@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Attribute processor for AMP HTML.
 
 Runs after the default "attributes" processor in the chain, handling

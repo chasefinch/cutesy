@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Collection utilities for Cutesy."""
 
 from __future__ import annotations

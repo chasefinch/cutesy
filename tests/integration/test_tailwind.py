@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Test against Cutesy Tailwind spec files."""
 
 from pathlib import Path

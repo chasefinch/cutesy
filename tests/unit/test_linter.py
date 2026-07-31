@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for HTMLLinter functionality."""
 
 from typing import ClassVar
@@ -480,9 +482,9 @@ class TestHTMLLinter:
     def test_dynamic_name_with_static_prefix_round_trips(self) -> None:
         """Test that a static-prefix + dynamic-suffix attribute round-trips.
 
-        ``x-{{ name }}="value"`` is a common pattern for binding Alpine.js
-        directives to a Django context variable; the entire token before
-        ``=`` is the attribute name.
+        ``x-{{ name }}="value"`` is a common pattern for binding
+        Alpine.js directives to a Django context variable; the entire
+        token before ``=`` is the attribute name.
         """
         linter = HTMLLinter(fix=True, preprocessor=django.Preprocessor())
 
@@ -659,9 +661,9 @@ asdf
     def test_break_for_inline_tag_preserves_closing_bracket(self) -> None:
         """Regression: _break_for_inline_tag must not strip '>' from prev tag.
 
-        When two adjacent tags both need attribute wrapping and there is no
-        whitespace between them (e.g. <a ...><img ...>), the line-break
-        logic must not remove the closing '>' of the first tag.
+        When two adjacent tags both need attribute wrapping and there is
+        no whitespace between them (e.g. <a ...><img ...>), the line-
+        break logic must not remove the closing '>' of the first tag.
         """
         short_line_length = 40
         linter = HTMLLinter(fix=True, line_length=short_line_length)
@@ -817,8 +819,9 @@ asdf
     def test_unicode_cdata_closing_tag_not_corrupted(self) -> None:
         """Regression: Unicode chars that change length under str.lower().
 
-        Turkish İ (U+0130) lowercases to 'i̇' (2 chars), which previously
-        corrupted position tracking when searching for </style> or </script>.
+        Turkish İ (U+0130) lowercases to 'i̇' (2 chars), which
+        previously corrupted position tracking when searching for
+        </style> or </script>.
         """
         linter = HTMLLinter(fix=True)
 

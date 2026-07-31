@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Test the collections utilities."""
 
 from cutesy.utilities.collections import collapse

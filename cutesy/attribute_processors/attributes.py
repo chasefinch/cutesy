@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Attribute processor that dispatches based on attribute type knowledge.
 
 Replaces the separate 'whitespace' and 'reindent' processors with a

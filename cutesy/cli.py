@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Expose Cutesy via CLI.
 
 Cutesy 🥰 — Lint (and optionally fix & format) HTML files.

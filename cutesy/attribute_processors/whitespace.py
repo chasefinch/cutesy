@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Trim whitespace inside of attributes where possible."""
 
 import re
@@ -7,12 +9,12 @@ from ..rules import Rule
 from ..types import Error
 from . import BaseAttributeProcessor
 
-# Match "..." or '...' with backslash escapes (no multiline strings)
+# Match "..." or '...' with backslash escapes (no multiline strings).
+# \x22 is a double quote; spelling it out keeps this to one plain literal,
+# since a triple-quoted pattern gets rewritten by docformatter.
 STRING_RE = re.compile(
-    r"""(?sx)
-    ("(?:\\.|[^"\\])*")     # double-quoted string
-  | ('(?:\\.|[^'\\])*')     # single-quoted string
-""",
+    r"\x22(?:\\.|[^\x22\\])*\x22|'(?:\\.|[^'\\])*'",
+    re.DOTALL,
 )
 
 # 2+ horizontal whitespace, not touching \n, between non-whitespace chars

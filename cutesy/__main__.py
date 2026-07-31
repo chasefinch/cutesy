@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Run Cutesy locally."""
 
 import sys

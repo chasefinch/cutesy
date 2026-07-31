@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Types to support Cutesy."""
 
 from data_enum import DataEnum

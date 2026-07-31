@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Reindent multiline attributes according to their outer context."""
 
 import re

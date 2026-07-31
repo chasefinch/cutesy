@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tools to work with base36, for case-insensitive low-digit numbers."""
 
 BASE_36_BASE = 36
