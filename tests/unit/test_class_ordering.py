@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for class ordering attribute processor functionality."""
 
 from cutesy.attribute_processors.class_ordering.types import (

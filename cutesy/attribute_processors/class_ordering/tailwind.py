@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Class sorting to accommodate the Tailwind CSS framework."""
 
 from __future__ import annotations

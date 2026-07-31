@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Prerendering to accommodate the Django template language."""
 
 # Current App

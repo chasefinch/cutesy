@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Class sorting to accommodate the Tailwind CSS framework."""
 
 from __future__ import annotations
@@ -620,8 +622,8 @@ def _expand_with_structural_split(
     """Expand, but only split on structural (block) placeholders.
 
     Non-structural delimited parts (VALUE, IGNORED, …) are merged with
-    their adjacent non-delimited text so that compound tokens like
-    ``my-class--{{ slug }}`` remain intact.
+    their adjacent non-delimited text so that compound tokens like ``my-
+    class--{{ slug }}`` remain intact.
     """
     # Accumulates consecutive non-structural pieces to be merged.
     merge_buf: list[str] = []

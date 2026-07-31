@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Prerendering to accommodate template languages."""
 
 import re

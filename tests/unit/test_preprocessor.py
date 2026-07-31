@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for preprocessor types and base functionality."""
 
 from typing import ClassVar

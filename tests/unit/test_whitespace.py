@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for whitespace attribute processor."""
 
 from cutesy.attribute_processors.whitespace import (

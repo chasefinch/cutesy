@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Cutesy - A linter & formatter for consistent HTML code."""
 
 from .linter import HTMLLinter

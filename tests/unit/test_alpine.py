@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for the Alpine.js attribute processor."""
 
 from cutesy.attribute_processors.alpine import AttributeProcessor

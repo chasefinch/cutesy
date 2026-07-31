@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for Django preprocessor functionality."""
 
 import pytest

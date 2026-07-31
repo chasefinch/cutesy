@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Test against spec files."""
 
 from pathlib import Path

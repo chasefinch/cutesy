@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Define metadata for Cutesy 🥰."""
 
 import os
@@ -32,6 +34,7 @@ if USE_MYPYC:
         from mypyc.build import mypycify
     except ImportError:
         """Mypyc not available, build without compilation."""
+
     else:
         # Compile all modules in cutesy/ except those in MYPYC_SKIP
         all_modules = [str(path) for path in Path("cutesy").rglob("*.py")]
@@ -49,6 +52,7 @@ if USE_RUST:
         from setuptools_rust import Binding, RustExtension
     except ImportError:
         """Setuptools-rust not available, build without Rust extensions."""
+
     else:
         rust_extensions = [
             RustExtension(

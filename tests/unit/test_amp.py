@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for the AMP attribute processor."""
 
 from cutesy.attribute_processors.amp import AttributeProcessor

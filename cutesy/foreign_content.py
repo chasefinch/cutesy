@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Lookup tables for foreign content (SVG & MathML) case correction.
 
 Per the HTML spec, elements inside <svg> and <math> use case-sensitive names.

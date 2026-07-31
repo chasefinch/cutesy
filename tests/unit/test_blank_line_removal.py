@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Tests for blank line removal functionality."""
 
 from cutesy.linter import HTMLLinter

@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Chase Finch
+
 """Constants related to attribute processing."""
 
 TOKEN_ATTRIBUTES = frozenset(
