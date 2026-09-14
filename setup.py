@@ -22,8 +22,9 @@ MYPYC_SKIP = frozenset(
 )
 
 # Build configuration
+RUST_MANIFEST_PATH = Path("rust/Cargo.toml")
 USE_MYPYC = os.environ.get("CUTESY_USE_MYPYC", "1") == "1"
-USE_RUST = os.environ.get("CUTESY_USE_RUST", "1") == "1"
+USE_RUST = os.environ.get("CUTESY_USE_RUST", "1") == "1" and RUST_MANIFEST_PATH.exists()
 
 ext_modules = []
 rust_extensions = []
@@ -57,7 +58,7 @@ if USE_RUST:
         rust_extensions = [
             RustExtension(
                 "cutesy.cutesy_core",
-                path="rust/Cargo.toml",
+                path=str(RUST_MANIFEST_PATH),
                 binding=Binding.PyO3,
                 debug=False,
             ),
