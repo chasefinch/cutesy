@@ -6,4 +6,4 @@ docformatter==1.7.8
 ruff==0.16.9
 wemake-python-styleguide==1.8.1
 
-mypy==2.3.1
+mypy==2.4.0
