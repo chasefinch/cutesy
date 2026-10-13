@@ -1,0 +1,2 @@
+recursive-include rust *.rs Cargo.toml Cargo.lock
+prune rust/target
