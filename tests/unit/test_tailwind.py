@@ -138,6 +138,24 @@ class TestTailwind:
                     full_string="@container",
                 ),
             ),
+            # Tailwind v3 important prefix
+            (
+                "hover:!-mt-4",
+                TailwindClass(
+                    class_name="mt-4",
+                    modifiers=["hover"],
+                    full_string="hover:!-mt-4",
+                ),
+            ),
+            # Tailwind v4 important suffix
+            (
+                "md:-mt-4!",
+                TailwindClass(
+                    class_name="mt-4",
+                    modifiers=["md"],
+                    full_string="md:-mt-4!",
+                ),
+            ),
         ],
     )
     def test_parse_tailwind_class(self, raw: str, expected: TailwindClass) -> None:
@@ -375,6 +393,187 @@ class TestFlexGroupAssignment:
         assert _find_group("grid") == "display"
         assert _find_group("grid-cols-3") == "grid container"
         assert _find_group("grid-rows-2") == "grid container"
+
+
+class TestUtilityGroupAssignment:
+    """Test that non-layout utilities are assigned to the correct groups."""
+
+    @pytest.mark.parametrize(
+        ("class_name", "expected_group"),
+        [
+            # Position
+            ("isolate", "position/float"),
+            ("isolation-auto", "position/float"),
+            ("start-0", "position/float"),
+            ("end-4", "position/float"),
+            ("inset-x-0", "position/float"),
+            # Display
+            ("inline-grid", "display"),
+            ("flow-root", "display"),
+            ("table", "display"),
+            ("table-cell", "display"),
+            ("table-column-group", "display"),
+            ("list-item", "display"),
+            ("visible", "display"),
+            ("invisible", "display"),
+            ("collapse", "display"),
+            ("box-border", "display"),
+            ("box-decoration-clone", "display"),
+            # Flex / grid extras
+            ("justify-items-center", "flex container"),
+            ("justify-self-end", "flex item"),
+            ("grid-flow-row", "grid container"),
+            ("auto-cols-fr", "grid container"),
+            ("auto-rows-min", "grid container"),
+            ("break-after-column", "grid container"),
+            ("break-inside-avoid", "grid container"),
+            ("col-auto", "grid item"),
+            ("col-3", "grid item"),
+            ("row-auto", "grid item"),
+            ("row-[2]", "grid item"),
+            # Sizing
+            ("size-4", "sizing"),
+            ("size-full", "sizing"),
+            # Typography
+            ("truncate", "typography"),
+            ("italic", "typography"),
+            ("not-italic", "typography"),
+            ("antialiased", "typography"),
+            ("uppercase", "typography"),
+            ("normal-case", "typography"),
+            ("underline", "typography"),
+            ("line-through", "typography"),
+            ("no-underline", "typography"),
+            ("tabular-nums", "typography"),
+            ("decoration-2", "typography"),
+            ("decoration-pink-500", "typography"),
+            ("underline-offset-4", "typography"),
+            ("indent-4", "typography"),
+            ("line-clamp-3", "typography"),
+            ("text-balance", "typography"),
+            ("wrap-break-word", "typography"),
+            ("break-words", "typography"),
+            ("content-['']", "typography"),
+            # Borders / rings
+            ("border", "borders/outline/ring/radius/divide"),
+            ("border-b", "borders/outline/ring/radius/divide"),
+            ("rounded", "borders/outline/ring/radius/divide"),
+            ("outline", "borders/outline/ring/radius/divide"),
+            ("outline-none", "borders/outline/ring/radius/divide"),
+            ("divide-y-2", "borders/outline/ring/radius/divide"),
+            ("ring", "borders/outline/ring/radius/divide"),
+            ("ring-2", "borders/outline/ring/radius/divide"),
+            ("ring-inset", "borders/outline/ring/radius/divide"),
+            ("ring-blue-500/50", "borders/outline/ring/radius/divide"),
+            ("ring-offset-2", "borders/outline/ring/radius/divide"),
+            ("inset-ring", "borders/outline/ring/radius/divide"),
+            ("inset-ring-2", "borders/outline/ring/radius/divide"),
+            # Tables
+            ("table-auto", "tables"),
+            ("table-fixed", "tables"),
+            ("caption-top", "tables"),
+            # Effects
+            ("shadow", "effects"),
+            ("shadow-lg", "effects"),
+            ("inset-shadow-sm", "effects"),
+            ("text-shadow-md", "effects"),
+            ("mask-none", "effects"),
+            ("mask-radial-from-50%", "effects"),
+            ("opacity-50", "effects"),
+            # Filters
+            ("filter", "filters"),
+            ("filter-none", "filters"),
+            ("blur", "filters"),
+            ("blur-sm", "filters"),
+            ("brightness-50", "filters"),
+            ("contrast-125", "filters"),
+            ("drop-shadow", "filters"),
+            ("drop-shadow-lg", "filters"),
+            ("grayscale", "filters"),
+            ("hue-rotate-15", "filters"),
+            ("invert", "filters"),
+            ("invert-0", "filters"),
+            ("saturate-150", "filters"),
+            ("sepia", "filters"),
+            ("backdrop-blur-sm", "filters"),
+            # Transforms
+            ("origin-center", "transforms"),
+            ("perspective-near", "transforms"),
+            ("perspective-origin-top", "transforms"),
+            ("backface-hidden", "transforms"),
+            ("transform-3d", "transforms"),
+            ("rotate-x-45", "transforms"),
+            ("translate-z-2", "transforms"),
+            # Interactivity
+            ("accent-pink-500", "interactivity/behavior"),
+            ("appearance-none", "interactivity/behavior"),
+            ("caret-blue-500", "interactivity/behavior"),
+            ("scheme-dark", "interactivity/behavior"),
+            ("field-sizing-content", "interactivity/behavior"),
+            ("resize", "interactivity/behavior"),
+            ("resize-none", "interactivity/behavior"),
+            ("will-change-transform", "interactivity/behavior"),
+            # Accessibility
+            ("sr-only", "accessibility"),
+            ("forced-color-adjust-none", "accessibility"),
+        ],
+    )
+    def test_group_assignment(self, class_name: str, expected_group: str) -> None:
+        """Test each utility is assigned to the correct group."""
+        assert _find_group(class_name) == expected_group
+
+    @pytest.mark.parametrize(
+        "class_name",
+        [
+            "container-fluid",
+            "static-page",
+            "fixed-header",
+            "hidden-xs",
+            "blockquote-custom",
+            "flexbox",
+            "tableau",
+            "shadowed",
+            "blurry",
+            "invertible",
+            "ringleader",
+            "borderless",
+            "underlined",
+        ],
+    )
+    def test_bare_utilities_do_not_match_prefixes(self, class_name: str) -> None:
+        """Test bare-word utilities don't match classes they merely prefix."""
+        assert _find_group(class_name) is None
+
+    def test_ring_sorted_with_borders(self) -> None:
+        """Test ring utilities are grouped with borders, not custom classes."""
+        classes = ["custom-btn", "focus:ring-2", "rounded-lg", "ring-blue-500", "border"]
+        groups = group_and_sort(classes)
+        assert groups == [
+            ["border", "ring-blue-500", "focus:ring-2", "rounded-lg"],
+            ["custom-btn"],
+        ]
+
+    def test_inset_variants_cluster_with_their_family(self) -> None:
+        """Test inset-ring/inset-shadow sort alongside ring/shadow."""
+        classes = [
+            "rounded",
+            "ring-2",
+            "inset-ring-1",
+            "outline-none",
+            "shadow-md",
+            "inset-shadow-sm",
+        ]
+        groups = group_and_sort(classes)
+        assert groups == [
+            ["outline-none", "inset-ring-1", "ring-2", "rounded"],
+            ["shadow-md", "inset-shadow-sm"],
+        ]
+
+    def test_important_marker_does_not_affect_grouping(self) -> None:
+        """Test v3 "!flex" and v4 "flex!" are grouped like "flex"."""
+        classes = ["custom", "flex!", "!p-4", "hover:!bg-red-500", "-mt-2!"]
+        groups = group_and_sort(classes)
+        assert groups == [["flex!"], ["-mt-2!", "!p-4"], ["hover:!bg-red-500"], ["custom"]]
 
 
 class TestSuperGroup:

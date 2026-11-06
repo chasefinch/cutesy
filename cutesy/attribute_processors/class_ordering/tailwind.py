@@ -79,7 +79,11 @@ def parse_tailwind_class(full: str) -> TailwindClass:
 
     parts.append("".join(buffer))
 
-    modifiers, base = parts[:-1], parts[-1].removeprefix("-")
+    modifiers, base = parts[:-1], parts[-1]
+
+    # Strip the "important" marker (v3 prefix "!flex", v4 suffix "flex!") so
+    # it doesn't affect grouping; full_string keeps it for output fidelity.
+    base = base.strip("!").removeprefix("-")
 
     # Handle @ prefixed modifiers - combine empty strings with following parts
     processed_modifiers = []
@@ -106,19 +110,30 @@ def parse_tailwind_class(full: str) -> TailwindClass:
     )
 
 
+# Utility patterns are anchored at the start of the (modifier-free) class
+# name. Bare-word utilities (e.g. "flex", "border", "shadow") are anchored
+# at the end too, or at a "-" where the utility also accepts a suffix, so
+# that user-defined classes such as "container-fluid" or "static-page" are
+# not mistaken for Tailwind.
 GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
     (
         "position/float",
         (
-            r"(?:static|fixed|absolute|relative|sticky)",
+            r"(?:static|fixed|absolute|relative|sticky)$",
             r"(?:float-|clear-)",
-            r"(?:z-|isolation|inset-|top-|right-|bottom-|left-)",
+            r"(?:z-|isolate$|isolation-|inset-(?!shadow|ring)|top-|right-|bottom-|left-)",
+            r"(?:start-|end-)",
         ),
     ),
     (
         "display",
         (
-            r"(?:container|block|inline-flex|inline-block|inline|flex(?!-)|grid(?!-)|contents|hidden)",
+            r"(?:container|block|inline-block|inline-flex|inline-grid|inline-table|inline)$",
+            r"(?:flex|grid|flow-root|contents|list-item|hidden)$",
+            r"table(?:-(?:caption|cell|column|column-group|footer-group|header-group|row-group|row))?$",
+            r"(?:visible|invisible|collapse)$",
+            r"(?:box-border|box-content)$",
+            r"(?:box-decoration-)",
         ),
     ),
     (
@@ -126,15 +141,16 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
         (
             r"(?:flex-(?:row|col|wrap|nowrap))",
             r"(?:place-content-|place-items-)",
-            r"(?:justify-|content-)",
+            r"(?:justify-(?!self-))",
+            r"(?:content-(?:normal|center|start|end|between|around|evenly|baseline|stretch)$)",
             r"(?:items-)",
         ),
     ),
     (
         "grid container",
         (
-            r"(?:grid-cols-|grid-rows-)",
-            r"(?:columns-)",
+            r"(?:grid-cols-|grid-rows-|grid-flow-|auto-cols-|auto-rows-)",
+            r"(?:columns-|break-(?:after|before|inside)-)",
         ),
     ),
     (
@@ -147,12 +163,15 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
             r"(?:order-)",
             r"(?:flex-|grow|shrink|basis-)",
             r"(?:place-self-)",
-            r"(?:self-)",
+            r"(?:justify-self-|self-)",
         ),
     ),
     (
         "grid item",
-        (r"(?:col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",),
+        (
+            r"(?:col-span-|row-span-|col-start-|col-end-|row-start-|row-end-)",
+            r"(?:col|row)-(?:auto$|\d|\[|\()",
+        ),
     ),
     (
         "spacing (margin/padding)",
@@ -161,11 +180,17 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
             r"(?:p[trblxyse]?-\S+)",
         ),
     ),
-    ("sizing", (r"(?:w-|min-w-|max-w-|h-|min-h-|max-h-|aspect-)",)),
+    ("sizing", (r"(?:size-|w-|min-w-|max-w-|h-|min-h-|max-h-|aspect-)",)),
     (
         "typography",
         (
-            r"(?:font-|text-|leading-|tracking-|list-|placeholder-|whitespace-|break-|hyphens-)",
+            r"(?:font-|text-(?!shadow)|leading-|tracking-|list-|placeholder-|whitespace-)",
+            r"(?:break-|wrap-|hyphens-|decoration-|underline-offset-|indent-|line-clamp-)",
+            r"(?:italic|not-italic|antialiased|subpixel-antialiased|truncate)$",
+            r"(?:uppercase|lowercase|capitalize|normal-case)$",
+            r"(?:underline|overline|line-through|no-underline)$",
+            r"(?:normal-nums|ordinal|slashed-zero|lining-nums|oldstyle-nums)$",
+            r"(?:proportional-nums|tabular-nums|diagonal-fractions|stacked-fractions)$",
             r"(?:align-)",
             r"(?:content-)",
         ),
@@ -184,16 +209,54 @@ GROUPS_IN_ORDER: Sequence[tuple[str, Sequence[str]]] = (
             r"(?:from-|via-|to-|gradient-)",
         ),
     ),
-    ("borders/outline/radius/divide", (r"(?:border-|rounded-|divide-|outline-)",)),
-    ("effects", (r"(?:shadow-|opacity-|mix-blend-|backdrop-)",)),
+    (
+        "borders/outline/ring/radius/divide",
+        (
+            r"(?:border|rounded|outline)(?:-|$)",
+            r"(?:divide-)",
+            r"(?:ring|inset-ring)(?:-|$)",
+        ),
+    ),
+    ("tables", (r"(?:table-(?:auto|fixed)$|caption-)",)),
+    (
+        "effects",
+        (
+            r"(?:shadow(?:-|$)|inset-shadow-|text-shadow-)",
+            r"(?:opacity-|mix-blend-|mask-)",
+        ),
+    ),
+    (
+        "filters",
+        (
+            r"(?:filter|blur|drop-shadow|grayscale|invert|sepia)(?:-|$)",
+            r"(?:brightness-|contrast-|hue-rotate-|saturate-)",
+            r"(?:backdrop-)",
+        ),
+    ),
     ("svg", (r"(?:fill-|stroke-)",)),
-    ("transforms", (r"(?:transform|scale-|rotate-|translate-|skew-)",)),
+    (
+        "transforms",
+        (
+            r"(?:transform|origin-|perspective-|backface-)",
+            r"(?:scale-|rotate-|translate-|skew-)",
+        ),
+    ),
     ("transitions/animation", (r"(?:transition|duration-|ease-|delay-|animate-)",)),
     (
         "interactivity/behavior",
-        (r"(?:cursor-|select-|pointer-events-|touch-|scroll-|overscroll-|snap-)",),
+        (
+            r"(?:cursor-|select-|pointer-events-|touch-|scroll-|overscroll-|snap-)",
+            r"(?:accent-|appearance-|caret-|scheme-|field-sizing-|will-change-)",
+            r"(?:resize)(?:-|$)",
+        ),
     ),
-    ("accessibility", (r"(?:sr-only|not-sr-only)",)),
+    (
+        "accessibility",
+        (
+            r"(?:sr-only|not-sr-only)$",
+            r"(?:forced-color-adjust-)",
+        ),
+    ),
 )
 
 _COMPILED: Final[tuple[tuple[str, list[re.Pattern[str]]], ...]] = tuple(
@@ -449,12 +512,18 @@ def _border_specificity(name: str) -> int:
     return 0
 
 
+_INSET_VARIANT_PREFIXES: Final = ("inset-ring", "inset-shadow")
+
+
 def _family_key(group_name: str, class_name: str) -> tuple:
     """Cluster similar utilities inside a group."""
     head = class_name.split("-", 1)[0]  # e.g., 'bg', 'text', 'p', 'border'
+    if class_name.startswith(_INSET_VARIANT_PREFIXES):
+        # inset-ring-* / inset-shadow-* cluster with ring-* / shadow-*
+        head = class_name.split("-", 2)[1]
     if group_name == "spacing (margin/padding)":
         return (head, _spacing_specificity(class_name))
-    if group_name == "borders/outline/radius/divide":
+    if group_name == "borders/outline/ring/radius/divide":
         return (head, _border_specificity(class_name))
     # Generic: More segments → consider more specific
     return (head, class_name.count("-"))
