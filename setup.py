@@ -34,7 +34,7 @@ if USE_MYPYC:
     try:
         from mypyc.build import mypycify
     except ImportError:
-        """Mypyc not available, build without compilation."""
+        ...  # Mypyc not available, build without compilation
 
     else:
         # Compile all modules in cutesy/ except those in MYPYC_SKIP
@@ -52,7 +52,7 @@ if USE_RUST:
     try:
         from setuptools_rust import Binding, RustExtension
     except ImportError:
-        """Setuptools-rust not available, build without Rust extensions."""
+        ...  # Setuptools-rust not available, build without Rust extensions
 
     else:
         rust_extensions = [
